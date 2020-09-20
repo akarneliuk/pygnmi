@@ -8,7 +8,7 @@ setup(
   author = 'Anton Karneliuk',
   author_email = 'anton@karneliuk.com',
   url = 'https://github.com/akarneliuk/pygnmi',
-  download_url = 'https://github.com/user/reponame/archive/v_01.tar.gz',    # I explain this later on
+  download_url = 'https://github.com/akarneliuk/pygnmi/archive/v0.1.0.tar.gz',
   keywords = ['gnmi', 'automation', 'grpc'], 
   install_requires=[
           'asyncio',
