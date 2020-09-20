@@ -19,10 +19,12 @@ class NFData(object):
 
         self.username = False
         self.password = False
-        self.targets = False
+        self.targets = None
         self.insecure = False
         self.certificate = None
         self.operation = False
+        self.gnmi_path = None
+        self.to_print = False
 
         ind = 0
         while ind < len(input_vars):
@@ -101,6 +103,33 @@ class NFData(object):
                     self.insecure = True
                     ind += 1
 
+                elif input_vars[ind] == '--print':
+                    self.to_print = True
+                    ind += 1
+
+                elif input_vars[ind] == '--gnmi-path':
+                    try:
+                        paths = input_vars[ind + 1].split(',')
+                        try:
+                            self.gnmi_path = [str(path) for path in paths]
+
+                        except IndexError:
+                            print(msg['bad_host'])
+                            logging.error(msg['bad_host'])
+                            sys.exit(2)
+
+                        except ValueError:
+                            print(msg['wrong_data'])
+                            logging.error(msg['wrong_data'])
+                            sys.exit(2)
+
+                        ind += 2
+
+                    except IndexError:
+                        print(msg['not_enough_arg'])
+                        logging.critical(msg['not_enough_arg'])
+                        sys.exit(3)
+
                 elif input_vars[ind] == '-h' or input_vars[ind] == '--help':
                     print(msg['help'])
                     logging.info(f'Help is triggered. The execution is terminated.')
@@ -133,4 +162,9 @@ class NFData(object):
         if not self.operation:
             print(msg['not_defined_op'])
             logging.critical(msg['not_defined_op'])
+            sys.exit(3)
+
+        if not self.gnmi_path and (self.operation == 'get' or self.operation == 'set'):
+            print(msg['not_defined_path'])
+            logging.critical(msg['not_defined_path'])
             sys.exit(3)
