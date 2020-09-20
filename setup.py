@@ -9,7 +9,7 @@ setup(
   author_email = 'anton@karneliuk.com',
   url = 'https://github.com/akarneliuk/pygnmi',
   download_url = 'https://github.com/akarneliuk/pygnmi/archive/v0.1.1.tar.gz',
-  keywords = ['gnmi', 'automation', 'grpc'], 
+  keywords = ['gnmi', 'automation', 'grpc', 'network'], 
   install_requires=[
           'asyncio',
           'grpcio',
@@ -19,7 +19,8 @@ setup(
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',
     'Intended Audience :: System Administrators',
-    'Intended Audience :: Telecommunications Industry',   
+    'Intended Audience :: Telecommunications Industry',
+    'Operating System :: OS Independent',
     'Topic :: System :: Networking',
     'License :: OSI Approved :: BSD License',
     'Programming Language :: Python :: 3',
