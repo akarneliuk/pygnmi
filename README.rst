@@ -24,10 +24,10 @@ Tested network operating systems (NOS)
 =======
 License
 =======
-By using the pyGNMI tool you agree with `the license <LICENSE.txt>_`.
+By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 
 =======
 Dev Log
 =======
-Release `0.1.0`:
+Release **0.1.0**:
 - The first release
