@@ -9,12 +9,14 @@ The explanation of the demo:
 - Capabilities
 
 ### Supported operation modes
-- secure gRPC channel (encrypted with certificate)
 - insecure gRPC channel (without encryption)
 
 ### Tested network operating systems (NOS)
 - Arista EOS
 - Nokia SRLinux
+
+## License
+By using the pyGNMI tool you agree with [the license](LICENSE.txt)
 
 ## Log
 Release `0.1.0`:

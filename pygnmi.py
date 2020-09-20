@@ -47,7 +47,7 @@ if __name__ == "__main__":
         GC.connect(DD.certificate)
 
     except:
-        logging.critical(f'The connectivity towards {DD.targerts} cannot be established. The execution is terminated.')
+        logging.critical(f'The connectivity towards {DD.targets} cannot be established. The execution is terminated.')
         sys.exit(1)
 
     if DD.operation == 'capabilities':
