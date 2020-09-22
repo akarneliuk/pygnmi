@@ -42,12 +42,12 @@ if __name__ == "__main__":
 
     # gNMI operations
     GC = gNMIclient(DD.targets, username=DD.username, password=DD.password, to_print=DD.to_print)
-    try:
-        GC.connect(DD.insecure, path_cert=DD.certificate)
+#    try:
+    GC.connect(DD.insecure, path_cert=DD.certificate)
 
-    except:
-        logging.critical(f'The connectivity towards {DD.targets} cannot be established. The execution is terminated.')
-        sys.exit(1)
+#    except:
+#        logging.critical(f'The connectivity towards {DD.targets} cannot be established. The execution is terminated.')
+#        sys.exit(1)
 
     if DD.operation == 'capabilities':
         result = GC.capabilities()

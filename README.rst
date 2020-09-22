@@ -1,6 +1,8 @@
 ==========================
 pyGNMI: Python gNMI client
 ==========================
+|project|_ |documentation|_ |version|_ |tag|_ |license|_
+
 This repository contains pure Python implementation of the gNMI client to interact with the network functions.
 
 =====
@@ -11,15 +13,20 @@ The explanation of the demo:
 Supported requests
 ------------------
 - Capabilities
+- Get
 
 Supported operation modes
 -------------------------
 - insecure gRPC channel (without encryption)
 
-Tested network operating systems (NOS)
+Tested Network Operating Systems (NOS)
 --------------------------------------
 - Arista EOS
+
+Network Operating Systems (NOS) in test
+---------------------------------------
 - Nokia SRLinux
+- Nokia SR OS
 
 =======
 License

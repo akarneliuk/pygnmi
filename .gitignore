@@ -2,3 +2,4 @@
 venv/
 log/
 .temp/
+.vscode/

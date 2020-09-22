@@ -42,7 +42,7 @@ class gNMIclient(object):
                         logging.error('The SSL certificate cannot be opened.')
                         sys.exit(10)
 
-                channel = grpc.secure_channel(f'{he[0]}:{he[1]}', credentials=cert)
+                channel = grpc.secure_channel(f'{he[0]}:{he[1]}', cert)
                 grpc.channel_ready_future(channel).result(timeout=5)
                 self.__stub = gNMIStub(channel)
 
