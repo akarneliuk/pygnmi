@@ -3,12 +3,13 @@
 
 # Modules
 import grpc
-from bin.gnmi_pb2_grpc import *
-from bin.gnmi_pb2 import *
+from bin.gnmi_pb2_grpc import gNMIStub
+from bin.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest
 import re
 import sys
 import json
 import logging
+
 
 # Own modules
 from path_generator import gnmi_path_generator
@@ -19,35 +20,48 @@ class gNMIclient(object):
     """
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
-    def __init__(self, targets, username=None, password=None, to_print=False):
+    def __init__(self, target, username=None, password=None, to_print=False, insecure=False, path_cert=None):
+        """
+        Initializing the object
+        """
         self.__metadata = [('username', username), ('password', password)]
-        self.__targets = targets
+        self.__target = target
         self.__capabilities = None
         self.__to_print = to_print
+        self.__insecure = insecure
+        self.__path_cert = path_cert
 
-    def connect(self, insecure, path_cert=None):
-        for he in self.__targets:
-            if insecure:
-                channel = grpc.insecure_channel(f'{he[0]}:{he[1]}', self.__metadata)
-                grpc.channel_ready_future(channel).result(timeout=5)
-                self.__stub = gNMIStub(channel)
+    
+    def __enter__(self):
+        """
+        Building the connectivity towards network element over gNMI
+        """
+        if self.__insecure:
+            self.__channel = grpc.insecure_channel(f'{self.__target[0]}:{self.__target[1]}', self.__metadata)
+            grpc.channel_ready_future(self.__channel).result(timeout=5)
+            self.__stub = gNMIStub(self.__channel)
 
-            else:
-                if path_cert:
-                    try:
-                        with open(path_cert, 'rb') as f:
-                            cert = grpc.ssl_channel_credentials(f.read())
+        else:
+            if self.__path_cert:
+                try:
+                    with open(self.__path_cert, 'rb') as f:
+                        cert = grpc.ssl_channel_credentials(f.read())
 
-                    except:
-                        logging.error('The SSL certificate cannot be opened.')
-                        sys.exit(10)
+                except:
+                    logging.error('The SSL certificate cannot be opened.')
+                    sys.exit(10)
 
-                channel = grpc.secure_channel(f'{he[0]}:{he[1]}', cert)
-                grpc.channel_ready_future(channel).result(timeout=5)
-                self.__stub = gNMIStub(channel)
+            self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', cert)
+            grpc.channel_ready_future(self.__channel).result(timeout=5)
+            self.__stub = gNMIStub(self.__channel)
+
+        return self
 
 
     def capabilities(self):
+        """
+        Collecting capabilities
+        """
         logging.info(f'Collecting Capabilities...')
 
         try:
@@ -85,6 +99,9 @@ class gNMIclient(object):
 
 
     def get(self, path):
+        """
+        Collecting path information
+        """
         logging.info(f'Collecting info from requested paths (Get opertaion)...')
 
         protobuf_paths = [gnmi_path_generator(pe) for pe in path]
@@ -103,3 +120,7 @@ class gNMIclient(object):
 
         if self.__to_print:
             print(gnmi_message_response)
+
+
+    def __exit__(self, type, value, traceback):
+        self.__channel.close()

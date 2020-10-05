@@ -20,11 +20,11 @@ Supported operation modes
 Tested Network Operating Systems (NOS)
 --------------------------------------
 - Arista EOS
+- Nokia SR OS
 
 Network Operating Systems (NOS) in test
 ---------------------------------------
 - Nokia SRLinux
-- Nokia SR OS
 
 =======
 License
@@ -34,6 +34,11 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 =======
 Dev Log
 =======
+Release **0.1.2**:
+
+- The gNMIClient is recreated as context manger.
+- Tests with Nokia SR OS done, the module is working nice for insecure channel.
+
 Release **0.1.1**:
 
 - Added the ``Get`` operation out of gNMI specification.

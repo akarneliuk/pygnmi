@@ -2,16 +2,15 @@ from distutils.core import setup
 setup(
   name = 'pygnmi',
   packages = ['pygnmi'],
-  version = '0.1.1',
+  version = '0.1.2',
   license='bsd-3-clause',
   description = 'This repository contains pure Python implementation of the gNMI client to interact with the network functions.',
   author = 'Anton Karneliuk',
   author_email = 'anton@karneliuk.com',
   url = 'https://github.com/akarneliuk/pygnmi',
-  download_url = 'https://github.com/akarneliuk/pygnmi/archive/v0.1.1.tar.gz',
+  download_url = 'https://github.com/akarneliuk/pygnmi/archive/v0.1.2.tar.gz',
   keywords = ['gnmi', 'automation', 'grpc', 'network'], 
   install_requires=[
-          'asyncio',
           'grpcio',
           'grpcio-tools'
       ],

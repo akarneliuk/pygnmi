@@ -13,6 +13,7 @@ import os
 from arg_parser import NFData
 from client import gNMIclient
 
+
 # Variables
 path_msg = 'artefacts/messages.json'
 path_log = 'log/execution.log'
@@ -40,17 +41,17 @@ if __name__ == "__main__":
     del sys.argv[0]
     DD = NFData(sys.argv, msg)
 
-    # gNMI operations
-    GC = gNMIclient(DD.targets, username=DD.username, password=DD.password, to_print=DD.to_print)
+    # gNMI operation
 #    try:
-    GC.connect(DD.insecure, path_cert=DD.certificate)
+    with gNMIclient(DD.targets, username=DD.username, password=DD.password, 
+                    to_print=DD.to_print, insecure=DD.insecure, path_cert=DD.certificate) as GC:
+        if DD.operation == 'capabilities':
+            result = GC.capabilities()
 
+        elif DD.operation == 'get':
+            result = GC.get(DD.gnmi_path)
 #    except:
 #        logging.critical(f'The connectivity towards {DD.targets} cannot be established. The execution is terminated.')
 #        sys.exit(1)
 
-    if DD.operation == 'capabilities':
-        result = GC.capabilities()
 
-    elif DD.operation == 'get':
-        result = GC.get(DD.gnmi_path)

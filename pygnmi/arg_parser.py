@@ -51,26 +51,18 @@ class NFData(object):
 
                 elif input_vars[ind] == '-t' or input_vars[ind] == '--target':
                     try:
-                        targets = input_vars[ind + 1].split(',')
-                        try:
-                            self.targets = [(str(target.split(':')[0]), int(target.split(':')[1])) for target in targets]
-
-                        except IndexError:
-                            print(msg['bad_host'])
-                            logging.error(msg['bad_host'])
-                            sys.exit(2)
-
-                        except ValueError:
-                            print(msg['wrong_data'])
-                            logging.error(msg['wrong_data'])
-                            sys.exit(2)
-
+                        self.targets = (str(input_vars[ind + 1].split(':')[0]), int(input_vars[ind + 1].split(':')[1]))
                         ind += 2
 
                     except IndexError:
-                        print(msg['not_enough_arg'])
-                        logging.critical(msg['not_enough_arg'])
-                        sys.exit(3)
+                        print(msg['bad_host'])
+                        logging.error(msg['bad_host'])
+                        sys.exit(2)
+
+                    except ValueError:
+                        print(msg['wrong_data'])
+                        logging.error(msg['wrong_data'])
+                        sys.exit(2)
 
 
                 elif input_vars[ind] == '-o' or input_vars[ind] == '--operation':
