@@ -1,14 +1,20 @@
 from distutils.core import setup
+
+with open('README.rst') as fh:
+    long_description = fh.read()
+
 setup(
   name = 'pygnmi',
   packages = ['pygnmi'],
-  version = '0.1.2',
+  version = '0.1.3',
   license='bsd-3-clause',
   description = 'This repository contains pure Python implementation of the gNMI client to interact with the network functions.',
+  long_description = long_description,
+  long_description_content_type = 'text/x-rst',
   author = 'Anton Karneliuk',
   author_email = 'anton@karneliuk.com',
   url = 'https://github.com/akarneliuk/pygnmi',
-  download_url = 'https://github.com/akarneliuk/pygnmi/archive/v0.1.2.tar.gz',
+  download_url = 'https://github.com/akarneliuk/pygnmi/archive/v0.1.3.tar.gz',
   keywords = ['gnmi', 'automation', 'grpc', 'network'], 
   install_requires=[
           'grpcio',
