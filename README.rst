@@ -34,6 +34,10 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 =======
 Dev Log
 =======
+Release **0.1.4**:
+
+- Minor bugfixing
+
 Release **0.1.3**:
 
 - Minor bugfixing

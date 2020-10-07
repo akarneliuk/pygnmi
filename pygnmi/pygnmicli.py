@@ -12,6 +12,7 @@ import os
 # Own modules
 from arg_parser import NFData
 from client import gNMIclient
+from artefacts.messages import msg
 
 
 # Variables
@@ -27,15 +28,6 @@ if __name__ == "__main__":
 
     logging.basicConfig(filename=path_log, level=logging.INFO, format='%(asctime)s.%(msecs)03d+01:00,%(levelname)s,%(message)s', datefmt='%Y-%m-%dT%H:%M:%S')
     logging.info('Starting application...')
-
-    # Importing messages
-    try:
-        with open(path_msg, 'r') as f:
-            msg = json.loads(f.read())
-
-    except:
-        print(f'Can\'t import messages. Execution is terminated')
-        logging.error(f'Can\'t import messages. Execution is terminated')
 
     # Collecting inputs
     del sys.argv[0]
