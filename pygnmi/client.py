@@ -3,8 +3,8 @@
 
 # Modules
 import grpc
-from pygnmi.bin.gnmi_pb2_grpc import gNMIStub
-from pygnmi.bin.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest
+from pygnmi.spec.gnmi_pb2_grpc import gNMIStub
+from pygnmi.spec.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest
 import re
 import sys
 import json
@@ -12,7 +12,7 @@ import logging
 
 
 # Own modules
-from path_generator import gnmi_path_generator
+from pygnmi.path_generator import gnmi_path_generator
 
 
 # Classes

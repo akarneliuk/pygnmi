@@ -2,7 +2,7 @@
 import grpc
 
 # from proto.gnmi import gnmi_pb2 as proto_dot_gnmi_dot_gnmi__pb2
-import bin.gnmi_pb2 as proto_dot_gnmi_dot_gnmi__pb2
+import pygnmi.spec.gnmi_pb2 as proto_dot_gnmi_dot_gnmi__pb2
 
 
 class gNMIStub(object):

@@ -10,9 +10,9 @@ import os
 
 
 # Own modules
-from arg_parser import NFData
-from client import gNMIclient
-from artefacts.messages import msg
+from pygnmi.arg_parser import NFData
+from pygnmi.client import gNMIclient
+from pygnmi.artefacts.messages import msg
 
 
 # Variables

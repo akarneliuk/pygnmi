@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Modules
-from pygnmi.bin.gnmi_pb2 import *
+from pygnmi.spec.gnmi_pb2 import *
 import re
 
 # User-defined functions
