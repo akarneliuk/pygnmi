@@ -3,8 +3,8 @@
 
 # Modules
 import grpc
-from bin.gnmi_pb2_grpc import gNMIStub
-from bin.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest
+from pygnmi.bin.gnmi_pb2_grpc import gNMIStub
+from pygnmi.bin.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest
 import re
 import sys
 import json

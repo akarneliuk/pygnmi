@@ -5,4 +5,4 @@ pygnmi/__init__.py
 pygnmi/arg_parser.py
 pygnmi/client.py
 pygnmi/path_generator.py
-pygnmi/pygnmi.py
+pygnmi/pygnmicli.py
