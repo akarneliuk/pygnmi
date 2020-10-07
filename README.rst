@@ -34,6 +34,10 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 =======
 Dev Log
 =======
+Release **0.1.7**:
+
+- Changing packages modules
+
 Release **0.1.6**:
 
 - Restructuring internal context
