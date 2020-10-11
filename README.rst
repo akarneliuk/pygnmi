@@ -10,6 +10,7 @@ This repository contains pure Python implementation of the gNMI client to intera
 Usage
 =====
 Sample code example:
+
 .. code-block:: python3
 
   # Modules
