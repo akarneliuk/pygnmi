@@ -10,22 +10,21 @@ This repository contains pure Python implementation of the gNMI client to intera
 Usage
 =====
 Sample code example:
-```python
-#!/usr/bin/env python
+.. code-block:: python3
 
-# Modules
-from pygnmi.client import gNMIclient
+  # Modules
+  from pygnmi.client import gNMIclient
 
-# Variables
-host = ('169.254.255.64', '57400')
+  # Variables
+  host = ('169.254.255.64', '57400')
 
-# Body
-if __name__ == '__main__':
-    with gNMIclient(target=host, username='admin', password='admin', insecure=True, to_print=True) as gc:
-         result = gc.get(path=['openconfig-interfaces:interfaces', 'openconfig-acl:acl'])
+  # Body
+  if __name__ == '__main__':
+      with gNMIclient(target=host, username='admin', password='admin', insecure=True, to_print=True) as gc:
+           result = gc.get(path=['openconfig-interfaces:interfaces', 'openconfig-acl:acl'])
          
-    print(result)
-```
+      print(result)
+
 
 Supported requests
 ------------------
