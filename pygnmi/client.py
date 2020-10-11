@@ -60,7 +60,7 @@ class gNMIclient(object):
 
     def capabilities(self):
         """
-        Collecting capabilities
+        Collecting the gNMI capabilities of the network device
         """
         logging.info(f'Collecting Capabilities...')
 
@@ -97,14 +97,22 @@ class gNMIclient(object):
         except:
             logging.error(f'Collection of Capabilities is failed.')
 
+            return None
+
 
     def get(self, path):
         """
-        Collecting path information
+        Collecting the information about the resources from defined paths.
+        Path is provided as a list in format: ['yanf-module:container/container[key=value]', 'yanf-module:container/container[key=value]', ..]
         """
         logging.info(f'Collecting info from requested paths (Get opertaion)...')
 
-        protobuf_paths = [gnmi_path_generator(pe) for pe in path]
+        try:
+            protobuf_paths = [gnmi_path_generator(pe) for pe in path]
+
+        except:
+            logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
+            sys.exit(10)
 
         if self.__capabilities and 'supported_encodings' in self.__capabilities:
             if 0 in self.__capabilities['supported_encodings']:
@@ -115,11 +123,66 @@ class gNMIclient(object):
         else:
             enc = 0
 
-        gnmi_message_request = GetRequest(path=protobuf_paths, type=0, encoding=enc)
-        gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
+        try:
+            gnmi_message_request = GetRequest(path=protobuf_paths, type=0, encoding=enc)
+            gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
 
-        if self.__to_print:
-            print(gnmi_message_response)
+            if self.__to_print:
+                print(gnmi_message_response)
+
+            if gnmi_message_response:
+                response = {}
+
+                if gnmi_message_response.notification:
+                    response.update({'notification': []})
+
+                    for notification in gnmi_message_response.notification:
+                        notification_container = {}
+
+                        notification_container.update({'timestamp': notification.timestamp}) if notification.timestamp else notification_container.update({'timestamp': 0})
+
+                        if notification.update:
+                            notification_container.update({'update': []})
+
+                            for update_msg in notification.update:
+                                update_container = {}
+
+                                if update_msg.path and update_msg.path.elem:
+                                    resource_path = []
+                                    for path_elem in update_msg.path.elem:
+                                        tp = ''
+                                        if path_elem.name:
+                                            tp += path_elem.name
+
+                                        if path_elem.key:
+                                            for pk_name, pk_value in path_elem.key.items():
+                                                tp += f'[{pk_name}={pk_value}]'
+
+                                        resource_path.append(tp)
+                                
+                                    update_container.update({'path': '/'.join(resource_path)})
+
+                                else:
+                                    update_container.update({'path': None})
+
+                                if update_msg.val:
+                                    if update_msg.val.json_ietf_val:
+                                        update_container.update({'json_ietf_val': json.loads(update_msg.val.json_ietf_val)})
+
+                                    elif update_msg.val.json_val:
+                                        update_container.update({'json_val': json.loads(update_msg.val.json_val)})
+
+                                notification_container['update'].append(update_container)
+
+                        response['notification'].append(notification_container)
+
+            return response
+        
+        except:
+            logging.error(f'Collection of Get information failed is failed.')
+
+            return None
+
 
 
     def __exit__(self, type, value, traceback):

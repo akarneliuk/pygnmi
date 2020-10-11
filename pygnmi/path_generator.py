@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#(c)2020, Anton Karneliuk
 
 # Modules
 from pygnmi.spec.gnmi_pb2 import *
