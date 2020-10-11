@@ -21,7 +21,7 @@ Sample code example:
 
   # Body
   if __name__ == '__main__':
-      with gNMIclient(target=host, username='admin', password='admin', insecure=True, to_print=True) as gc:
+      with gNMIclient(target=host, username='admin', password='admin', insecure=True) as gc:
            result = gc.get(path=['openconfig-interfaces:interfaces', 'openconfig-acl:acl'])
          
       print(result)
