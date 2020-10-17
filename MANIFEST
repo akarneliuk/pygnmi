@@ -5,3 +5,8 @@ pygnmi/__init__.py
 pygnmi/arg_parser.py
 pygnmi/client.py
 pygnmi/path_generator.py
+pygnmi/artefacts/messages.py
+pygnmi/spec/gnmi_ext_pb2.py
+pygnmi/spec/gnmi_ext_pb2_grpc.py
+pygnmi/spec/gnmi_pb2.py
+pygnmi/spec/gnmi_pb2_grpc.py

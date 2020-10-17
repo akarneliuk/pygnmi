@@ -53,6 +53,10 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 =======
 Dev Log
 =======
+Releast **0.1.9**:
+
+- Adding the property ``datatype='all'`` to the get() request. The values are per the gNMI specification: all, config, state, operatonal.
+
 Release **0.1.8**:
 
 - Adding conversion of the collected information over the gNMI into a Python dictionary

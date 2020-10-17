@@ -100,12 +100,29 @@ class gNMIclient(object):
             return None
 
 
-    def get(self, path):
+    def get(self, path, datatype='all'):
         """
         Collecting the information about the resources from defined paths.
         Path is provided as a list in format: ['yanf-module:container/container[key=value]', 'yanf-module:container/container[key=value]', ..]
         """
         logging.info(f'Collecting info from requested paths (Get opertaion)...')
+
+        datatype = datatype.lower()
+        type_dict = {'all', 'config', 'state', 'operational'}
+
+        if datatype in type_dict:
+            if datatype == 'all':
+                pb_datatype = 0
+            elif datatype == 'config':
+                pb_datatype = 1
+            elif datatype == 'state':
+                pb_datatype = 2
+            elif datatype == 'operational':
+                pb_datatype = 3
+            else:
+                logging.error('The GetRequst data type is not within the dfined range')
+
+        print(pb_datatype)
 
         try:
             protobuf_paths = [gnmi_path_generator(pe) for pe in path]
@@ -124,7 +141,7 @@ class gNMIclient(object):
             enc = 0
 
         try:
-            gnmi_message_request = GetRequest(path=protobuf_paths, type=0, encoding=enc)
+            gnmi_message_request = GetRequest(path=protobuf_paths, type=pb_datatype, encoding=enc)
             gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
 
             if self.__to_print:

@@ -41,7 +41,7 @@ if __name__ == "__main__":
             result = GC.capabilities()
 
         elif DD.operation == 'get':
-            result = GC.get(DD.gnmi_path)
+            result = GC.get(DD.gnmi_path, datatype='all')
 #    except:
 #        logging.critical(f'The connectivity towards {DD.targets} cannot be established. The execution is terminated.')
 #        sys.exit(1)
