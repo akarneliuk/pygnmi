@@ -4,7 +4,7 @@
 # Modules
 import grpc
 from pygnmi.spec.gnmi_pb2_grpc import gNMIStub
-from pygnmi.spec.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest
+from pygnmi.spec.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest, Update, TypedValue
 import re
 import sys
 import json
@@ -122,8 +122,6 @@ class gNMIclient(object):
             else:
                 logging.error('The GetRequst data type is not within the dfined range')
 
-        print(pb_datatype)
-
         try:
             protobuf_paths = [gnmi_path_generator(pe) for pe in path]
 
@@ -200,6 +198,83 @@ class gNMIclient(object):
 
             return None
 
+
+    def set(self, delete=None, replace=None, update=None):
+        """
+        Changing the configuration on the destination network elements.
+        Could provide a single attribute or multiple attributes.
+        """
+        del_protobuf_paths = []
+        replace_msg = []
+        update_msg = []
+
+        if delete:
+            if isinstance(replace, list):
+                try:
+                    del_protobuf_paths = [gnmi_path_generator(pe) for pe in delete]
+
+                except:
+                    logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
+                    sys.exit(10)
+
+            else:
+                logging.error(f'The provided input for Set Update message is not list.')
+                sys.exit(10)
+
+        if replace:
+            if isinstance(replace, list):
+                for ue in replace:
+                    if isinstance(ue, tuple):
+                        u_path = gnmi_path_generator(ue[0])
+                        u_val = json.dumps(ue[1]).encode('utf-8')
+
+                        replace_msg.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
+
+                    else:
+                        logging.error(f'The input element for Update message must be tuple, got {ue}.')
+                        sys.exit(10)
+
+            else:
+                logging.error(f'The provided input for Set Update message is not list.')
+                sys.exit(10)
+
+        if update:
+            if isinstance(update, list):
+                for ue in update:
+                    if isinstance(ue, tuple):
+                        u_path = gnmi_path_generator(ue[0])
+                        u_val = json.dumps(ue[1]).encode('utf-8')
+
+                        update_msg.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
+
+                    else:
+                        logging.error(f'The input element for Update message must be tuple, got {ue}.')
+                        sys.exit(10)
+
+            else:
+                logging.error(f'The provided input for Set Update message is not list.')
+                sys.exit(10)
+
+#        try:
+        gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
+        gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
+
+        if self.__to_print:
+            print(gnmi_message_response)
+
+        if gnmi_message_response:
+            response = {}
+
+            return response
+
+        else:
+            logging.error('Failed parsing of SetResponse.')
+            return None
+        
+#        except:
+#            logging.error(f'Collection of Set information failed is failed.')
+
+            return None
 
 
     def __exit__(self, type, value, traceback):

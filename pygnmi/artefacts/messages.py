@@ -11,5 +11,6 @@ msg = {
     'wrong_data': 'The argument is provided in thw wrong type (e.g. string instead of integer).',
     'not_allowed_op': 'The request gNMI operation type is now allowed.',
     'not_defined_op': 'The gNMI operation type is not defined.',
-    'not_defined_path': 'The gNMI path is ot defined with Get or Set operation.'
+    'not_defined_path': 'The gNMI path is ot defined with Get or Set operation.',
+    'not_defined_set': 'The gNMI path (for delete operation) or update messages (for update or replace operation) are not defined.'
 }

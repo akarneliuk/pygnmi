@@ -42,6 +42,14 @@ if __name__ == "__main__":
 
         elif DD.operation == 'get':
             result = GC.get(DD.gnmi_path, datatype='all')
+
+        elif DD.operation == 'set':
+            deletes = DD.gnmi_path if DD.gnmi_path else None
+            updates = DD.update if DD.update else None
+            replaces = DD.replace if DD.replace else None
+
+            result = GC.set(delete=deletes, update=updates, replace=replaces)
+
 #    except:
 #        logging.critical(f'The connectivity towards {DD.targets} cannot be established. The execution is terminated.')
 #        sys.exit(1)

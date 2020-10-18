@@ -31,6 +31,7 @@ Supported requests
 ------------------
 - Capabilities
 - Get
+- Set
 
 Supported operation modes
 -------------------------
@@ -53,6 +54,11 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 =======
 Dev Log
 =======
+
+Releast **0.2.0**:
+
+- Adding the ``Set`` operation from gNMI specification.
+
 Releast **0.1.9**:
 
 - Adding the property ``datatype='all'`` to the get() request. The values are per the gNMI specification: all, config, state, operatonal.
@@ -94,11 +100,11 @@ Release **0.1.0**:
 
 - The first release.
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.1.8&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.2.0&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=in%20development&color=yellow
 .. _tag: https://pypi.org/project/pygnmi/
 .. |license| image:: https://img.shields.io/static/v1?label=license&message=BSD-3-clause&color=success
 .. _license: https://github.com/akarneliuk/pygnmi/blob/master/LICENSE.txt
 .. |project| image:: https://img.shields.io/badge/akarneliuk%2Fpygnmi-blueviolet.svg?logo=github&color=success
-.. _project: https://github.com/akarneliuk/pygnmi/blob/master/LICENSE.txt
+.. _project: https://github.com/akarneliuk/pygnmi/

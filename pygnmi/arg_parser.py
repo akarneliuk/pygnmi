@@ -25,6 +25,8 @@ class NFData(object):
         self.operation = False
         self.gnmi_path = None
         self.to_print = False
+        self.update = None
+        self.replace = None
 
         ind = 0
         while ind < len(input_vars):
@@ -159,4 +161,9 @@ class NFData(object):
         if not self.gnmi_path and (self.operation == 'get' or self.operation == 'set'):
             print(msg['not_defined_path'])
             logging.critical(msg['not_defined_path'])
+            sys.exit(3)
+
+        if self.operation == 'set' and not (self.update or self.gnmi_path or self.replace):
+            print(msg['not_defined_set'])
+            logging.critical(msg['not_defined_set'])
             sys.exit(3)
