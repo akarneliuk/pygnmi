@@ -209,16 +209,16 @@ class gNMIclient(object):
         update_msg = []
 
         if delete:
-            if isinstance(replace, list):
-                try:
-                    del_protobuf_paths = [gnmi_path_generator(pe) for pe in delete]
+            if isinstance(delete, list):
+            #    try:
+                del_protobuf_paths = [gnmi_path_generator(pe) for pe in delete]
 
-                except:
-                    logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
-                    sys.exit(10)
+            #    except:
+            #        logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
+            #        sys.exit(10)
 
             else:
-                logging.error(f'The provided input for Set Update message is not list.')
+                logging.error(f'The provided input for Set message (delete operation) is not list.')
                 sys.exit(10)
 
         if replace:
@@ -235,7 +235,7 @@ class gNMIclient(object):
                         sys.exit(10)
 
             else:
-                logging.error(f'The provided input for Set Update message is not list.')
+                logging.error(f'The provided input for Set message (replace operation) is not list.')
                 sys.exit(10)
 
         if update:
@@ -252,7 +252,7 @@ class gNMIclient(object):
                         sys.exit(10)
 
             else:
-                logging.error(f'The provided input for Set Update message is not list.')
+                logging.error(f'The provided input for Set message (update operation) is not list.')
                 sys.exit(10)
 
 #        try:

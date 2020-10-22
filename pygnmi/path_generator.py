@@ -9,12 +9,24 @@ import re
 def gnmi_path_generator(path_in_question):
     gnmi_path = Path()
     keys = []
+    temp_path = ''
+    temp_non_modified = ''
 
     # Subtracting all the keys from the elements and storing them separately
-    while re.match('.*?\[.+?=.+?\].*?', path_in_question):
-        temp_key, temp_value = re.sub('.*?\[(.+?)\].*?', '\g<1>', path_in_question).split('=')
-        keys.append({temp_key: temp_value})
-        path_in_question = re.sub('(.*?\[).+?(\].*?)', f'\g<1>{len(keys) - 1}\g<2>', path_in_question)
+    if re.match('.*?\[.+?=.+?\].*?', path_in_question):
+        split_list = re.findall('.*?\[.+?=.+?\].*?', path_in_question)
+
+        for sle in split_list:
+            temp_non_modified += sle
+            temp_key, temp_value = re.sub('.*?\[(.+?)\].*?', '\g<1>', sle).split('=')
+            keys.append({temp_key: temp_value})
+            sle = re.sub('(.*?\[).+?(\].*?)', f'\g<1>{len(keys) - 1}\g<2>', sle)
+            temp_path += sle
+
+        if len(temp_non_modified) < len (path_in_question):
+            temp_path += path_in_question.replace(temp_non_modified, '')
+
+        path_in_question = temp_path
 
     path_elements = path_in_question.split('/')
 
