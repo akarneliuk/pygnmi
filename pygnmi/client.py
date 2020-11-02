@@ -210,12 +210,12 @@ class gNMIclient(object):
 
         if delete:
             if isinstance(delete, list):
-            #    try:
-                del_protobuf_paths = [gnmi_path_generator(pe) for pe in delete]
+                try:
+                    del_protobuf_paths = [gnmi_path_generator(pe) for pe in delete]
 
-            #    except:
-            #        logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
-            #        sys.exit(10)
+                except:
+                    logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
+                    sys.exit(10)
 
             else:
                 logging.error(f'The provided input for Set message (delete operation) is not list.')
@@ -255,25 +255,62 @@ class gNMIclient(object):
                 logging.error(f'The provided input for Set message (update operation) is not list.')
                 sys.exit(10)
 
-#        try:
-        gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
-        gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
+        try:
+            gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
+            gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
 
-        if self.__to_print:
-            print(gnmi_message_response)
+            if self.__to_print:
+                print(gnmi_message_response)
 
-        if gnmi_message_response:
-            response = {}
+            if gnmi_message_response:
+                response = {}
 
-            return response
+                if gnmi_message_response.response:
+                    response.update({'response': []})
 
-        else:
-            logging.error('Failed parsing of SetResponse.')
-            return None
+                    for response_entry in gnmi_message_response.response:
+                        response_container = {}
+
+                        if response_entry.path and response_entry.path.elem:
+                            resource_path = []
+                            for path_elem in response_entry.path.elem:
+                                tp = ''
+                                if path_elem.name:
+                                    tp += path_elem.name
+
+                                if path_elem.key:
+                                    for pk_name, pk_value in path_elem.key.items():
+                                        tp += f'[{pk_name}={pk_value}]'
+
+                                resource_path.append(tp)
+                        
+                            response_container.update({'path': '/'.join(resource_path)})
+
+                        else:
+                            response_container.update({'path': None})
+
+                        if response_entry.op:
+                            if response_entry.op == 1:
+                                res_op = 'DELETE'
+                            elif response_entry.op == 2:
+                                res_op = 'REPLACE'
+                            elif response_entry.op == 3:
+                                res_op = 'UPDATE'
+                            else:
+                                res_op = 'UNDEFINED'
+
+                            response_container.update({'op': res_op})
+
+                        response['response'].append(response_container)
+
+                return response
+
+            else:
+                logging.error('Failed parsing the SetResponse.')
+                return None
         
-#        except:
-#            logging.error(f'Collection of Set information failed is failed.')
-
+        except:
+            logging.error(f'Collection of Set information failed is failed.')
             return None
 
 
