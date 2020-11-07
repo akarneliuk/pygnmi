@@ -55,9 +55,13 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 Dev Log
 =======
 
+Release **0.2.3**:
+
+- Added support for IPv6 transport (now you can connect to the network function over IPv6).
+
 Release **0.2.2**:
 
-- Adding conversion of the collected information over the gNMI into a Python dictionary for Set operation.
+- Added conversion of the collected information over the gNMI into a Python dictionary for Set operation.
 
 Release **0.2.1**:
 
@@ -66,15 +70,15 @@ Release **0.2.1**:
 
 Releast **0.2.0**:
 
-- Adding the ``Set`` operation from gNMI specification.
+- Added the ``Set`` operation from gNMI specification.
 
 Releast **0.1.9**:
 
-- Adding the property ``datatype='all'`` to the get() request. The values are per the gNMI specification: all, config, state, operatonal.
+- Added the property ``datatype='all'`` to the get() request. The values are per the gNMI specification: all, config, state, operatonal.
 
 Release **0.1.8**:
 
-- Adding conversion of the collected information over the gNMI into a Python dictionary for Get operation
+- Added conversion of the collected information over the gNMI into a Python dictionary for Get operation
 
 Release **0.1.7**:
 

@@ -36,6 +36,9 @@ class gNMIclient(object):
         """
         Building the connectivity towards network element over gNMI
         """
+        if re.match('.*:.*', self.__target[0]):
+            self.__target[0] = f'[{self.__target[0]}]'
+
         if self.__insecure:
             self.__channel = grpc.insecure_channel(f'{self.__target[0]}:{self.__target[1]}', self.__metadata)
             grpc.channel_ready_future(self.__channel).result(timeout=5)
@@ -103,7 +106,7 @@ class gNMIclient(object):
     def get(self, path, datatype='all'):
         """
         Collecting the information about the resources from defined paths.
-        Path is provided as a list in format: ['yanf-module:container/container[key=value]', 'yanf-module:container/container[key=value]', ..]
+        Path is provided as a list in format: ['yang-module:container/container[key=value]', 'yang-module:container/container[key=value]', ..]
         """
         logging.info(f'Collecting info from requested paths (Get opertaion)...')
 
