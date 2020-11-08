@@ -55,6 +55,10 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 Dev Log
 =======
 
+Release **0.2.4**:
+
+- Minor bugfixing
+
 Release **0.2.3**:
 
 - Added support for IPv6 transport (now you can connect to the network function over IPv6).

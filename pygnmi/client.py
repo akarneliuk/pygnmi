@@ -25,19 +25,21 @@ class gNMIclient(object):
         Initializing the object
         """
         self.__metadata = [('username', username), ('password', password)]
-        self.__target = target
         self.__capabilities = None
         self.__to_print = to_print
         self.__insecure = insecure
         self.__path_cert = path_cert
+
+        if re.match('.*:.*', target[0]):
+            self.__target = (f'[{target[0]}]', target[1])
+        else:
+            self.__target = target
 
     
     def __enter__(self):
         """
         Building the connectivity towards network element over gNMI
         """
-        if re.match('.*:.*', self.__target[0]):
-            self.__target[0] = f'[{self.__target[0]}]'
 
         if self.__insecure:
             self.__channel = grpc.insecure_channel(f'{self.__target[0]}:{self.__target[1]}', self.__metadata)
