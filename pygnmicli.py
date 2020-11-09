@@ -55,6 +55,9 @@ if __name__ == "__main__":
 
             result = GC.set(delete=deletes, update=updates, replace=replaces)
 
+        elif DD.operation == 'subscribe':
+            GC.subscribe()
+
         if result:
             print(result)
 

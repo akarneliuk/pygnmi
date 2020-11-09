@@ -4,7 +4,7 @@
 # Modules
 import grpc
 from pygnmi.spec.gnmi_pb2_grpc import gNMIStub
-from pygnmi.spec.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest, Update, TypedValue
+from pygnmi.spec.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest, Update, TypedValue, SubscribeRequest, Poll, Subscription, SubscriptionList, SubscriptionMode, Alias, AliasList
 import re
 import sys
 import json
@@ -20,7 +20,8 @@ class gNMIclient(object):
     """
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
-    def __init__(self, target, username=None, password=None, to_print=False, insecure=False, path_cert=None):
+    def __init__(self, target: tuple, username: str = None, password: str = None, 
+                 to_print: bool = False, insecure: bool = False, path_cert: str = None):
         """
         Initializing the object
         """
@@ -65,7 +66,8 @@ class gNMIclient(object):
 
     def capabilities(self):
         """
-        Collecting the gNMI capabilities of the network device
+        Collecting the gNMI capabilities of the network device.
+        There are no arguments needed for this call
         """
         logging.info(f'Collecting Capabilities...')
 
@@ -105,10 +107,18 @@ class gNMIclient(object):
             return None
 
 
-    def get(self, path, datatype='all'):
+    def get(self, path: list, datatype: str = 'all'):
         """
         Collecting the information about the resources from defined paths.
-        Path is provided as a list in format: ['yang-module:container/container[key=value]', 'yang-module:container/container[key=value]', ..]
+
+        Path is provided as a list in the following format: 
+          path = ['yang-module:container/container[key=value]', 'yang-module:container/container[key=value]', ..]
+        
+        The datatype argument may have the following value per gNMI specification:
+          - all
+          - config
+          - state
+          - operational
         """
         logging.info(f'Collecting info from requested paths (Get opertaion)...')
 
@@ -204,10 +214,21 @@ class gNMIclient(object):
             return None
 
 
-    def set(self, delete=None, replace=None, update=None):
+    def set(self, delete: list = None, replace: list = None, update: list = None):
         """
         Changing the configuration on the destination network elements.
         Could provide a single attribute or multiple attributes.
+
+        delete:
+          - list of paths with the resources to delete. The format is the same as for get() request
+
+        replace:
+          - list of tuples where the first entry path provided as a string, and the second entry
+            is a dictionary with the configuration to be configured
+
+        replace:
+          - list of tuples where the first entry path provided as a string, and the second entry
+            is a dictionary with the configuration to be configured
         """
         del_protobuf_paths = []
         replace_msg = []
@@ -318,6 +339,15 @@ class gNMIclient(object):
             logging.error(f'Collection of Set information failed is failed.')
             return None
 
+
+    def subscribe(self, subscribe: list = None, poll: bool = False, aliases: list = None):
+        """
+        Implentation of the subsrcibe gNMI RPC to pool
+        """
+        logging.info(f'Collecting Capabilities...')
+
+        raise NotImplementedError
+    
 
     def __exit__(self, type, value, traceback):
         self.__channel.close()

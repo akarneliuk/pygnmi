@@ -6,7 +6,7 @@ from pygnmi.spec.gnmi_pb2 import *
 import re
 
 # User-defined functions
-def gnmi_path_generator(path_in_question):
+def gnmi_path_generator(path_in_question: list):
     gnmi_path = Path()
     keys = []
     temp_path = ''
