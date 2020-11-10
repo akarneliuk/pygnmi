@@ -15,7 +15,7 @@ class NFData(object):
     """
 
     def __init__(self, input_vars, msg):
-        allowed_operations = ['capabilities', 'set', 'get']
+        allowed_operations = {'capabilities', 'set', 'get', 'subscribe'}
 
         self.username = False
         self.password = False

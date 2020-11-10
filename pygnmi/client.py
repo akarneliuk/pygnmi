@@ -4,7 +4,7 @@
 # Modules
 import grpc
 from pygnmi.spec.gnmi_pb2_grpc import gNMIStub
-from pygnmi.spec.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest, Update, TypedValue, SubscribeRequest, Poll, Subscription, SubscriptionList, SubscriptionMode, Alias, AliasList
+from pygnmi.spec.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest, Update, TypedValue, SubscribeRequest, Poll, Subscription, SubscriptionList, SubscriptionMode, Alias, AliasList, QOSMarking
 import re
 import sys
 import json
@@ -340,13 +340,177 @@ class gNMIclient(object):
             return None
 
 
-    def subscribe(self, subscribe: list = None, poll: bool = False, aliases: list = None):
+    def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None):
         """
         Implentation of the subsrcibe gNMI RPC to pool
         """
         logging.info(f'Collecting Capabilities...')
 
-        raise NotImplementedError
+        if (subscribe and poll) or (subscribe and aliases) or (poll and aliases):
+            raise Exception('Subscribe request supports only one request at a time.')
+
+        if isinstance(poll, bool):
+            if poll:
+                request = Poll()
+
+                gnmi_message_request = SubscribeRequest(poll=request)
+
+        else:
+            logging.error('Subscribe pool request is specificed, but the value is not boolean.')
+
+        if isinstance(aliases, list):
+            request = AliasList()
+            for ae in aliases:
+                if isinstance(ae, tuple):
+                    if re.match('^#.*', ae[1]):
+                        request.alias.add(path=gnmi_path_generator(ae[0]), alias=ae[1])
+
+                else:
+                    raise ValueError('The alias is malformed. It should start with #...')
+
+            gnmi_message_request = SubscribeRequest(aliases=request)
+
+        else:
+            logging.error('Subscribe aliases request is specified, but the value is not list.')
+
+        if isinstance(subscribe, dict):
+            request = SubscriptionList()
+
+            # use_alias
+            if 'use_alias' not in subscribe:
+                subscribe.update({'use_alias': False})
+
+            if isinstance(subscribe['use_alias'], bool):
+                request.use_alias = subscribe['use_alias']
+            else:
+                raise ValueError('Subsricbe use_alias should have boolean type.')
+
+            # mode
+            if 'mode' not in subscribe:
+                subscribe.update({'mode': 'stream'})
+
+            if subscribe['mode'].lower() in {'stream', 'once', 'poll'}:
+                if subscribe['mode'].lower() == 'stream':
+                    request.mode = 0
+                elif subscribe['mode'].lower() == 'once':
+                    request.mode = 1
+                elif subscribe['mode'].lower() == 'poll':
+                    request.mode = 2
+            else:
+                raise ValueError('Subscribe mode is out of allowed ranges.')
+
+            # allow_aggregation
+            if 'allow_aggregation' not in subscribe:
+                subscribe.update({'allow_aggregation': False})
+
+            if isinstance(subscribe['allow_aggregation'], bool):
+                request.allow_aggregation = subscribe['allow_aggregation']
+            else:
+                raise ValueError('Subsricbe allow_aggregation should have boolean type.')
+
+            # updates_only
+            if 'updates_only' not in subscribe:
+                subscribe.update({'updates_only': False})
+
+            if isinstance(subscribe['updates_only'], bool):
+                request.updates_only = subscribe['updates_only']
+            else:
+                raise ValueError('Subsricbe updates_only should have boolean type.')
+
+            # encoding
+            if 'encoding' not in subscribe:
+                subscribe.update({'encoding': 'json'})
+
+            if subscribe['encoding'].lower() in {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}:
+                if subscribe['encoding'].lower() == 'json':
+                    request.encoding = 0
+                elif subscribe['encoding'].lower() == 'bytes':
+                    request.encoding = 1
+                elif subscribe['encoding'].lower() == 'proto':
+                    request.encoding = 2
+                elif subscribe['encoding'].lower() == 'ascii':
+                    request.encoding = 3
+                elif subscribe['encoding'].lower() == 'json_ietf':
+                    request.encoding = 4
+            else:
+                raise ValueError('Subscribe encoding is out of allowed ranges.')
+
+            # qos
+            if 'qos' not in subscribe:
+                subscribe.update({'qos': 0})
+
+            if subscribe['qos'] >= 0 and subscribe['qos'] <= 64:
+                request.qos = QOSMarking(marking=subscribe['qos'])
+
+            # use_models
+            if 'use_models' not in subscribe:
+                subscribe.update({'use_models': []})
+
+            if isinstance(subscribe['use_models'], list) and subscribe['use_models']:
+                raise NotImplementedError('This will be done later at some point, if there is a need.')
+
+            # prefix
+            if 'prefix' not in subscribe:
+                subscribe.update({'prefix': None})
+
+            if subscribe['prefix']:
+                request.prefix = gnmi_path_generator(subscribe['prefix'])
+
+            # subscription
+            if 'subscription' not in subscribe:
+                subscribe.update({'subscription': []})
+
+            if subscribe['subscription']:
+                for se in subscribe['subscription']:
+                    if 'path' in se:
+                        v1 = gnmi_path_generator(se['path'])
+                    else:
+                        raise ValueError('Subscribe:subscription:path is missing')
+
+                    if 'mode' in se:
+                        if se['mode'].lower() in {'target_defined', 'on_change', 'sample'}:
+                            if se['mode'].lower() == 'target_defined':
+                                v2 = 0
+                            elif se['mode'].lower() == 'on_change':
+                                v2 = 1
+                            elif se['mode'].lower() == 'sample':
+                                v2 = 2
+
+                        else:
+                            raise ValueError('Subscribe:subscription:mode is not inside allowed range')
+                    else:
+                        raise ValueError('Subscribe:subscription:mode is missing')
+
+                    if 'sample_interval' in se and isinstance(se['sample_interval'], int):
+                        v3 = se['sample_interval']
+                    else:
+                        v3 = 0
+
+                    if 'suppress_redundant' in se and isinstance(se['suppress_redundant'], bool):
+                        v4 = se['suppress_redundant']
+                    else:
+                        v4 = False
+
+                    if 'heartbeat_interval' in se and isinstance(se['heartbeat_interval'], int):
+                        v5 = se['heartbeat_interval']
+                    else:
+                        v5 = 0
+
+                    request.subscription.add(path=v1, mode=v2, sample_interval=v3, suppress_redundant=v4, heartbeat_interval=v5)
+
+            else:
+                raise ValueError('Subscribe:subscription value is missing.')
+
+            gnmi_message_request = SubscribeRequest(subscribe=request)
+
+        else:
+            logging.error('Subscribe subscribe requst is specified, but the value is not list.')
+
+        gnmi_message_response = self.__stub.Subscribe(gnmi_message_request, metadata=self.__metadata)
+
+        print(gnmi_message_response)
+
+        return None
     
 
     def __exit__(self, type, value, traceback):

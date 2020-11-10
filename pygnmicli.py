@@ -56,7 +56,10 @@ if __name__ == "__main__":
             result = GC.set(delete=deletes, update=updates, replace=replaces)
 
         elif DD.operation == 'subscribe':
-            GC.subscribe()
+            poll = True
+            aliases=[('openconfig-interfaces:interfaces', '#interfaces'), ('openconfig-acl:acl', '#acl')]
+
+            result = GC.subscribe(aliases=aliases)
 
         if result:
             print(result)
