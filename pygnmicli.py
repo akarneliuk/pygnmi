@@ -57,9 +57,30 @@ if __name__ == "__main__":
 
         elif DD.operation == 'subscribe':
             poll = True
-            aliases=[('openconfig-interfaces:interfaces', '#interfaces'), ('openconfig-acl:acl', '#acl')]
+#            aliases = [('openconfig-interfaces:interfaces', '#interfaces'), ('openconfig-acl:acl', '#acl')]
+            subscribe = {
+                            'subscription': [
+                                {
+                                    'path': 'openconfig-interfaces:interfaces/interface[name=Ethernet1]',
+                                    'mode': 'sample',
+                                    'sample_interval': 10000000000,
+                                    'heartbeat_interval': 30000000000
+                                },
+                                                                {
+                                    'path': 'openconfig-interfaces:interfaces/interface[name=Management1]',
+                                    'mode': 'sample',
+                                    'sample_interval': 10000000000,
+                                    'heartbeat_interval': 30000000000
+                                }
+                            ], 
+                            'use_aliases': False, 
+                            'mode': 'stream', 
+                            'encoding': 'proto'}
 
-            result = GC.subscribe(aliases=aliases)
+            result = GC.subscribe(subscribe=subscribe)
+            for ent in result:
+                print(GC.telemetry_parser(ent))
+
 
         if result:
             print(result)

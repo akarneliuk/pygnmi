@@ -4,11 +4,12 @@
 # Modules
 import grpc
 from pygnmi.spec.gnmi_pb2_grpc import gNMIStub
-from pygnmi.spec.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest, Update, TypedValue, SubscribeRequest, Poll, Subscription, SubscriptionList, SubscriptionMode, Alias, AliasList, QOSMarking
+from pygnmi.spec.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest, Update, TypedValue, SubscribeRequest, Poll, Subscription, SubscriptionList, SubscriptionMode, Alias, AliasList, QOSMarking, SubscribeResponse
 import re
 import sys
 import json
 import logging
+import time
 
 
 # Own modules
@@ -30,6 +31,7 @@ class gNMIclient(object):
         self.__to_print = to_print
         self.__insecure = insecure
         self.__path_cert = path_cert
+        self.__options=[('grpc.ssl_target_name_override', target[0])]
 
         if re.match('.*:.*', target[0]):
             self.__target = (f'[{target[0]}]', target[1])
@@ -57,7 +59,7 @@ class gNMIclient(object):
                     logging.error('The SSL certificate cannot be opened.')
                     sys.exit(10)
 
-            self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', cert)
+            self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', cert, self.__options)
             grpc.channel_ready_future(self.__channel).result(timeout=5)
             self.__stub = gNMIStub(self.__channel)
 
@@ -377,13 +379,13 @@ class gNMIclient(object):
             request = SubscriptionList()
 
             # use_alias
-            if 'use_alias' not in subscribe:
-                subscribe.update({'use_alias': False})
+            if 'use_aliases' not in subscribe:
+                subscribe.update({'use_aliases': False})
 
-            if isinstance(subscribe['use_alias'], bool):
-                request.use_alias = subscribe['use_alias']
+            if isinstance(subscribe['use_aliases'], bool):
+                request.use_aliases = subscribe['use_aliases']
             else:
-                raise ValueError('Subsricbe use_alias should have boolean type.')
+                raise ValueError('Subsricbe use_aliases should have boolean type.')
 
             # mode
             if 'mode' not in subscribe:
@@ -419,7 +421,7 @@ class gNMIclient(object):
 
             # encoding
             if 'encoding' not in subscribe:
-                subscribe.update({'encoding': 'json'})
+                subscribe.update({'encoding': 'proto'})
 
             if subscribe['encoding'].lower() in {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}:
                 if subscribe['encoding'].lower() == 'json':
@@ -439,8 +441,8 @@ class gNMIclient(object):
             if 'qos' not in subscribe:
                 subscribe.update({'qos': 0})
 
-            if subscribe['qos'] >= 0 and subscribe['qos'] <= 64:
-                request.qos = QOSMarking(marking=subscribe['qos'])
+#            if subscribe['qos'] >= 0 and subscribe['qos'] <= 64:
+#                request.qos = QOSMarking(marking=subscribe['qos'])
 
             # use_models
             if 'use_models' not in subscribe:
@@ -506,12 +508,102 @@ class gNMIclient(object):
         else:
             logging.error('Subscribe subscribe requst is specified, but the value is not list.')
 
-        gnmi_message_response = self.__stub.Subscribe(gnmi_message_request, metadata=self.__metadata)
 
-        print(gnmi_message_response)
+        return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
-        return None
-    
+
+    def __generator(self, in_message=None):
+        """
+        Private method used in the telemetry as the input to the stream RPC requires iterator
+        rather than a standard element.
+        """
+        yield in_message
+
+
+    def telemetry_parser(self, in_message=None):
+        """
+        The telemetry parser is method used to covert the Protobuf message
+        """
+#        print(f'----\n{in_message}\n-----')  # Used for debuf purpose
+
+        try:
+            response = {}
+            if in_message.update:
+                response.update({'update': {'update': []}})
+                
+                response['update'].update({'timestamp': in_message.update.timestamp}) if in_message.update.timestamp else in_message.update({'timestamp': 0})
+
+                for update_msg in in_message.update.update:
+                    update_container = {}
+
+                    if update_msg.path and update_msg.path.elem:
+                        resource_path = []
+                        for path_elem in update_msg.path.elem:
+                            tp = ''
+                            if path_elem.name:
+                                tp += path_elem.name
+
+                            if path_elem.key:
+                                for pk_name, pk_value in path_elem.key.items():
+                                    tp += f'[{pk_name}={pk_value}]'
+
+                            resource_path.append(tp)
+                    
+                        update_container.update({'path': '/'.join(resource_path)})
+
+                    else:
+                        update_container.update({'path': None})
+
+                    if update_msg.val:
+                        if update_msg.val.json_ietf_val or update_msg.val.json_ietf_val == '':
+                            update_container.update({'val': json.loads(update_msg.val.json_ietf_val)})
+
+                        elif update_msg.val.json_val:
+                            update_container.update({'val': json.loads(update_msg.val.json_val)})
+
+                        elif update_msg.val.string_val:
+                            update_container.update({'val':update_msg.val.string_val})
+
+                        elif update_msg.val.int_val:
+                            update_container.update({'val': update_msg.val.int_val})
+
+                        elif update_msg.val.uint_val:
+                            update_container.update({'val': update_msg.val.uint_val})
+
+                        elif update_msg.val.bool_val:
+                            update_container.update({'val': update_msg.val.bool_val})
+
+                        elif update_msg.val.float_val:
+                            update_container.update({'val': update_msg.val.float_val})
+
+                        elif update_msg.val.decimal_val:
+                            update_container.update({'val': update_msg.val.decimal_val})
+
+                        elif update_msg.val.any_val:
+                            update_container.update({'val': update_msg.val.any_val})
+
+                        elif update_msg.val.ascii_val:
+                            update_container.update({'val': update_msg.val.ascii_val})
+
+                        elif update_msg.val.proto_bytes:
+                            update_container.update({'val': update_msg.val.proto_bytes})
+
+                    response['update']['update'].append(update_container)
+
+            return response
+
+        except TypeError:
+            response = {}
+            if in_message.sync_response:
+                response['sync_response'] = in_message.sync_response
+
+            return response
+
+        except:
+            logging.error(f'Parsing of telemetry information is failed.')
+
+            return None
+
 
     def __exit__(self, type, value, traceback):
         self.__channel.close()
