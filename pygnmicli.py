@@ -11,7 +11,7 @@ import os
 
 # Own modules
 from pygnmi.arg_parser import NFData
-from pygnmi.client import gNMIclient
+from pygnmi.client import gNMIclient, telemetryParser
 from pygnmi.artefacts.messages import msg
 
 
@@ -56,7 +56,6 @@ if __name__ == "__main__":
             result = GC.set(delete=deletes, update=updates, replace=replaces)
 
         elif DD.operation == 'subscribe':
-            poll = True
 #            aliases = [('openconfig-interfaces:interfaces', '#interfaces'), ('openconfig-acl:acl', '#acl')]
             subscribe = {
                             'subscription': [
@@ -79,7 +78,7 @@ if __name__ == "__main__":
 
             result = GC.subscribe(subscribe=subscribe)
             for ent in result:
-                print(GC.telemetry_parser(ent))
+                print(telemetryParser(ent))
 
 
         if result:

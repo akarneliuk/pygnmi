@@ -346,167 +346,170 @@ class gNMIclient(object):
         """
         Implentation of the subsrcibe gNMI RPC to pool
         """
-        logging.info(f'Collecting Capabilities...')
+        logging.info(f'Collecting Telemetry...')
 
         if (subscribe and poll) or (subscribe and aliases) or (poll and aliases):
             raise Exception('Subscribe request supports only one request at a time.')
 
-        if isinstance(poll, bool):
-            if poll:
-                request = Poll()
+        if poll:
+            if isinstance(poll, bool):
+                if poll:
+                    request = Poll()
 
-                gnmi_message_request = SubscribeRequest(poll=request)
+                    gnmi_message_request = SubscribeRequest(poll=request)
 
-        else:
-            logging.error('Subscribe pool request is specificed, but the value is not boolean.')
+            else:
+                logging.error('Subscribe pool request is specificed, but the value is not boolean.')
 
-        if isinstance(aliases, list):
-            request = AliasList()
-            for ae in aliases:
-                if isinstance(ae, tuple):
-                    if re.match('^#.*', ae[1]):
-                        request.alias.add(path=gnmi_path_generator(ae[0]), alias=ae[1])
+        if aliases:
+            if isinstance(aliases, list):
+                request = AliasList()
+                for ae in aliases:
+                    if isinstance(ae, tuple):
+                        if re.match('^#.*', ae[1]):
+                            request.alias.add(path=gnmi_path_generator(ae[0]), alias=ae[1])
+
+                    else:
+                        raise ValueError('The alias is malformed. It should start with #...')
+
+                gnmi_message_request = SubscribeRequest(aliases=request)
+
+            else:
+                logging.error('Subscribe aliases request is specified, but the value is not list.')
+
+        if subscribe:
+            if isinstance(subscribe, dict):
+                request = SubscriptionList()
+
+                # use_alias
+                if 'use_aliases' not in subscribe:
+                    subscribe.update({'use_aliases': False})
+
+                if isinstance(subscribe['use_aliases'], bool):
+                    request.use_aliases = subscribe['use_aliases']
+                else:
+                    raise ValueError('Subsricbe use_aliases should have boolean type.')
+
+                # mode
+                if 'mode' not in subscribe:
+                    subscribe.update({'mode': 'stream'})
+
+                if subscribe['mode'].lower() in {'stream', 'once', 'poll'}:
+                    if subscribe['mode'].lower() == 'stream':
+                        request.mode = 0
+                    elif subscribe['mode'].lower() == 'once':
+                        request.mode = 1
+                    elif subscribe['mode'].lower() == 'poll':
+                        request.mode = 2
+                else:
+                    raise ValueError('Subscribe mode is out of allowed ranges.')
+
+                # allow_aggregation
+                if 'allow_aggregation' not in subscribe:
+                    subscribe.update({'allow_aggregation': False})
+
+                if isinstance(subscribe['allow_aggregation'], bool):
+                    request.allow_aggregation = subscribe['allow_aggregation']
+                else:
+                    raise ValueError('Subsricbe allow_aggregation should have boolean type.')
+
+                # updates_only
+                if 'updates_only' not in subscribe:
+                    subscribe.update({'updates_only': False})
+
+                if isinstance(subscribe['updates_only'], bool):
+                    request.updates_only = subscribe['updates_only']
+                else:
+                    raise ValueError('Subsricbe updates_only should have boolean type.')
+
+                # encoding
+                if 'encoding' not in subscribe:
+                    subscribe.update({'encoding': 'proto'})
+
+                if subscribe['encoding'].lower() in {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}:
+                    if subscribe['encoding'].lower() == 'json':
+                        request.encoding = 0
+                    elif subscribe['encoding'].lower() == 'bytes':
+                        request.encoding = 1
+                    elif subscribe['encoding'].lower() == 'proto':
+                        request.encoding = 2
+                    elif subscribe['encoding'].lower() == 'ascii':
+                        request.encoding = 3
+                    elif subscribe['encoding'].lower() == 'json_ietf':
+                        request.encoding = 4
+                else:
+                    raise ValueError('Subscribe encoding is out of allowed ranges.')
+
+                # qos
+                if 'qos' not in subscribe:
+                    subscribe.update({'qos': 0})
+
+    #            if subscribe['qos'] >= 0 and subscribe['qos'] <= 64:
+    #                request.qos = QOSMarking(marking=subscribe['qos'])
+
+                # use_models
+                if 'use_models' not in subscribe:
+                    subscribe.update({'use_models': []})
+
+                if isinstance(subscribe['use_models'], list) and subscribe['use_models']:
+                    raise NotImplementedError('This will be done later at some point, if there is a need.')
+
+                # prefix
+                if 'prefix' not in subscribe:
+                    subscribe.update({'prefix': None})
+
+                if subscribe['prefix']:
+                    request.prefix = gnmi_path_generator(subscribe['prefix'])
+
+                # subscription
+                if 'subscription' not in subscribe:
+                    subscribe.update({'subscription': []})
+
+                if subscribe['subscription']:
+                    for se in subscribe['subscription']:
+                        if 'path' in se:
+                            v1 = gnmi_path_generator(se['path'])
+                        else:
+                            raise ValueError('Subscribe:subscription:path is missing')
+
+                        if 'mode' in se:
+                            if se['mode'].lower() in {'target_defined', 'on_change', 'sample'}:
+                                if se['mode'].lower() == 'target_defined':
+                                    v2 = 0
+                                elif se['mode'].lower() == 'on_change':
+                                    v2 = 1
+                                elif se['mode'].lower() == 'sample':
+                                    v2 = 2
+
+                            else:
+                                raise ValueError('Subscribe:subscription:mode is not inside allowed range')
+                        else:
+                            raise ValueError('Subscribe:subscription:mode is missing')
+
+                        if 'sample_interval' in se and isinstance(se['sample_interval'], int):
+                            v3 = se['sample_interval']
+                        else:
+                            v3 = 0
+
+                        if 'suppress_redundant' in se and isinstance(se['suppress_redundant'], bool):
+                            v4 = se['suppress_redundant']
+                        else:
+                            v4 = False
+
+                        if 'heartbeat_interval' in se and isinstance(se['heartbeat_interval'], int):
+                            v5 = se['heartbeat_interval']
+                        else:
+                            v5 = 0
+
+                        request.subscription.add(path=v1, mode=v2, sample_interval=v3, suppress_redundant=v4, heartbeat_interval=v5)
 
                 else:
-                    raise ValueError('The alias is malformed. It should start with #...')
+                    raise ValueError('Subscribe:subscription value is missing.')
 
-            gnmi_message_request = SubscribeRequest(aliases=request)
-
-        else:
-            logging.error('Subscribe aliases request is specified, but the value is not list.')
-
-        if isinstance(subscribe, dict):
-            request = SubscriptionList()
-
-            # use_alias
-            if 'use_aliases' not in subscribe:
-                subscribe.update({'use_aliases': False})
-
-            if isinstance(subscribe['use_aliases'], bool):
-                request.use_aliases = subscribe['use_aliases']
-            else:
-                raise ValueError('Subsricbe use_aliases should have boolean type.')
-
-            # mode
-            if 'mode' not in subscribe:
-                subscribe.update({'mode': 'stream'})
-
-            if subscribe['mode'].lower() in {'stream', 'once', 'poll'}:
-                if subscribe['mode'].lower() == 'stream':
-                    request.mode = 0
-                elif subscribe['mode'].lower() == 'once':
-                    request.mode = 1
-                elif subscribe['mode'].lower() == 'poll':
-                    request.mode = 2
-            else:
-                raise ValueError('Subscribe mode is out of allowed ranges.')
-
-            # allow_aggregation
-            if 'allow_aggregation' not in subscribe:
-                subscribe.update({'allow_aggregation': False})
-
-            if isinstance(subscribe['allow_aggregation'], bool):
-                request.allow_aggregation = subscribe['allow_aggregation']
-            else:
-                raise ValueError('Subsricbe allow_aggregation should have boolean type.')
-
-            # updates_only
-            if 'updates_only' not in subscribe:
-                subscribe.update({'updates_only': False})
-
-            if isinstance(subscribe['updates_only'], bool):
-                request.updates_only = subscribe['updates_only']
-            else:
-                raise ValueError('Subsricbe updates_only should have boolean type.')
-
-            # encoding
-            if 'encoding' not in subscribe:
-                subscribe.update({'encoding': 'proto'})
-
-            if subscribe['encoding'].lower() in {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}:
-                if subscribe['encoding'].lower() == 'json':
-                    request.encoding = 0
-                elif subscribe['encoding'].lower() == 'bytes':
-                    request.encoding = 1
-                elif subscribe['encoding'].lower() == 'proto':
-                    request.encoding = 2
-                elif subscribe['encoding'].lower() == 'ascii':
-                    request.encoding = 3
-                elif subscribe['encoding'].lower() == 'json_ietf':
-                    request.encoding = 4
-            else:
-                raise ValueError('Subscribe encoding is out of allowed ranges.')
-
-            # qos
-            if 'qos' not in subscribe:
-                subscribe.update({'qos': 0})
-
-#            if subscribe['qos'] >= 0 and subscribe['qos'] <= 64:
-#                request.qos = QOSMarking(marking=subscribe['qos'])
-
-            # use_models
-            if 'use_models' not in subscribe:
-                subscribe.update({'use_models': []})
-
-            if isinstance(subscribe['use_models'], list) and subscribe['use_models']:
-                raise NotImplementedError('This will be done later at some point, if there is a need.')
-
-            # prefix
-            if 'prefix' not in subscribe:
-                subscribe.update({'prefix': None})
-
-            if subscribe['prefix']:
-                request.prefix = gnmi_path_generator(subscribe['prefix'])
-
-            # subscription
-            if 'subscription' not in subscribe:
-                subscribe.update({'subscription': []})
-
-            if subscribe['subscription']:
-                for se in subscribe['subscription']:
-                    if 'path' in se:
-                        v1 = gnmi_path_generator(se['path'])
-                    else:
-                        raise ValueError('Subscribe:subscription:path is missing')
-
-                    if 'mode' in se:
-                        if se['mode'].lower() in {'target_defined', 'on_change', 'sample'}:
-                            if se['mode'].lower() == 'target_defined':
-                                v2 = 0
-                            elif se['mode'].lower() == 'on_change':
-                                v2 = 1
-                            elif se['mode'].lower() == 'sample':
-                                v2 = 2
-
-                        else:
-                            raise ValueError('Subscribe:subscription:mode is not inside allowed range')
-                    else:
-                        raise ValueError('Subscribe:subscription:mode is missing')
-
-                    if 'sample_interval' in se and isinstance(se['sample_interval'], int):
-                        v3 = se['sample_interval']
-                    else:
-                        v3 = 0
-
-                    if 'suppress_redundant' in se and isinstance(se['suppress_redundant'], bool):
-                        v4 = se['suppress_redundant']
-                    else:
-                        v4 = False
-
-                    if 'heartbeat_interval' in se and isinstance(se['heartbeat_interval'], int):
-                        v5 = se['heartbeat_interval']
-                    else:
-                        v5 = 0
-
-                    request.subscription.add(path=v1, mode=v2, sample_interval=v3, suppress_redundant=v4, heartbeat_interval=v5)
+                gnmi_message_request = SubscribeRequest(subscribe=request)
 
             else:
-                raise ValueError('Subscribe:subscription value is missing.')
-
-            gnmi_message_request = SubscribeRequest(subscribe=request)
-
-        else:
-            logging.error('Subscribe subscribe requst is specified, but the value is not list.')
+                logging.error('Subscribe subscribe requst is specified, but the value is not list.')
 
 
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
@@ -520,90 +523,89 @@ class gNMIclient(object):
         yield in_message
 
 
-    def telemetry_parser(self, in_message=None):
-        """
-        The telemetry parser is method used to covert the Protobuf message
-        """
-#        print(f'----\n{in_message}\n-----')  # Used for debuf purpose
-
-        try:
-            response = {}
-            if in_message.update:
-                response.update({'update': {'update': []}})
-                
-                response['update'].update({'timestamp': in_message.update.timestamp}) if in_message.update.timestamp else in_message.update({'timestamp': 0})
-
-                for update_msg in in_message.update.update:
-                    update_container = {}
-
-                    if update_msg.path and update_msg.path.elem:
-                        resource_path = []
-                        for path_elem in update_msg.path.elem:
-                            tp = ''
-                            if path_elem.name:
-                                tp += path_elem.name
-
-                            if path_elem.key:
-                                for pk_name, pk_value in path_elem.key.items():
-                                    tp += f'[{pk_name}={pk_value}]'
-
-                            resource_path.append(tp)
-                    
-                        update_container.update({'path': '/'.join(resource_path)})
-
-                    else:
-                        update_container.update({'path': None})
-
-                    if update_msg.val:
-                        if update_msg.val.json_ietf_val or update_msg.val.json_ietf_val == '':
-                            update_container.update({'val': json.loads(update_msg.val.json_ietf_val)})
-
-                        elif update_msg.val.json_val:
-                            update_container.update({'val': json.loads(update_msg.val.json_val)})
-
-                        elif update_msg.val.string_val:
-                            update_container.update({'val':update_msg.val.string_val})
-
-                        elif update_msg.val.int_val:
-                            update_container.update({'val': update_msg.val.int_val})
-
-                        elif update_msg.val.uint_val:
-                            update_container.update({'val': update_msg.val.uint_val})
-
-                        elif update_msg.val.bool_val:
-                            update_container.update({'val': update_msg.val.bool_val})
-
-                        elif update_msg.val.float_val:
-                            update_container.update({'val': update_msg.val.float_val})
-
-                        elif update_msg.val.decimal_val:
-                            update_container.update({'val': update_msg.val.decimal_val})
-
-                        elif update_msg.val.any_val:
-                            update_container.update({'val': update_msg.val.any_val})
-
-                        elif update_msg.val.ascii_val:
-                            update_container.update({'val': update_msg.val.ascii_val})
-
-                        elif update_msg.val.proto_bytes:
-                            update_container.update({'val': update_msg.val.proto_bytes})
-
-                    response['update']['update'].append(update_container)
-
-            return response
-
-        except TypeError:
-            response = {}
-            if in_message.sync_response:
-                response['sync_response'] = in_message.sync_response
-
-            return response
-
-        except:
-            logging.error(f'Parsing of telemetry information is failed.')
-
-            return None
-
-
     def __exit__(self, type, value, traceback):
         self.__channel.close()
+
+
+# User-defined functions
+
+def telemetryParser(in_message=None):
+    """
+    The telemetry parser is method used to covert the Protobuf message
+    """
+
+    try:
+        response = {}
+        if in_message.HasField('update'):
+            response.update({'update': {'update': []}})
+            
+            response['update'].update({'timestamp': in_message.update.timestamp}) if in_message.update.timestamp else in_message.update({'timestamp': 0})
+
+            for update_msg in in_message.update.update:
+                update_container = {}
+
+                if update_msg.path and update_msg.path.elem:
+                    resource_path = []
+                    for path_elem in update_msg.path.elem:
+                        tp = ''
+                        if path_elem.name:
+                            tp += path_elem.name
+
+                        if path_elem.key:
+                            for pk_name, pk_value in path_elem.key.items():
+                                tp += f'[{pk_name}={pk_value}]'
+
+                        resource_path.append(tp)
+                
+                    update_container.update({'path': '/'.join(resource_path)})
+
+                else:
+                    update_container.update({'path': None})
+
+                if update_msg.val:
+                    if update_msg.val.HasField('json_ietf_val'):
+                        update_container.update({'val': json.loads(update_msg.val.json_ietf_val)})
+
+                    elif update_msg.val.HasField('json_val'):
+                        update_container.update({'val': json.loads(update_msg.val.json_val)})
+
+                    elif update_msg.val.HasField('string_val'):
+                        update_container.update({'val':update_msg.val.string_val})
+
+                    elif update_msg.val.HasField('int_val'):
+                        update_container.update({'val': update_msg.val.int_val})
+
+                    elif update_msg.val.HasField('uint_val'):
+                        update_container.update({'val': update_msg.val.uint_val})
+
+                    elif update_msg.val.HasField('bool_val'):
+                        update_container.update({'val': update_msg.val.bool_val})
+
+                    elif update_msg.val.HasField('float_val'):
+                        update_container.update({'val': update_msg.val.float_val})
+
+                    elif update_msg.val.HasField('decimal_val'):
+                        update_container.update({'val': update_msg.val.decimal_val})
+
+                    elif update_msg.val.HasField('any_val'):
+                        update_container.update({'val': update_msg.val.any_val})
+
+                    elif update_msg.val.HasField('ascii_val'):
+                        update_container.update({'val': update_msg.val.ascii_val})
+
+                    elif update_msg.val.HasField('proto_bytes'):
+                        update_container.update({'val': update_msg.val.proto_bytes})
+
+                response['update']['update'].append(update_container)
+
+            return response
+
+        elif in_message.HasField('sync_response'):
+            response['sync_response'] = in_message.sync_response
+
+            return response
+
+    except:
+        logging.error(f'Parsing of telemetry information is failed.')
+
+        return None

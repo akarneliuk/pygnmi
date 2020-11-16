@@ -27,15 +27,17 @@ Sample code example:
       print(result)
 
 
-Supported requests
+All gNMI RPCs supported
 ------------------
 - Capabilities
 - Get
 - Set
+- Subscribe
 
 Supported operation modes
 -------------------------
 - insecure gRPC channel (without encryption)
+- secure gRPC channel (with encryption and authentication based on certificate)
 
 Tested Network Operating Systems (NOS)
 --------------------------------------
@@ -55,6 +57,11 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 Dev Log
 =======
 
+Release **0.3.0**:
+
+- Added new function ``telemetryParser``, which converts Protobuf messages in Python dictionary.
+- Fixed the errors with the telemetry parsing.
+
 Release **0.2.7**:
 
 - Modified core so that telemetry is working in ``once`` and ``stream`` mode.
@@ -65,11 +72,11 @@ Release **0.2.6**:
 
 Release **0.2.5**:
 
-- Added typing hints
+- Added typing hints.
 
 Release **0.2.4**:
 
-- Minor bugfixing
+- Minor bugfixing.
 
 Release **0.2.3**:
 
@@ -94,27 +101,27 @@ Releast **0.1.9**:
 
 Release **0.1.8**:
 
-- Added conversion of the collected information over the gNMI into a Python dictionary for Get operation
+- Added conversion of the collected information over the gNMI into a Python dictionary for Get operation.
 
 Release **0.1.7**:
 
-- Changing packages modules
+- Changing packages modules.
 
 Release **0.1.6**:
 
-- Restructuring internal context
+- Restructuring internal context.
 
 Release **0.1.5**:
 
-- Minor bugfixing
+- Minor bugfixing.
 
 Release **0.1.4**:
 
-- Minor bugfixing
+- Minor bugfixing.
 
 Release **0.1.3**:
 
-- Minor bugfixing
+- Minor bugfixing.
 
 Release **0.1.2**:
 
@@ -129,7 +136,7 @@ Release **0.1.0**:
 
 - The first release.
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.2.7&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.3.0&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=in%20development&color=yellow
 .. _tag: https://pypi.org/project/pygnmi/
