@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#(c)2020, Anton Karneliuk
+#(c)2020, karneliuk.com
 
 # Modules
 import re

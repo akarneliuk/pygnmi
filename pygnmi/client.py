@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#(c)2020, Anton Karneliuk
+#(c)2020, karneliuk.com
 
 # Modules
 import grpc
@@ -197,12 +197,12 @@ class gNMIclient(object):
                                 else:
                                     update_container.update({'path': None})
 
-                                if update_msg.val:
-                                    if update_msg.val.json_ietf_val:
-                                        update_container.update({'json_ietf_val': json.loads(update_msg.val.json_ietf_val)})
+                                if update_msg.HasField('val'):
+                                    if update_msg.val.HasField('json_ietf_val'):
+                                        update_container.update({'val': json.loads(update_msg.val.json_ietf_val)})
 
-                                    elif update_msg.val.json_val:
-                                        update_container.update({'json_val': json.loads(update_msg.val.json_val)})
+                                    elif update_msg.val.HasField('json_val'):
+                                        update_container.update({'val': json.loads(update_msg.val.json_val)})
 
                                 notification_container['update'].append(update_container)
 

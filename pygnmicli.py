@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#(c)2020, Anton Karneliuk
+#(c)2020, karneliuk.com
 
 
 # Modules
@@ -49,7 +49,8 @@ if __name__ == "__main__":
 
         elif DD.operation == 'set':
             print(f'Doing {DD.operation} request to {DD.targets}...')
-            deletes = DD.gnmi_path if DD.gnmi_path else None
+#            deletes = DD.gnmi_path if DD.gnmi_path else None
+            deletes = ['openconfig-interfaces:interfaces/interface[name=Loopback30]','openconfig-network-instance:network-instances/network-instance[name=default]/interfaces/interface[name=Loopback30]']
             updates = DD.update if DD.update else None
             replaces = DD.replace if DD.replace else None
 
