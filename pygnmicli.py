@@ -49,25 +49,21 @@ if __name__ == "__main__":
 
         elif DD.operation == 'set':
             print(f'Doing {DD.operation} request to {DD.targets}...')
-#            deletes = DD.gnmi_path if DD.gnmi_path else None
-            deletes = ['openconfig-interfaces:interfaces/interface[name=Loopback30]','openconfig-network-instance:network-instances/network-instance[name=default]/interfaces/interface[name=Loopback30]']
+            deletes = DD.gnmi_path if DD.gnmi_path else None
+#            deletes = ['openconfig-interfaces:interfaces/interface[name=Loopback30]','openconfig-network-instance:network-instances/network-instance[name=default]/interfaces/interface[name=Loopback30]']
             updates = DD.update if DD.update else None
             replaces = DD.replace if DD.replace else None
+
+#            updates = [('openconfig-interfaces:interfaces/interface[name=1/1/c1/1]', {'name': '1/1/c1/1', 'config': {'name': '1/1/c1/1', 'enabled': True, 'type': 'ethernetCsmacd', 'description': 'Link to gNMI-EOS1 @ Eth1'}})]
 
             result = GC.set(delete=deletes, update=updates, replace=replaces)
 
         elif DD.operation == 'subscribe':
 #            aliases = [('openconfig-interfaces:interfaces', '#interfaces'), ('openconfig-acl:acl', '#acl')]
-            subscribe = {
+            subscribe1 = {
                             'subscription': [
                                 {
                                     'path': 'openconfig-interfaces:interfaces/interface[name=Ethernet1]',
-                                    'mode': 'sample',
-                                    'sample_interval': 10000000000,
-                                    'heartbeat_interval': 30000000000
-                                },
-                                                                {
-                                    'path': 'openconfig-interfaces:interfaces/interface[name=Management1]',
                                     'mode': 'sample',
                                     'sample_interval': 10000000000,
                                     'heartbeat_interval': 30000000000
@@ -77,7 +73,19 @@ if __name__ == "__main__":
                             'mode': 'stream', 
                             'encoding': 'proto'}
 
-            result = GC.subscribe(subscribe=subscribe)
+            subscribe2 = {
+                            'subscription': [
+                                {
+                                    'path': 'openconfig-interfaces:interfaces/interface[name=1/1/c1/1]',
+                                    'mode': 'sample',
+                                    'sample_interval': 10000000000
+                                }
+                            ], 
+                            'use_aliases': False, 
+                            'mode': 'stream', 
+                            'encoding': 'json'}
+
+            result = GC.subscribe(subscribe=subscribe1)
             for ent in result:
                 print(telemetryParser(ent))
 

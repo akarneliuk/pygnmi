@@ -541,6 +541,21 @@ def telemetryParser(in_message=None):
             
             response['update'].update({'timestamp': in_message.update.timestamp}) if in_message.update.timestamp else in_message.update({'timestamp': 0})
 
+            if in_message.update.HasField('prefix'):
+                resource_prefix = []
+                for prefix_elem in in_message.update.prefix.elem:
+                    tp = ''
+                    if prefix_elem.name:
+                        tp += prefix_elem.name
+
+                    if prefix_elem.key:
+                        for pk_name, pk_value in prefix_elem.key.items():
+                            tp += f'[{pk_name}={pk_value}]'
+
+                    resource_prefix.append(tp)
+
+                response['update'].update({'prefix': '/'.join(resource_prefix)})
+
             for update_msg in in_message.update.update:
                 update_container = {}
 
