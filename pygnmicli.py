@@ -54,8 +54,6 @@ if __name__ == "__main__":
             updates = DD.update if DD.update else None
             replaces = DD.replace if DD.replace else None
 
-#            updates = [('openconfig-interfaces:interfaces/interface[name=1/1/c1/1]', {'name': '1/1/c1/1', 'config': {'name': '1/1/c1/1', 'enabled': True, 'type': 'ethernetCsmacd', 'description': 'Link to gNMI-EOS1 @ Eth1'}})]
-
             result = GC.set(delete=deletes, update=updates, replace=replaces)
 
         elif DD.operation == 'subscribe':

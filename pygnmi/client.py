@@ -103,6 +103,11 @@ class gNMIclient(object):
             self.__capabilities = response
             return response
 
+        except grpc._channel._InactiveRpcError as err:
+            print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
+            logging.critical(f"Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            sys.exit(10)
+
         except:
             logging.error(f'Collection of Capabilities is failed.')
 
@@ -209,7 +214,12 @@ class gNMIclient(object):
                         response['notification'].append(notification_container)
 
             return response
-        
+
+        except grpc._channel._InactiveRpcError as err:
+            print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
+            logging.critical(f"Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            sys.exit(10)
+
         except:
             logging.error(f'Collection of Get information failed is failed.')
 
@@ -284,6 +294,9 @@ class gNMIclient(object):
                 sys.exit(10)
 
         try:
+            if self.__to_print:
+                print(SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg))
+
             gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
             gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
 
@@ -336,7 +349,12 @@ class gNMIclient(object):
             else:
                 logging.error('Failed parsing the SetResponse.')
                 return None
-        
+
+        except grpc._channel._InactiveRpcError as err:
+            print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
+            logging.critical(f"Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            sys.exit(10)
+
         except:
             logging.error(f'Collection of Set information failed is failed.')
             return None
@@ -528,7 +546,6 @@ class gNMIclient(object):
 
 
 # User-defined functions
-
 def telemetryParser(in_message=None):
     """
     The telemetry parser is method used to covert the Protobuf message
