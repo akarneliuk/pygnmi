@@ -545,6 +545,10 @@ class gNMIclient(object):
         self.__channel.close()
 
 
+    def close(self):
+        self.__channel.close()
+
+
 # User-defined functions
 def telemetryParser(in_message=None):
     """

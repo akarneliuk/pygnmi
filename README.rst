@@ -57,6 +57,10 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 Dev Log
 =======
 
+Release **0.3.4**:
+
+- Added the ``close`` method to ``gNMIClient`` class for those, who doesn't use ``with ... as ...`` context manager.
+
 Release **0.3.3**:
 
 - Added the functionality to pass gRPC messages to the code execution
