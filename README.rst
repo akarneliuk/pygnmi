@@ -26,11 +26,11 @@ Sample code example:
          
       print(result)
 
-Also integration with Nornir is supported (`refer to Examples <examples>`_).
+Also integration with Nornir is supported (`refer to examples <examples/nornir>`_).
 
 Video tutorial
 --------------
-Watch the detailed explanation how to use pyGNMI `at our YouTube channel <https://www.youtube.com/watch?v=NooE_uHIgys&list=PLsTgo2tBPnTwmeP9zsd8B_tZR-kbguvla>`_.
+Watch the detailed explanation how to use pyGNMI `in our YouTube channel <https://www.youtube.com/watch?v=NooE_uHIgys&list=PLsTgo2tBPnTwmeP9zsd8B_tZR-kbguvla>`_.
 
 
 All gNMI RPCs supported
