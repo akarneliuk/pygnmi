@@ -1,0 +1,15 @@
+---
+gNMI-EOS1:
+    hostname: fc00:169:254:255::a
+    port: 57400
+    username: aaa
+    password: aaa
+    platform: arista-eos
+
+gNMI-SR1:
+    hostname: 169.254.255.11
+    port: 57400
+    username: admin
+    password: admin
+    platform: nokia-sros
+...

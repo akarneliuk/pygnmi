@@ -1,0 +1,7 @@
+2021-01-02 17:22:21,112 -  nornir.core -     INFO -        run() - Running task 'gnmi_capabilites' with args {} on 2 hosts
+2021-01-02 17:23:25,660 -  nornir.core -     INFO -        run() - Running task 'gnmi_capabilites' with args {} on 2 hosts
+2021-01-02 17:23:54,786 -  nornir.core -     INFO -        run() - Running task 'gnmi_capabilites' with args {} on 2 hosts
+2021-01-02 17:26:36,848 -  nornir.core -     INFO -        run() - Running task 'gnmi_capabilites' with args {} on 2 hosts
+2021-01-02 17:26:37,068 -  nornir.core -     INFO -        run() - Running task 'gnmi_get' with args {'path': ['openconfig-interfaces:interfaces']} on 2 hosts
+2021-01-02 17:27:20,435 -  nornir.core -     INFO -        run() - Running task 'gnmi_capabilites' with args {} on 2 hosts
+2021-01-02 17:27:20,656 -  nornir.core -     INFO -        run() - Running task 'gnmi_get' with args {'path': ['openconfig-interfaces:interfaces']} on 2 hosts

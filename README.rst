@@ -26,6 +26,12 @@ Sample code example:
          
       print(result)
 
+Also integration with Nornir is supported (`refer to Examples <examples>`_).
+
+Video tutorial
+--------------
+Watch the detailed explanation how to use pyGNMI `at our YouTube channel <https://www.youtube.com/watch?v=NooE_uHIgys&list=PLsTgo2tBPnTwmeP9zsd8B_tZR-kbguvla>`_.
+
 
 All gNMI RPCs supported
 -----------------------
@@ -47,6 +53,8 @@ Tested Network Operating Systems (NOS)
 Network Operating Systems (NOS) in test
 ---------------------------------------
 - Nokia SRLinux
+- Cisco IOS XR
+- Cisco Nexus
 
 =======
 License
@@ -56,6 +64,12 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 =======
 Dev Log
 =======
+
+Release **0.3.5**:
+
+- Added the example for Nornir Integration
+- Added the topology diagram
+- Added links to the video tutorial
 
 Release **0.3.4**:
 
@@ -153,7 +167,9 @@ Release **0.1.0**:
 
 - The first release.
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.3.3&color=success
+(c)2020-2021, karneliuk.com
+
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.3.5&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=in%20development&color=yellow
 .. _tag: https://pypi.org/project/pygnmi/

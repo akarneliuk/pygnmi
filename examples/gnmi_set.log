@@ -1,2 +1,0 @@
- python gnmi_set.py 
-{'response': [{'path': 'network-instances/network-instance[name=default]/interfaces/interface[name=Loopback30]', 'op': 'DELETE'}, {'path': 'interfaces/interface[name=Loopback30]', 'op': 'DELETE'}, {'path': 'interfaces/interface[name=Ethernet1]', 'op': 'REPLACE'}, {'path': 'interfaces/interface[name=Loopback10]', 'op': 'UPDATE'}, {'path': 'interfaces/interface[name=Loopback20]', 'op': 'UPDATE'}]}
