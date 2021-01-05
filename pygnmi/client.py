@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#(c)2020, karneliuk.com
+#(c)2019-2021, karneliuk.com
 
 # Modules
 import grpc
@@ -93,7 +93,18 @@ class gNMIclient(object):
                     response.update({'supported_encodings': []})
 
                     for ree in gnmi_message_response.supported_encodings:
-                        response['supported_encodings'].append(ree)
+                        if ree == 0:
+                            dree = 'json'
+                        elif ree == 1:
+                            dree = 'bytes'
+                        elif ree == 2:
+                            dree = 'proto'
+                        elif ree == 3:
+                            dree = 'ascii'
+                        else:
+                            dree = 'json_ietf'
+
+                        response['supported_encodings'].append(dree)
 
                 if gnmi_message_response.gNMI_version:
                     response.update({'gnmi_version': gnmi_message_response.gNMI_version})
@@ -114,23 +125,31 @@ class gNMIclient(object):
             return None
 
 
-    def get(self, path: list, datatype: str = 'all'):
+    def get(self, path: list, datatype: str = 'all', encoding: str = 'json'):
         """
         Collecting the information about the resources from defined paths.
 
         Path is provided as a list in the following format: 
           path = ['yang-module:container/container[key=value]', 'yang-module:container/container[key=value]', ..]
         
-        The datatype argument may have the following value per gNMI specification:
+        The datatype argument may have the following values per gNMI specification:
           - all
           - config
           - state
           - operational
+
+        The encoding argument may have the following values per gNMI specification:
+          - json
+          - bytes
+          - proto
+          - ascii
+          - json_ietf
         """
         logging.info(f'Collecting info from requested paths (Get opertaion)...')
 
         datatype = datatype.lower()
         type_dict = {'all', 'config', 'state', 'operational'}
+        encoding_set = {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}
 
         if datatype in type_dict:
             if datatype == 'all':
@@ -144,6 +163,18 @@ class gNMIclient(object):
             else:
                 logging.error('The GetRequst data type is not within the dfined range')
 
+        if encoding in encoding_set:
+            if encoding.lower() == 'json':
+                pb_encoding = 0
+            if encoding.lower() == 'bytes':
+                pb_encoding = 1
+            elif encoding.lower() == 'proto':
+                pb_encoding = 2
+            elif encoding.lower() == 'ascii':
+                pb_encoding = 3
+            else:
+                pb_encoding = 4
+
         try:
             protobuf_paths = [gnmi_path_generator(pe) for pe in path]
 
@@ -152,16 +183,13 @@ class gNMIclient(object):
             sys.exit(10)
 
         if self.__capabilities and 'supported_encodings' in self.__capabilities:
-            if 0 in self.__capabilities['supported_encodings']:
-                enc = 0
-            elif 4 in self.__capabilities['supported_encodings']:
-                enc = 4
-
-        else:
-            enc = 0
+            if 'json' in self.__capabilities['supported_encodings']:
+                pb_encoding = 0
+            elif 'json_ietf' in self.__capabilities['supported_encodings']:
+                pb_encoding = 4
 
         try:
-            gnmi_message_request = GetRequest(path=protobuf_paths, type=pb_datatype, encoding=enc)
+            gnmi_message_request = GetRequest(path=protobuf_paths, type=pb_datatype, encoding=pb_encoding)
             gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
 
             if self.__to_print:
@@ -208,6 +236,15 @@ class gNMIclient(object):
 
                                     elif update_msg.val.HasField('json_val'):
                                         update_container.update({'val': json.loads(update_msg.val.json_val)})
+
+                                    elif update_msg.val.HasField('ascii_val'):
+                                        update_container.update({'val': json.loads(update_msg.val.ascii_val)})
+
+                                    elif update_msg.val.HasField('bytes_val'):
+                                        update_container.update({'val': json.loads(update_msg.val.bytes_val)})
+
+                                    elif update_msg.val.HasField('proto_bytes'):
+                                        update_container.update({'val': json.loads(update_msg.val.proto_bytes)})
 
                                 notification_container['update'].append(update_container)
 

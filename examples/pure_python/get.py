@@ -14,6 +14,6 @@ if __name__ == "__main__":
         with gNMIclient(target=(host["ip_address"], host["port"]), username=host["username"],
                         password=host["password"], insecure=True) as gc:
 
-            result = gc.get(path=paths)
+            result = gc.get(path=paths, encoding='json')
 
         print(f"{host['ip_address']}: {result}\n\n")

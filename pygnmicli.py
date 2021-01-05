@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#(c)2020, karneliuk.com
+#(c)2019-2021, karneliuk.com
 
 
 # Modules
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
         elif DD.operation == 'get':
             print(f'Doing {DD.operation} request to {DD.targets}...')
-            result = GC.get(DD.gnmi_path, datatype='all')
+            result = GC.get(DD.gnmi_path, datatype='all', encoding='json_ietf')
 
         elif DD.operation == 'set':
             print(f'Doing {DD.operation} request to {DD.targets}...')
