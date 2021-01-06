@@ -22,7 +22,7 @@ class gNMIclient(object):
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
     def __init__(self, target: tuple, username: str = None, password: str = None, 
-                 to_print: bool = False, insecure: bool = False, path_cert: str = None):
+                 to_print: bool = False, insecure: bool = False, path_cert: str = None, server: str = None):
         """
         Initializing the object
         """
@@ -31,7 +31,9 @@ class gNMIclient(object):
         self.__to_print = to_print
         self.__insecure = insecure
         self.__path_cert = path_cert
-        self.__options=[('grpc.ssl_target_name_override', target[0])]
+        self.__server = server
+        # self.__options=[('grpc.ssl_target_name_override', target[0])]
+        self.__options=[('grpc.ssl_target_name_override', server)]
 
         if re.match('.*:.*', target[0]):
             self.__target = (f'[{target[0]}]', target[1])
