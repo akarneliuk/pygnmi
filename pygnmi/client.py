@@ -265,7 +265,7 @@ class gNMIclient(object):
             return None
 
 
-    def set(self, delete: list = None, replace: list = None, update: list = None):
+    def set(self, delete: list = None, replace: list = None, update: list = None, encoding: str = 'json'):
         """
         Changing the configuration on the destination network elements.
         Could provide a single attribute or multiple attributes.
@@ -280,10 +280,22 @@ class gNMIclient(object):
         replace:
           - list of tuples where the first entry path provided as a string, and the second entry
             is a dictionary with the configuration to be configured
+
+        The encoding argument may have the following values per gNMI specification:
+          - json
+          - bytes
+          - proto
+          - ascii
+          - json_ietf
         """
         del_protobuf_paths = []
         replace_msg = []
         update_msg = []
+        encoding_set = {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}
+
+        if encoding not in encoding_set:
+            logging.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
+            sys.exit(11)
 
         if delete:
             if isinstance(delete, list):
@@ -307,6 +319,17 @@ class gNMIclient(object):
 
                         replace_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
 
+                        if encoding == 'json':
+                            replace_msg.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
+                        elif encoding == 'bytes':
+                            replace_msg.append(Update(path=u_path, val=TypedValue(bytes_val=u_val)))
+                        elif encoding == 'proto':
+                            replace_msg.append(Update(path=u_path, val=TypedValue(proto_bytes=u_val)))
+                        elif encoding == 'ascii':
+                            replace_msg.append(Update(path=u_path, val=TypedValue(ascii_val=u_val)))
+                        elif encoding == 'json_ietf':
+                            replace_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
+
                     else:
                         logging.error(f'The input element for Update message must be tuple, got {ue}.')
                         sys.exit(10)
@@ -322,7 +345,19 @@ class gNMIclient(object):
                         u_path = gnmi_path_generator(ue[0])
                         u_val = json.dumps(ue[1]).encode('utf-8')
 
+
                         update_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
+
+                        if encoding == 'json':
+                            update_msg.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
+                        elif encoding == 'bytes':
+                            update_msg.append(Update(path=u_path, val=TypedValue(bytes_val=u_val)))
+                        elif encoding == 'proto':
+                            update_msg.append(Update(path=u_path, val=TypedValue(proto_bytes=u_val)))
+                        elif encoding == 'ascii':
+                            update_msg.append(Update(path=u_path, val=TypedValue(ascii_val=u_val)))
+                        elif encoding == 'json_ietf':
+                            update_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
 
                     else:
                         logging.error(f'The input element for Update message must be tuple, got {ue}.')
