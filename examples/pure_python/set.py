@@ -20,6 +20,6 @@ if __name__ == "__main__":
                 m = nokia_update
                 d = nokia_delete                
 
-            result = gc.set(delete=d)
+            result = gc.set(update=m, encoding='json_ietf')
 
         print(f"{host['ip_address']}: {result}\n\n")

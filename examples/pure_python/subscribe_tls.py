@@ -24,7 +24,7 @@ subscribe = {
 
 # Body
 if __name__ == '__main__':
-    with gNMIclient(target=host, username='test2', password='cisco123', path_cert='/ws/avpathak-bgl/BossHogg/openconfig/ems_BH_P2A4.pem',server='ems.cisco.com') as gc:
+    with gNMIclient(target=host, username='test2', password='cisco123', path_cert='/ws/avpathak-bgl/BossHogg/openconfig/ems_BH_P2A4.pem', override='ems.cisco.com') as gc:
         response = gc.subscribe(subscribe=subscribe)
 
         for telemetry_entry in response:
