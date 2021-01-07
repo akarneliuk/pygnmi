@@ -305,7 +305,7 @@ class gNMIclient(object):
                         u_path = gnmi_path_generator(ue[0])
                         u_val = json.dumps(ue[1]).encode('utf-8')
 
-                        replace_msg.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
+                        replace_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
 
                     else:
                         logging.error(f'The input element for Update message must be tuple, got {ue}.')
@@ -322,7 +322,7 @@ class gNMIclient(object):
                         u_path = gnmi_path_generator(ue[0])
                         u_val = json.dumps(ue[1]).encode('utf-8')
 
-                        update_msg.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
+                        update_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
 
                     else:
                         logging.error(f'The input element for Update message must be tuple, got {ue}.')
