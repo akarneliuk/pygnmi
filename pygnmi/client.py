@@ -316,8 +316,6 @@ class gNMIclient(object):
                         u_path = gnmi_path_generator(ue[0])
                         u_val = json.dumps(ue[1]).encode('utf-8')
 
-                        replace_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
-
                         if encoding == 'json':
                             replace_msg.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
                         elif encoding == 'bytes':
@@ -343,9 +341,6 @@ class gNMIclient(object):
                     if isinstance(ue, tuple):
                         u_path = gnmi_path_generator(ue[0])
                         u_val = json.dumps(ue[1]).encode('utf-8')
-
-
-                        update_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
 
                         if encoding == 'json':
                             update_msg.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
