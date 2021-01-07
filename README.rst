@@ -65,6 +65,10 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 Dev Log
 =======
 
+Release **0.3.7**:
+
+- Added the argument ``encoding`` as an extra key to ``Set`` operation
+
 Release **0.3.6**:
 
 - Added the argument ``encoding`` to ``Get`` operation
@@ -173,7 +177,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.3.6&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.3.7&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=in%20development&color=yellow
 .. _tag: https://pypi.org/project/pygnmi/

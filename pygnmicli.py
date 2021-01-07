@@ -50,11 +50,11 @@ if __name__ == "__main__":
         elif DD.operation == 'set':
             print(f'Doing {DD.operation} request to {DD.targets}...')
             deletes = DD.gnmi_path if DD.gnmi_path else None
-#            deletes = ['openconfig-interfaces:interfaces/interface[name=Loopback30]','openconfig-network-instance:network-instances/network-instance[name=default]/interfaces/interface[name=Loopback30]']
             updates = DD.update if DD.update else None
             replaces = DD.replace if DD.replace else None
+            encoding = 'json_ietf'
 
-            result = GC.set(delete=deletes, update=updates, replace=replaces)
+            result = GC.set(delete=deletes, update=updates, replace=replaces, encoding=encoding)
 
         elif DD.operation == 'subscribe':
 #            aliases = [('openconfig-interfaces:interfaces', '#interfaces'), ('openconfig-acl:acl', '#acl')]
