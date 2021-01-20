@@ -194,6 +194,7 @@ class gNMIclient(object):
             gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
 
             if self.__to_print:
+                print(gnmi_message_request)
                 print(gnmi_message_response)
 
             if gnmi_message_response:
