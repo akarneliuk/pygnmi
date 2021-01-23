@@ -79,6 +79,9 @@ class gNMIclient(object):
             gnmi_message_response = self.__stub.Capabilities(gnmi_message_request, metadata=self.__metadata)
 
             if self.__to_print:
+                print("gNMI request:")
+                print(gnmi_message_request)
+                print("\n\ngNMI response:")
                 print(gnmi_message_response)
 
             if gnmi_message_response:
@@ -177,7 +180,11 @@ class gNMIclient(object):
                 pb_encoding = 4
 
         try:
-            protobuf_paths = [gnmi_path_generator(pe) for pe in path]
+            if not path:
+                protobuf_paths = []
+                protobuf_paths.append(gnmi_path_generator(path))
+            else:
+                protobuf_paths = [gnmi_path_generator(pe) for pe in path]
 
         except:
             logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
@@ -194,6 +201,9 @@ class gNMIclient(object):
             gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
 
             if self.__to_print:
+                print("gNMI request:")
+                print(gnmi_message_request)
+                print("\n\ngNMI response:")
                 print(gnmi_message_response)
 
             if gnmi_message_response:
@@ -362,13 +372,13 @@ class gNMIclient(object):
                 sys.exit(10)
 
         try:
-            if self.__to_print:
-                print(SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg))
-
             gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
             gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
 
             if self.__to_print:
+                print("gNMI requests:")
+                print(gnmi_message_request)
+                print("\n\ngNMI response:")
                 print(gnmi_message_response)
 
             if gnmi_message_response:
