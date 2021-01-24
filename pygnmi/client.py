@@ -636,12 +636,12 @@ class gNMIclient(object):
 
 
 # User-defined functions
-def telemetryParser(in_message=None):
+def telemetryParser(in_message=None, debug: bool = False):
     """
     The telemetry parser is method used to covert the Protobuf message
     """
 
-    if self.__debug:
+    if debug:
         print("gNMI response:\n------------------------------------------------")
         print(in_message)
         print("------------------------------------------------")
