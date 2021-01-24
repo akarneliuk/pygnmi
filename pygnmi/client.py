@@ -22,13 +22,13 @@ class gNMIclient(object):
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
     def __init__(self, target: tuple, username: str = None, password: str = None, 
-                 to_print: bool = False, insecure: bool = False, path_cert: str = None, override: str = None):
+                 debug: bool = False, insecure: bool = False, path_cert: str = None, override: str = None):
         """
         Initializing the object
         """
         self.__metadata = [('username', username), ('password', password)]
         self.__capabilities = None
-        self.__to_print = to_print
+        self.__debug = debug
         self.__insecure = insecure
         self.__path_cert = path_cert
         self.__override = override
@@ -78,11 +78,12 @@ class gNMIclient(object):
             gnmi_message_request = CapabilityRequest()
             gnmi_message_response = self.__stub.Capabilities(gnmi_message_request, metadata=self.__metadata)
 
-            if self.__to_print:
-                print("gNMI request:")
+            if self.__debug:
+                print("gNMI request:\n------------------------------------------------")
                 print(gnmi_message_request)
-                print("\n\ngNMI response:")
+                print("------------------------------------------------\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
+                print("------------------------------------------------")
 
             if gnmi_message_response:
                 response = {}
@@ -200,11 +201,12 @@ class gNMIclient(object):
             gnmi_message_request = GetRequest(path=protobuf_paths, type=pb_datatype, encoding=pb_encoding)
             gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
 
-            if self.__to_print:
-                print("gNMI request:")
+            if self.__debug:
+                print("gNMI request:\n------------------------------------------------")
                 print(gnmi_message_request)
-                print("\n\ngNMI response:")
+                print("------------------------------------------------\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
+                print("------------------------------------------------")
 
             if gnmi_message_response:
                 response = {}
@@ -375,11 +377,12 @@ class gNMIclient(object):
             gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
             gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
 
-            if self.__to_print:
-                print("gNMI requests:")
+            if self.__debug:
+                print("gNMI request:\n------------------------------------------------")
                 print(gnmi_message_request)
-                print("\n\ngNMI response:")
+                print("------------------------------------------------\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
+                print("------------------------------------------------")
 
             if gnmi_message_response:
                 response = {}
@@ -608,6 +611,11 @@ class gNMIclient(object):
                 logging.error('Subscribe subscribe requst is specified, but the value is not list.')
 
 
+            if self.__debug:
+                print("gNMI request:\n------------------------------------------------")
+                print(gnmi_message_request)
+                print("------------------------------------------------")
+
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
 
@@ -632,6 +640,11 @@ def telemetryParser(in_message=None):
     """
     The telemetry parser is method used to covert the Protobuf message
     """
+
+    if self.__debug:
+        print("gNMI response:\n------------------------------------------------")
+        print(in_message)
+        print("------------------------------------------------")
 
     try:
         response = {}
