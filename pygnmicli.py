@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
         elif DD.operation == 'get':
             print(f'Doing {DD.operation} request to {DD.targets}...')
-            result = GC.get(DD.gnmi_path, datatype='all', encoding='json_ietf')
+            result = GC.get(DD.gnmi_path, datatype='all', encoding='json')
 
         elif DD.operation == 'set':
             print(f'Doing {DD.operation} request to {DD.targets}...')

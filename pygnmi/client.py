@@ -171,7 +171,7 @@ class gNMIclient(object):
         if encoding in encoding_set:
             if encoding.lower() == 'json':
                 pb_encoding = 0
-            if encoding.lower() == 'bytes':
+            elif encoding.lower() == 'bytes':
                 pb_encoding = 1
             elif encoding.lower() == 'proto':
                 pb_encoding = 2
