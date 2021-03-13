@@ -50,12 +50,12 @@ Tested Network Operating Systems (NOS)
 - Arista EOS
 - Nokia SR OS
 - Cisco IOS XR
+- Juniper JUNOS
 
 Network Operating Systems (NOS) in test
 ---------------------------------------
 - Nokia SRLinux
 - Cisco Nexus
-- Juniper JUNOS
 
 =======
 License
