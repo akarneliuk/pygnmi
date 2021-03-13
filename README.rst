@@ -66,6 +66,11 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 Dev Log
 =======
 
+Release **0.4.0**:
+
+- Added support for Juniper JUNOS
+- Fixed the issue with ``override`` for PKI-based certificates
+
 Release **0.3.12**:
 
 - Minor bug fix.
@@ -199,7 +204,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.3.12&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.4.0&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=in%20development&color=yellow
 .. _tag: https://pypi.org/project/pygnmi/

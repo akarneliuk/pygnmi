@@ -31,8 +31,7 @@ class gNMIclient(object):
         self.__debug = debug
         self.__insecure = insecure
         self.__path_cert = path_cert
-        self.__override = override
-        self.__options=[('grpc.ssl_target_name_override', self.__override)]
+        self.__options=[('grpc.ssl_target_name_override', override)] if override else None
 
         if re.match('.*:.*', target[0]):
             self.__target = (f'[{target[0]}]', target[1])
@@ -60,7 +59,8 @@ class gNMIclient(object):
                     logging.error('The SSL certificate cannot be opened.')
                     sys.exit(10)
 
-            self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', cert, self.__options)
+            self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', 
+                                                 credentials=cert, options=self.__options)
             grpc.channel_ready_future(self.__channel).result(timeout=5)
             self.__stub = gNMIStub(self.__channel)
 
