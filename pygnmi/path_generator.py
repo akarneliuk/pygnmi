@@ -40,9 +40,15 @@ def gnmi_path_generator(path_in_question: list):
                 gnmi_path.origin = pe_entry.split(':')[0]
                 gnmi_path.elem.add(name=pe_entry.split(':')[1])
 
-            elif re.match('.+?\[\d+?\].*?', pe_entry):
-                key_id = int(re.sub('.+?\[(\d+?)\].*?', '\g<1>', pe_entry))
-                gnmi_path.elem.add(name=pe_entry.split('[')[0], key=keys[key_id])
+            elif re.match('.+?\[\d+?\]', pe_entry):
+                element_keys = {}
+                path_info = [re.sub(']', '', en) for en in pe_entry.split('[')]
+                element = path_info.pop(0)
+
+                for ek in path_info:
+                    element_keys.update(keys[int(ek)])
+                
+                gnmi_path.elem.add(name=element, key=element_keys)
 
             else:
                 gnmi_path.elem.add(name=pe_entry)

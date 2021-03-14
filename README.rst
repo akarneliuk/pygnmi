@@ -66,6 +66,11 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 Dev Log
 =======
 
+Release **0.4.2**:
+
+- Modified the path generation to comply with `gNMI Path encoding conventions <https://github.com/openconfig/reference/blob/master/rpc/gnmi/gnmi-path-conventions.md>`_.
+- Fixed the problem ``debug`` output, where the requests where not printed in case of response failing.
+
 Release **0.4.1**:
 
 - Minor bug fix.
@@ -208,7 +213,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.4.1&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.4.2&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=in%20development&color=yellow
 .. _tag: https://pypi.org/project/pygnmi/

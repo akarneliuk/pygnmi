@@ -76,12 +76,16 @@ class gNMIclient(object):
 
         try:
             gnmi_message_request = CapabilityRequest()
-            gnmi_message_response = self.__stub.Capabilities(gnmi_message_request, metadata=self.__metadata)
 
             if self.__debug:
                 print("gNMI request:\n------------------------------------------------")
                 print(gnmi_message_request)
-                print("------------------------------------------------\n\n\ngNMI response:\n------------------------------------------------")
+                print("------------------------------------------------")
+
+            gnmi_message_response = self.__stub.Capabilities(gnmi_message_request, metadata=self.__metadata)
+
+            if self.__debug:
+                print("\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
                 print("------------------------------------------------")
 
@@ -199,12 +203,16 @@ class gNMIclient(object):
 
         try:
             gnmi_message_request = GetRequest(path=protobuf_paths, type=pb_datatype, encoding=pb_encoding)
-            gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
 
             if self.__debug:
                 print("gNMI request:\n------------------------------------------------")
                 print(gnmi_message_request)
-                print("------------------------------------------------\n\n\ngNMI response:\n------------------------------------------------")
+                print("------------------------------------------------")
+
+            gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
+
+            if self.__debug:
+                print("\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
                 print("------------------------------------------------")
 
@@ -375,12 +383,16 @@ class gNMIclient(object):
 
         try:
             gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
-            gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
 
             if self.__debug:
                 print("gNMI request:\n------------------------------------------------")
                 print(gnmi_message_request)
-                print("------------------------------------------------\n\n\ngNMI response:\n------------------------------------------------")
+                print("------------------------------------------------")
+
+            gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
+
+            if self.__debug:
+                print("\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
                 print("------------------------------------------------")
 
