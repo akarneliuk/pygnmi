@@ -33,6 +33,7 @@ class gNMIclient(object):
         self.__insecure = insecure
         self.__path_cert = path_cert
         self.__options=[('grpc.ssl_target_name_override', override)] if override else None
+        self.__gnmi_timeout = gnmi_timeout
 
         if re.match('.*:.*', target[0]):
             self.__target = (f'[{target[0]}]', target[1])
@@ -47,7 +48,7 @@ class gNMIclient(object):
 
         if self.__insecure:
             self.__channel = grpc.insecure_channel(f'{self.__target[0]}:{self.__target[1]}', self.__metadata)
-            grpc.channel_ready_future(self.__channel).result(timeout=gnmi_timeout)
+            grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
             self.__stub = gNMIStub(self.__channel)
 
         else:
@@ -62,7 +63,7 @@ class gNMIclient(object):
 
             self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', 
                                                  credentials=cert, options=self.__options)
-            grpc.channel_ready_future(self.__channel).result(timeout=gnmi_timeout)
+            grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
             self.__stub = gNMIStub(self.__channel)
 
         return self
