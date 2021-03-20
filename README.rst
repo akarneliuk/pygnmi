@@ -66,9 +66,13 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 Dev Log
 =======
 
+Release **0.4.4**:
+
+- Minor bug fix.
+
 Release **0.4.3**:
 
-- Added possibility to modify the timeout (default value is 5 seconds) for the session using ``gnmi_timeout`` key for ``gNMIclient class.
+- Added possibility to modify the timeout (default value is 5 seconds) for the session using ``gnmi_timeout`` key for ``gNMIclient`` class.
 
 Release **0.4.2**:
 
