@@ -22,7 +22,8 @@ class gNMIclient(object):
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
     def __init__(self, target: tuple, username: str = None, password: str = None, 
-                 debug: bool = False, insecure: bool = False, path_cert: str = None, override: str = None):
+                 debug: bool = False, insecure: bool = False, path_cert: str = None, override: str = None,
+                 gnmi_timeout: int = 5):
         """
         Initializing the object
         """
@@ -46,7 +47,7 @@ class gNMIclient(object):
 
         if self.__insecure:
             self.__channel = grpc.insecure_channel(f'{self.__target[0]}:{self.__target[1]}', self.__metadata)
-            grpc.channel_ready_future(self.__channel).result(timeout=5)
+            grpc.channel_ready_future(self.__channel).result(timeout=gnmi_timeout)
             self.__stub = gNMIStub(self.__channel)
 
         else:
@@ -61,7 +62,7 @@ class gNMIclient(object):
 
             self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', 
                                                  credentials=cert, options=self.__options)
-            grpc.channel_ready_future(self.__channel).result(timeout=5)
+            grpc.channel_ready_future(self.__channel).result(timeout=gnmi_timeout)
             self.__stub = gNMIStub(self.__channel)
 
         return self
