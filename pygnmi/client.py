@@ -156,7 +156,7 @@ class gNMIclient(object):
           - ascii
           - json_ietf
         """
-        logging.info(f'Collecting info from requested paths (Get opertaion)...')
+        logging.info(f'Collecting info from requested paths (Get operation)...')
 
         datatype = datatype.lower()
         type_dict = {'all', 'config', 'state', 'operational'}
