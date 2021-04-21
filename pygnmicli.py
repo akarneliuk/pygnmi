@@ -36,7 +36,7 @@ if __name__ == "__main__":
     # gNMI operation
 #    try:
     with gNMIclient(DD.targets, username=DD.username, password=DD.password, 
-                    to_print=DD.to_print, insecure=DD.insecure, path_cert=DD.certificate) as GC:
+                    debug=DD.to_print, insecure=DD.insecure, path_cert=DD.certificate) as GC:
         result = None
         
         if DD.operation == 'capabilities':
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
         elif DD.operation == 'get':
             print(f'Doing {DD.operation} request to {DD.targets}...')
-            result = GC.get(DD.gnmi_path, datatype='all', encoding='json_ietf')
+            result = GC.get(DD.gnmi_path, datatype='all', encoding='json')
 
         elif DD.operation == 'set':
             print(f'Doing {DD.operation} request to {DD.targets}...')

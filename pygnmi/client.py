@@ -22,17 +22,18 @@ class gNMIclient(object):
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
     def __init__(self, target: tuple, username: str = None, password: str = None, 
-                 to_print: bool = False, insecure: bool = False, path_cert: str = None, override: str = None):
+                 debug: bool = False, insecure: bool = False, path_cert: str = None, override: str = None,
+                 gnmi_timeout: int = 5):
         """
         Initializing the object
         """
         self.__metadata = [('username', username), ('password', password)]
         self.__capabilities = None
-        self.__to_print = to_print
+        self.__debug = debug
         self.__insecure = insecure
         self.__path_cert = path_cert
-        self.__override = override
-        self.__options=[('grpc.ssl_target_name_override', self.__override)]
+        self.__options=[('grpc.ssl_target_name_override', override)] if override else None
+        self.__gnmi_timeout = gnmi_timeout
 
         if re.match('.*:.*', target[0]):
             self.__target = (f'[{target[0]}]', target[1])
@@ -47,7 +48,7 @@ class gNMIclient(object):
 
         if self.__insecure:
             self.__channel = grpc.insecure_channel(f'{self.__target[0]}:{self.__target[1]}', self.__metadata)
-            grpc.channel_ready_future(self.__channel).result(timeout=5)
+            grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
             self.__stub = gNMIStub(self.__channel)
 
         else:
@@ -60,8 +61,9 @@ class gNMIclient(object):
                     logging.error('The SSL certificate cannot be opened.')
                     sys.exit(10)
 
-            self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', cert, self.__options)
-            grpc.channel_ready_future(self.__channel).result(timeout=5)
+            self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', 
+                                                 credentials=cert, options=self.__options)
+            grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
             self.__stub = gNMIStub(self.__channel)
 
         return self
@@ -76,10 +78,18 @@ class gNMIclient(object):
 
         try:
             gnmi_message_request = CapabilityRequest()
+
+            if self.__debug:
+                print("gNMI request:\n------------------------------------------------")
+                print(gnmi_message_request)
+                print("------------------------------------------------")
+
             gnmi_message_response = self.__stub.Capabilities(gnmi_message_request, metadata=self.__metadata)
 
-            if self.__to_print:
+            if self.__debug:
+                print("\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
+                print("------------------------------------------------")
 
             if gnmi_message_response:
                 response = {}
@@ -167,7 +177,7 @@ class gNMIclient(object):
         if encoding in encoding_set:
             if encoding.lower() == 'json':
                 pb_encoding = 0
-            if encoding.lower() == 'bytes':
+            elif encoding.lower() == 'bytes':
                 pb_encoding = 1
             elif encoding.lower() == 'proto':
                 pb_encoding = 2
@@ -177,7 +187,11 @@ class gNMIclient(object):
                 pb_encoding = 4
 
         try:
-            protobuf_paths = [gnmi_path_generator(pe) for pe in path]
+            if not path:
+                protobuf_paths = []
+                protobuf_paths.append(gnmi_path_generator(path))
+            else:
+                protobuf_paths = [gnmi_path_generator(pe) for pe in path]
 
         except:
             logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
@@ -191,10 +205,18 @@ class gNMIclient(object):
 
         try:
             gnmi_message_request = GetRequest(path=protobuf_paths, type=pb_datatype, encoding=pb_encoding)
+
+            if self.__debug:
+                print("gNMI request:\n------------------------------------------------")
+                print(gnmi_message_request)
+                print("------------------------------------------------")
+
             gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
 
-            if self.__to_print:
+            if self.__debug:
+                print("\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
+                print("------------------------------------------------")
 
             if gnmi_message_response:
                 response = {}
@@ -362,14 +384,19 @@ class gNMIclient(object):
                 sys.exit(10)
 
         try:
-            if self.__to_print:
-                print(SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg))
-
             gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
+
+            if self.__debug:
+                print("gNMI request:\n------------------------------------------------")
+                print(gnmi_message_request)
+                print("------------------------------------------------")
+
             gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
 
-            if self.__to_print:
+            if self.__debug:
+                print("\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
+                print("------------------------------------------------")
 
             if gnmi_message_response:
                 response = {}
@@ -598,6 +625,11 @@ class gNMIclient(object):
                 logging.error('Subscribe subscribe requst is specified, but the value is not list.')
 
 
+            if self.__debug:
+                print("gNMI request:\n------------------------------------------------")
+                print(gnmi_message_request)
+                print("------------------------------------------------")
+
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
 
@@ -618,10 +650,15 @@ class gNMIclient(object):
 
 
 # User-defined functions
-def telemetryParser(in_message=None):
+def telemetryParser(in_message=None, debug: bool = False):
     """
     The telemetry parser is method used to covert the Protobuf message
     """
+
+    if debug:
+        print("gNMI response:\n------------------------------------------------")
+        print(in_message)
+        print("------------------------------------------------")
 
     try:
         response = {}

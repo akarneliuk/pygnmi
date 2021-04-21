@@ -49,11 +49,12 @@ Tested Network Operating Systems (NOS)
 --------------------------------------
 - Arista EOS
 - Nokia SR OS
+- Cisco IOS XR
+- Juniper JUNOS
 
 Network Operating Systems (NOS) in test
 ---------------------------------------
 - Nokia SRLinux
-- Cisco IOS XR
 - Cisco Nexus
 
 =======
@@ -64,6 +65,48 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 =======
 Dev Log
 =======
+
+Release **0.4.5**:
+
+- Minor bug fix.
+
+Release **0.4.4**:
+
+- Minor bug fix.
+
+Release **0.4.3**:
+
+- Added possibility to modify the timeout (default value is 5 seconds) for the session using ``gnmi_timeout`` key for ``gNMIclient`` class.
+
+Release **0.4.2**:
+
+- Modified the path generation to comply with `gNMI Path encoding conventions <https://github.com/openconfig/reference/blob/master/rpc/gnmi/gnmi-path-conventions.md>`_.
+- Fixed the problem ``debug`` output, where the requests where not printed in case of response failing.
+
+Release **0.4.1**:
+
+- Minor bug fix.
+
+Release **0.4.0**:
+
+- Added support for Juniper JUNOS
+- Fixed the issue with ``override`` for PKI-based certificates
+
+Release **0.3.12**:
+
+- Minor bug fix.
+
+Release **0.3.11**:
+
+- Minor bug fix.
+
+Release **0.3.10**:
+
+- Renamed the debug mode. Add argument ``debug=True`` upon object creation to see the Protobuf messages.
+
+Release **0.3.9**:
+
+- Added functionality to list the full the device configuration in case the path is empty: ``get(path[])``.
 
 Release **0.3.8**:
 
@@ -182,7 +225,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.3.8&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.4.4&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=in%20development&color=yellow
 .. _tag: https://pypi.org/project/pygnmi/
