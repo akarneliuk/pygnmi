@@ -160,7 +160,7 @@ class gNMIclient(object):
           - ascii
           - json_ietf
         """
-        logging.info(f'Collecting info from requested paths (Get opertaion)...')
+        logging.info(f'Collecting info from requested paths (Get operation)...')
 
         datatype = datatype.lower()
         type_dict = {'all', 'config', 'state', 'operational'}
@@ -754,6 +754,7 @@ def telemetryParser(in_message=None, debug: bool = False):
 
         return None
 
+
 class Nonblocking_iterator:
     def __init__(self, blocking_generator, timeout, stop_if_timeout = False):
         self.timeout = timeout
@@ -795,3 +796,4 @@ class Nonblocking_iterator:
 
     def next(self):
         return self.__next__()
+
