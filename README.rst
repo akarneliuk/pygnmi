@@ -66,6 +66,13 @@ By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 Dev Log
 =======
 
+Release **0.4.6**:
+
+- Replaced the ``sys.exit`` with raising exceptions.
+- Minor bug fix.
+- Brought the gNMI path to the canonical format: ``/origin:element1/element2...``.
+- Added possibility to omit the YANG module name, as some vendors doesn't include that in the request per their gNMI implementation: ``/element1/element2...``.
+
 Release **0.4.5**:
 
 - Minor bug fix.
@@ -225,7 +232,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.4.4&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.4.6&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=in%20development&color=yellow
 .. _tag: https://pypi.org/project/pygnmi/

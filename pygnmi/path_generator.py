@@ -30,13 +30,10 @@ def gnmi_path_generator(path_in_question: list):
             path_in_question = temp_path
 
         path_elements = path_in_question.split('/')
+        path_elements = list(filter(None, path_elements))
 
         for pe_entry in path_elements:
-            if not re.match('.+?:.+?', pe_entry) and len(path_elements) == 1:
-                logging.error(f"You haven't specified either YANG module or the top-level container in '{pe_entry}'.")
-                sys.exit(30)
-
-            elif re.match('.+?:.+?', pe_entry):
+            if re.match('.+?:.+?', pe_entry):
                 gnmi_path.origin = pe_entry.split(':')[0]
                 gnmi_path.elem.add(name=pe_entry.split(':')[1])
 
