@@ -11,6 +11,9 @@ import json
 import logging
 import time
 
+import queue
+import time
+import kthread
 
 # Own modules
 from pygnmi.path_generator import gnmi_path_generator
@@ -24,6 +27,7 @@ class gNMIclient(object):
     def __init__(self, target: tuple, username: str = None, password: str = None, 
                  debug: bool = False, insecure: bool = False, path_cert: str = None, override: str = None,
                  gnmi_timeout: int = 5):
+
         """
         Initializing the object
         """
@@ -40,7 +44,7 @@ class gNMIclient(object):
         else:
             self.__target = target
 
-    
+
     def __enter__(self):
         """
         Building the connectivity towards network element over gNMI
@@ -59,7 +63,7 @@ class gNMIclient(object):
 
                 except:
                     logging.error('The SSL certificate cannot be opened.')
-                    sys.exit(10)
+                    raise Exception('The SSL certificate cannot be opened.')
 
             self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', 
                                                  credentials=cert, options=self.__options)
@@ -93,7 +97,7 @@ class gNMIclient(object):
 
             if gnmi_message_response:
                 response = {}
-                
+
                 if gnmi_message_response.supported_models:
                     response.update({'supported_models': []})
 
@@ -127,8 +131,8 @@ class gNMIclient(object):
 
         except grpc._channel._InactiveRpcError as err:
             print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
-            sys.exit(10)
+            logging.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            raise Exception (err)
 
         except:
             logging.error(f'Collection of Capabilities is failed.')
@@ -140,9 +144,9 @@ class gNMIclient(object):
         """
         Collecting the information about the resources from defined paths.
 
-        Path is provided as a list in the following format: 
+        Path is provided as a list in the following format:
           path = ['yang-module:container/container[key=value]', 'yang-module:container/container[key=value]', ..]
-        
+
         The datatype argument may have the following values per gNMI specification:
           - all
           - config
@@ -195,7 +199,7 @@ class gNMIclient(object):
 
         except:
             logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
-            sys.exit(10)
+            raise Exception ('Conversion of gNMI paths to the Protobuf format failed')
 
         if self.__capabilities and 'supported_encodings' in self.__capabilities:
             if 'json' in self.__capabilities['supported_encodings']:
@@ -247,7 +251,7 @@ class gNMIclient(object):
                                                 tp += f'[{pk_name}={pk_value}]'
 
                                         resource_path.append(tp)
-                                
+
                                     update_container.update({'path': '/'.join(resource_path)})
 
                                 else:
@@ -277,8 +281,8 @@ class gNMIclient(object):
 
         except grpc._channel._InactiveRpcError as err:
             print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
-            sys.exit(10)
+            logging.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            raise Exception (err)
 
         except:
             logging.error(f'Collection of Get information failed is failed.')
@@ -316,7 +320,7 @@ class gNMIclient(object):
 
         if encoding not in encoding_set:
             logging.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
-            sys.exit(11)
+            raise Exception (f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
 
         if delete:
             if isinstance(delete, list):
@@ -325,11 +329,11 @@ class gNMIclient(object):
 
                 except:
                     logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
-                    sys.exit(10)
+                    raise Exception (f'Conversion of gNMI paths to the Protobuf format failed')
 
             else:
                 logging.error(f'The provided input for Set message (delete operation) is not list.')
-                sys.exit(10)
+                raise Exception (f'The provided input for Set message (delete operation) is not list.')
 
         if replace:
             if isinstance(replace, list):
@@ -351,11 +355,11 @@ class gNMIclient(object):
 
                     else:
                         logging.error(f'The input element for Update message must be tuple, got {ue}.')
-                        sys.exit(10)
+                        raise Exception (f'The input element for Update message must be tuple, got {ue}.')
 
             else:
                 logging.error(f'The provided input for Set message (replace operation) is not list.')
-                sys.exit(10)
+                raise Exception ('The provided input for Set message (replace operation) is not list.')
 
         if update:
             if isinstance(update, list):
@@ -377,11 +381,11 @@ class gNMIclient(object):
 
                     else:
                         logging.error(f'The input element for Update message must be tuple, got {ue}.')
-                        sys.exit(10)
+                        raise Exception (f'The input element for Update message must be tuple, got {ue}.')
 
             else:
                 logging.error(f'The provided input for Set message (update operation) is not list.')
-                sys.exit(10)
+                raise Exception ('The provided input for Set message (replace operation) is not list.')
 
         try:
             gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
@@ -419,7 +423,7 @@ class gNMIclient(object):
                                         tp += f'[{pk_name}={pk_value}]'
 
                                 resource_path.append(tp)
-                        
+
                             response_container.update({'path': '/'.join(resource_path)})
 
                         else:
@@ -447,15 +451,15 @@ class gNMIclient(object):
 
         except grpc._channel._InactiveRpcError as err:
             print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
-            sys.exit(10)
+            logging.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            raise Exception (err)
 
         except:
             logging.error(f'Collection of Set information failed is failed.')
             return None
 
 
-    def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None):
+    def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None, timeout: float = 0.0):
         """
         Implentation of the subsrcibe gNMI RPC to pool
         """
@@ -624,7 +628,6 @@ class gNMIclient(object):
             else:
                 logging.error('Subscribe subscribe requst is specified, but the value is not list.')
 
-
             if self.__debug:
                 print("gNMI request:\n------------------------------------------------")
                 print(gnmi_message_request)
@@ -632,12 +635,12 @@ class gNMIclient(object):
 
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
-
     def __generator(self, in_message=None):
         """
         Private method used in the telemetry as the input to the stream RPC requires iterator
         rather than a standard element.
         """
+
         yield in_message
 
 
@@ -664,7 +667,7 @@ def telemetryParser(in_message=None, debug: bool = False):
         response = {}
         if in_message.HasField('update'):
             response.update({'update': {'update': []}})
-            
+
             response['update'].update({'timestamp': in_message.update.timestamp}) if in_message.update.timestamp else in_message.update({'timestamp': 0})
 
             if in_message.update.HasField('prefix'):
@@ -697,7 +700,7 @@ def telemetryParser(in_message=None, debug: bool = False):
                                 tp += f'[{pk_name}={pk_value}]'
 
                         resource_path.append(tp)
-                
+
                     update_container.update({'path': '/'.join(resource_path)})
 
                 else:
@@ -750,3 +753,45 @@ def telemetryParser(in_message=None, debug: bool = False):
         logging.error(f'Parsing of telemetry information is failed.')
 
         return None
+
+class Nonblocking_iterator:
+    def __init__(self, blocking_generator, timeout, stop_if_timeout = False):
+        self.timeout = timeout
+        self.stop_if_timeout = stop_if_timeout
+        self.msg_queue = queue.Queue()
+        self.blocking_generator = blocking_generator
+        self._thread = kthread.KThread(
+            target=self._put_messages_from_blocking_generator_to_queue)
+        self._thread.start()
+
+    def _put_messages_from_blocking_generator_to_queue(self):
+        while True:
+            self.msg_queue.put(next(self.blocking_generator))
+
+    def terminate(self):
+        self._thread.terminate()
+        while self._thread.is_alive():
+            self._thread.join()
+        time.sleep(1)
+
+    def is_alive(self):
+        return self._thread.is_alive()
+
+    def join(self):
+        self._thread.join()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            return self.msg_queue.get(timeout=self.timeout)
+        except queue.Empty:
+            self._thread.terminate()
+            while self._thread.is_alive():
+                self._thread.join()
+            time.sleep(1)
+            raise Exception("timeout error")
+
+    def next(self):
+        return self.__next__()
