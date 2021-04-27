@@ -88,8 +88,8 @@ if __name__ == "__main__":
                 print(telemetryParser(ent))
 
 
-        if result:
-            print(result)
+#        if result:
+#            print(result)
 
 #    except:
 #        logging.critical(f'The connectivity towards {DD.targets} cannot be established. The execution is terminated.')

@@ -33,9 +33,12 @@ def gnmi_path_generator(path_in_question: list):
         path_elements = list(filter(None, path_elements))
 
         for pe_entry in path_elements:
-            if re.match('.+?:.+?', pe_entry):
-                gnmi_path.origin = pe_entry.split(':')[0]
-                gnmi_path.elem.add(name=pe_entry.split(':')[1])
+            if re.match('.+?:.*?', pe_entry):
+                parts = pe_entry.split(':')
+                gnmi_path.origin = parts[0]
+
+                if len(parts) > 1 and parts[1]:
+                    gnmi_path.elem.add(name=parts[1])
 
             elif re.match('.+?\[\d+?\]', pe_entry):
                 element_keys = {}

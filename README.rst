@@ -68,6 +68,10 @@ Dev Log
 
 Release **0.4.6**:
 
+- Fixed `gNMI Path issue <https://github.com/akarneliuk/pygnmi/issues/13>`_.
+
+Release **0.4.6**:
+
 - Replaced the ``sys.exit`` with raising exceptions.
 - Minor bug fix.
 - Brought the gNMI path to the canonical format: ``/origin:element1/element2...``.
@@ -232,9 +236,9 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.4.6&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.4.7&color=success
 .. _version: https://pypi.org/project/pygnmi/
-.. |tag| image:: https://img.shields.io/static/v1?label=status&message=in%20development&color=yellow
+.. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
 .. |license| image:: https://img.shields.io/static/v1?label=license&message=BSD-3-clause&color=success
 .. _license: https://github.com/akarneliuk/pygnmi/blob/master/LICENSE.txt
