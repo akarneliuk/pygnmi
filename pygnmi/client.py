@@ -147,6 +147,13 @@ class gNMIclient(object):
         Path is provided as a list in the following format:
           path = ['yang-module:container/container[key=value]', 'yang-module:container/container[key=value]', ..]
 
+        Available path formats:
+          - yang-module:container/container[key=value]
+          - /yang-module:container/container[key=value]
+          - /yang-module:/container/container[key=value]
+          - /container/container[key=value]
+          - /
+
         The datatype argument may have the following values per gNMI specification:
           - all
           - config
