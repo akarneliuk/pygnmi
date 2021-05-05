@@ -15,6 +15,11 @@ import queue
 import time
 import kthread
 
+# Those three modules are required to retrieve cert from the router and extract cn name
+import ssl
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+
 # Own modules
 from pygnmi.path_generator import gnmi_path_generator
 
@@ -64,6 +69,20 @@ class gNMIclient(object):
                 except:
                     logging.error('The SSL certificate cannot be opened.')
                     raise Exception('The SSL certificate cannot be opened.')
+                    
+            else:
+                try:
+                    ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
+                    ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
+                    ssl_cert_common_names = ssl_cert_deserialized.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
+                    ssl_target_name_override = ssl_cert_common_names[0].value
+                    self.__options = [("grpc.ssl_target_name_override", ssl_target_name_override)]
+                    logging.warning('ssl_target_name_override is applied, should be used for testing only!')
+                    cert = grpc.ssl_channel_credentials(ssl_cert)
+
+                except:
+                    logging.error(f'The SSL certificate cannot be retrieved from {self.__target}')
+                    raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}') 
 
             self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', 
                                                  credentials=cert, options=self.__options)
