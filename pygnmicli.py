@@ -34,9 +34,8 @@ if __name__ == "__main__":
     DD = NFData(sys.argv, msg)
 
     # gNMI operation
-#    try:
     with gNMIclient(DD.targets, username=DD.username, password=DD.password, 
-                    debug=DD.to_print, insecure=DD.insecure, path_cert=DD.certificate) as GC:
+                    debug=DD.to_print, insecure=DD.insecure) as GC:
         result = None
         
         if DD.operation == 'capabilities':
@@ -88,11 +87,7 @@ if __name__ == "__main__":
                 print(telemetryParser(ent))
 
 
-#        if result:
-#            print(result)
-
-#    except:
-#        logging.critical(f'The connectivity towards {DD.targets} cannot be established. The execution is terminated.')
-#        sys.exit(1)
+        if result:
+            print(result)
 
 

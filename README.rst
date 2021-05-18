@@ -62,9 +62,20 @@ License
 =======
 By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 
+============
+Contributors
+============
+
+- `Anton Karneliuk <https://github.com/akarneliuk>`_
+- `Stefan Lieberth <https://github.com/slieberth>`_
+
 =======
 Dev Log
 =======
+
+Release **0.5.0**:
+
+- Added possibility to extract certificate from the destination network function.
 
 Release **0.4.8**:
 
@@ -240,7 +251,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.4.8&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.5.0&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
