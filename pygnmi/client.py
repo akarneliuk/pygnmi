@@ -30,7 +30,7 @@ class gNMIclient(object):
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
     def __init__(self, target: tuple, username: str = None, password: str = None, 
-                 debug: bool = False, insecure: bool = False, path_cert: str = None, override: str = None,
+                 debug: bool = False, insecure: bool = False, path_cert: str = None, path_key: str = None, path_root: str = None, override: str = None,
                  gnmi_timeout: int = 5):
 
         """
@@ -41,6 +41,8 @@ class gNMIclient(object):
         self.__debug = debug
         self.__insecure = insecure
         self.__path_cert = path_cert
+        self.__path_key = path_key
+        self.__path_root = path_root
         self.__options=[('grpc.ssl_target_name_override', override)] if override else None
         self.__gnmi_timeout = gnmi_timeout
 
@@ -61,7 +63,17 @@ class gNMIclient(object):
             self.__stub = gNMIStub(self.__channel)
 
         else:
-            if self.__path_cert:
+            if self.__path_cert and self.__path_key and self.__path_root:
+                try:
+                    cert = open(self.__path_cert, 'rb').read()
+                    key = open(self.__path_key, 'rb').read()
+                    root_cert = open(self.__path_root, 'rb').read()
+                    cert = grpc.ssl_channel_credentials(root_certificates=root_cert, private_key=key, certificate_chain=cert)
+                except:
+                    logging.error('The SSL certificate cannot be opened.')
+                    raise Exception('The SSL certificate cannot be opened.')
+
+            elif self.__path_cert:
                 try:
                     with open(self.__path_cert, 'rb') as f:
                         cert = grpc.ssl_channel_credentials(f.read())
