@@ -46,7 +46,7 @@ class gNMIclient(object):
         self.__options=[('grpc.ssl_target_name_override', override)] if override else None
         self.__gnmi_timeout = gnmi_timeout
 
-        self.__target_path = f'{self.__target[0]}:{self.__target[1]}'
+        self.__target_path = f'{target[0]}:{target[1]}'
         if re.match('unix:.*', target[0]):
             self.__target = target
             self.__target_path = target[0]
