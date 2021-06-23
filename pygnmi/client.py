@@ -46,11 +46,14 @@ class gNMIclient(object):
         self.__options=[('grpc.ssl_target_name_override', override)] if override else None
         self.__gnmi_timeout = gnmi_timeout
 
-        if re.match('.*:.*', target[0]):
+        self.__target_path = f'{target[0]}:{target[1]}'
+        if re.match('unix:.*', target[0]):
+            self.__target = target
+            self.__target_path = target[0]
+        elif re.match('.*:.*', target[0]):
             self.__target = (f'[{target[0]}]', target[1])
         else:
             self.__target = target
-
 
     def __enter__(self):
         """
@@ -58,7 +61,7 @@ class gNMIclient(object):
         """
 
         if self.__insecure:
-            self.__channel = grpc.insecure_channel(f'{self.__target[0]}:{self.__target[1]}', self.__metadata)
+            self.__channel = grpc.insecure_channel(self.__target_path, self.__metadata)
             grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
             self.__stub = gNMIStub(self.__channel)
 
@@ -96,7 +99,7 @@ class gNMIclient(object):
                     logging.error(f'The SSL certificate cannot be retrieved from {self.__target}')
                     raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}') 
 
-            self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', 
+            self.__channel = grpc.secure_channel(self.__target_path, 
                                                  credentials=cert, options=self.__options)
             grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
             self.__stub = gNMIStub(self.__channel)
@@ -161,8 +164,8 @@ class gNMIclient(object):
             return response
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            print(f"Host: {self.__target_path}\nError: {err.details()}")
+            logging.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
             raise Exception (err)
 
         except:
@@ -318,8 +321,8 @@ class gNMIclient(object):
             return response
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            print(f"Host: {self.__target_path}\nError: {err.details()}")
+            logging.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
             raise Exception (err)
 
         except:
@@ -488,8 +491,8 @@ class gNMIclient(object):
                 return None
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            print(f"Host: {self.__target_path}\nError: {err.details()}")
+            logging.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
             raise Exception (err)
 
         except:
