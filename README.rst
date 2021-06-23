@@ -68,10 +68,23 @@ Contributors
 
 - `Anton Karneliuk <https://github.com/akarneliuk>`_
 - `Stefan Lieberth <https://github.com/slieberth>`_
+- `Prem Anand Haridoss <https://github.com/hprem>`_
+- `Andrew Southard <https://github.com/andsouth44>`_
+- `Jeroen van Bemme <https://github.com/jbemmel>`_
 
 =======
 Dev Log
 =======
+
+Release **0.5.1**:
+
+- Added example for non-blocking iterator for telemetry.
+- Added the extra support for Juniper TLS certificates.
+- Fixed regexp warnings.
+- Changed the logging functionality.
+- Enabled Unix domain socket.
+- Added ``close()`` 
+- Many thanks for all contributors to make this release happen.
 
 Release **0.5.0**:
 
@@ -251,7 +264,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.5.0&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.5.1&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
