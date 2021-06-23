@@ -24,6 +24,10 @@ from cryptography.hazmat.backends import default_backend
 from pygnmi.path_generator import gnmi_path_generator
 
 
+# Logger
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler(sys.stdout))
+
 # Classes
 class gNMIclient(object):
     """
@@ -67,7 +71,7 @@ class gNMIclient(object):
                         cert = grpc.ssl_channel_credentials(f.read())
 
                 except:
-                    logging.error('The SSL certificate cannot be opened.')
+                    logger.error('The SSL certificate cannot be opened.')
                     raise Exception('The SSL certificate cannot be opened.')
                     
             else:
@@ -77,11 +81,11 @@ class gNMIclient(object):
                     ssl_cert_common_names = ssl_cert_deserialized.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
                     ssl_target_name_override = ssl_cert_common_names[0].value
                     self.__options = [("grpc.ssl_target_name_override", ssl_target_name_override)]
-                    logging.warning('ssl_target_name_override is applied, should be used for testing only!')
+                    logger.warning('ssl_target_name_override is applied, should be used for testing only!')
                     cert = grpc.ssl_channel_credentials(ssl_cert)
 
                 except:
-                    logging.error(f'The SSL certificate cannot be retrieved from {self.__target}')
+                    logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
                     raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}') 
 
             self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', 
@@ -97,7 +101,7 @@ class gNMIclient(object):
         Collecting the gNMI capabilities of the network device.
         There are no arguments needed for this call
         """
-        logging.info(f'Collecting Capabilities...')
+        logger.info(f'Collecting Capabilities...')
 
         try:
             gnmi_message_request = CapabilityRequest()
@@ -143,18 +147,18 @@ class gNMIclient(object):
                 if gnmi_message_response.gNMI_version:
                     response.update({'gnmi_version': gnmi_message_response.gNMI_version})
 
-            logging.info(f'Collection of Capabilities is successfull')
+            logger.info(f'Collection of Capabilities is successfull')
 
             self.__capabilities = response
             return response
 
         except grpc._channel._InactiveRpcError as err:
             print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            logger.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
             raise Exception (err)
 
         except:
-            logging.error(f'Collection of Capabilities is failed.')
+            logger.error(f'Collection of Capabilities is failed.')
 
             return None
 
@@ -186,7 +190,7 @@ class gNMIclient(object):
           - ascii
           - json_ietf
         """
-        logging.info(f'Collecting info from requested paths (Get operation)...')
+        logger.info(f'Collecting info from requested paths (Get operation)...')
 
         datatype = datatype.lower()
         type_dict = {'all', 'config', 'state', 'operational'}
@@ -202,7 +206,7 @@ class gNMIclient(object):
             elif datatype == 'operational':
                 pb_datatype = 3
             else:
-                logging.error('The GetRequst data type is not within the dfined range')
+                logger.error('The GetRequst data type is not within the dfined range')
 
         if encoding in encoding_set:
             if encoding.lower() == 'json':
@@ -224,7 +228,7 @@ class gNMIclient(object):
                 protobuf_paths = [gnmi_path_generator(pe) for pe in path]
 
         except:
-            logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
+            logger.error(f'Conversion of gNMI paths to the Protobuf format failed')
             raise Exception ('Conversion of gNMI paths to the Protobuf format failed')
 
         if self.__capabilities and 'supported_encodings' in self.__capabilities:
@@ -307,11 +311,11 @@ class gNMIclient(object):
 
         except grpc._channel._InactiveRpcError as err:
             print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            logger.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
             raise Exception (err)
 
         except:
-            logging.error(f'Collection of Get information failed is failed.')
+            logger.error(f'Collection of Get information failed is failed.')
 
             return None
 
@@ -345,7 +349,7 @@ class gNMIclient(object):
         encoding_set = {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}
 
         if encoding not in encoding_set:
-            logging.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
+            logger.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
             raise Exception (f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
 
         if delete:
@@ -354,11 +358,11 @@ class gNMIclient(object):
                     del_protobuf_paths = [gnmi_path_generator(pe) for pe in delete]
 
                 except:
-                    logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
+                    logger.error(f'Conversion of gNMI paths to the Protobuf format failed')
                     raise Exception (f'Conversion of gNMI paths to the Protobuf format failed')
 
             else:
-                logging.error(f'The provided input for Set message (delete operation) is not list.')
+                logger.error(f'The provided input for Set message (delete operation) is not list.')
                 raise Exception (f'The provided input for Set message (delete operation) is not list.')
 
         if replace:
@@ -380,11 +384,11 @@ class gNMIclient(object):
                             replace_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
 
                     else:
-                        logging.error(f'The input element for Update message must be tuple, got {ue}.')
+                        logger.error(f'The input element for Update message must be tuple, got {ue}.')
                         raise Exception (f'The input element for Update message must be tuple, got {ue}.')
 
             else:
-                logging.error(f'The provided input for Set message (replace operation) is not list.')
+                logger.error(f'The provided input for Set message (replace operation) is not list.')
                 raise Exception ('The provided input for Set message (replace operation) is not list.')
 
         if update:
@@ -406,11 +410,11 @@ class gNMIclient(object):
                             update_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
 
                     else:
-                        logging.error(f'The input element for Update message must be tuple, got {ue}.')
+                        logger.error(f'The input element for Update message must be tuple, got {ue}.')
                         raise Exception (f'The input element for Update message must be tuple, got {ue}.')
 
             else:
-                logging.error(f'The provided input for Set message (update operation) is not list.')
+                logger.error(f'The provided input for Set message (update operation) is not list.')
                 raise Exception ('The provided input for Set message (replace operation) is not list.')
 
         try:
@@ -472,16 +476,16 @@ class gNMIclient(object):
                 return response
 
             else:
-                logging.error('Failed parsing the SetResponse.')
+                logger.error('Failed parsing the SetResponse.')
                 return None
 
         except grpc._channel._InactiveRpcError as err:
             print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
+            logger.critical(f"GRPC ERROR Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
             raise Exception (err)
 
         except:
-            logging.error(f'Collection of Set information failed is failed.')
+            logger.error(f'Collection of Set information failed is failed.')
             return None
 
 
@@ -489,7 +493,7 @@ class gNMIclient(object):
         """
         Implentation of the subsrcibe gNMI RPC to pool
         """
-        logging.info(f'Collecting Telemetry...')
+        logger.info(f'Collecting Telemetry...')
 
         if (subscribe and poll) or (subscribe and aliases) or (poll and aliases):
             raise Exception('Subscribe request supports only one request at a time.')
@@ -502,7 +506,7 @@ class gNMIclient(object):
                     gnmi_message_request = SubscribeRequest(poll=request)
 
             else:
-                logging.error('Subscribe pool request is specificed, but the value is not boolean.')
+                logger.error('Subscribe pool request is specificed, but the value is not boolean.')
 
         if aliases:
             if isinstance(aliases, list):
@@ -518,7 +522,7 @@ class gNMIclient(object):
                 gnmi_message_request = SubscribeRequest(aliases=request)
 
             else:
-                logging.error('Subscribe aliases request is specified, but the value is not list.')
+                logger.error('Subscribe aliases request is specified, but the value is not list.')
 
         if subscribe:
             if isinstance(subscribe, dict):
@@ -652,7 +656,7 @@ class gNMIclient(object):
                 gnmi_message_request = SubscribeRequest(subscribe=request)
 
             else:
-                logging.error('Subscribe subscribe requst is specified, but the value is not list.')
+                logger.error('Subscribe subscribe requst is specified, but the value is not list.')
 
             if self.__debug:
                 print("gNMI request:\n------------------------------------------------")
@@ -776,7 +780,7 @@ def telemetryParser(in_message=None, debug: bool = False):
             return response
 
     except:
-        logging.error(f'Parsing of telemetry information is failed.')
+        logger.error(f'Parsing of telemetry information is failed.')
 
         return None
 
