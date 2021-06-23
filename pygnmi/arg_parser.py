@@ -53,8 +53,8 @@ class NFData(object):
 
                 elif input_vars[ind] == '-t' or input_vars[ind] == '--target':
                     try:
-                        if re.match('\[.*\]', input_vars[ind + 1]):
-                            self.targets = re.sub('^\[([0-9a-f:]+?)\]:(\d+?)$', '\g<1> \g<2>', input_vars[ind + 1]).split(' ')
+                        if re.match(r'\[.*\]', input_vars[ind + 1]):
+                            self.targets = re.sub(r'^\[([0-9a-f:]+?)\]:(\d+?)$', r'\g<1> \g<2>', input_vars[ind + 1]).split(' ')
 
                         else:
                             self.targets = (str(input_vars[ind + 1].split(':')[0]), int(input_vars[ind + 1].split(':')[1]))

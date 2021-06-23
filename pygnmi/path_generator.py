@@ -14,14 +14,14 @@ def gnmi_path_generator(path_in_question: list):
 
     # Subtracting all the keys from the elements and storing them separately
     if path_in_question:
-        if re.match('.*?\[.+?=.+?\].*?', path_in_question):
-            split_list = re.findall('.*?\[.+?=.+?\].*?', path_in_question)
+        if re.match(r'.*?\[.+?=.+?\].*?', path_in_question):
+            split_list = re.findall(r'.*?\[.+?=.+?\].*?', path_in_question)
 
             for sle in split_list:
                 temp_non_modified += sle
-                temp_key, temp_value = re.sub('.*?\[(.+?)\].*?', '\g<1>', sle).split('=')
+                temp_key, temp_value = re.sub(r'.*?\[(.+?)\].*?', r'\g<1>', sle).split('=')
                 keys.append({temp_key: temp_value})
-                sle = re.sub('(.*?\[).+?(\].*?)', f'\g<1>{len(keys) - 1}\g<2>', sle)
+                sle = re.sub(r'(.*?\[).+?(\].*?)', fr'\g<1>{len(keys) - 1}\g<2>', sle)
                 temp_path += sle
 
             if len(temp_non_modified) < len (path_in_question):
@@ -40,7 +40,7 @@ def gnmi_path_generator(path_in_question: list):
                 if len(parts) > 1 and parts[1]:
                     gnmi_path.elem.add(name=parts[1])
 
-            elif re.match('.+?\[\d+?\]', pe_entry):
+            elif re.match(r'.+?\[\d+?\]', pe_entry):
                 element_keys = {}
                 path_info = [re.sub(']', '', en) for en in pe_entry.split('[')]
                 element = path_info.pop(0)
