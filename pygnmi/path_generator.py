@@ -3,7 +3,7 @@
 
 # Modules
 from pygnmi.spec.gnmi_pb2 import *
-import re, sys, logging
+import re, sys
 
 # User-defined functions
 def gnmi_path_generator(path_in_question: list):
