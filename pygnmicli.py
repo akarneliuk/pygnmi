@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     # gNMI operation
     with gNMIclient(DD.targets, username=DD.username, password=DD.password, 
-                    debug=DD.to_print, insecure=DD.insecure) as GC:
+                    debug=DD.to_print, insecure=DD.insecure, path_cert="./cert.pem") as GC:
         result = None
         
         if DD.operation == 'capabilities':

@@ -76,6 +76,11 @@ Contributors
 Dev Log
 =======
 
+Release **0.5.2**:
+
+- Minor bug fixing.
+- First release with unit tests.
+
 Release **0.5.1**:
 
 - Added example for non-blocking iterator for telemetry.
@@ -264,7 +269,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.5.1&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.5.2&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/

@@ -61,59 +61,16 @@ class gNMIclient(object):
 
     def __enter__(self):
         """
-        Building the connectivity towards network element over gNMI
+        Building the connectivity towards network element over gNMI (used in the with ... as ... context manager)
         """
-
-        if self.__insecure:
-            self.__channel = grpc.insecure_channel(self.__target_path, self.__metadata)
-            grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
-            self.__stub = gNMIStub(self.__channel)
-
-        else:
-            if self.__path_cert and self.__path_key and self.__path_root:
-                try:
-                    cert = open(self.__path_cert, 'rb').read()
-                    key = open(self.__path_key, 'rb').read()
-                    root_cert = open(self.__path_root, 'rb').read()
-                    cert = grpc.ssl_channel_credentials(root_certificates=root_cert, private_key=key, certificate_chain=cert)
-                except:
-                    logging.error('The SSL certificate cannot be opened.')
-                    raise Exception('The SSL certificate cannot be opened.')
-
-            elif self.__path_cert:
-                try:
-                    with open(self.__path_cert, 'rb') as f:
-                        cert = grpc.ssl_channel_credentials(f.read())
-
-                except:
-                    logger.error('The SSL certificate cannot be opened.')
-                    raise Exception('The SSL certificate cannot be opened.')
-                    
-            else:
-                try:
-                    ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
-                    ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
-                    ssl_cert_common_names = ssl_cert_deserialized.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
-                    ssl_target_name_override = ssl_cert_common_names[0].value
-                    self.__options = [("grpc.ssl_target_name_override", ssl_target_name_override)]
-                    logger.warning('ssl_target_name_override is applied, should be used for testing only!')
-                    cert = grpc.ssl_channel_credentials(ssl_cert)
-
-                except:
-                    logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
-                    raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}') 
-
-            self.__channel = grpc.secure_channel(self.__target_path, 
-                                                 credentials=cert, options=self.__options)
-            grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
-            self.__stub = gNMIStub(self.__channel)
+        self.connect()
 
         return self
 
 
     def connect(self):
         """
-        Building the connectivity towards network element over gNMI without conext manage with ... as ...
+        Building the connectivity towards network element over gNMI
         """
 
         if self.__insecure:

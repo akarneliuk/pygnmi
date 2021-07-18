@@ -4,3 +4,5 @@ venv/
 log/
 .temp/
 .vscode/
+**/.env
+**/.pytest_cache/
