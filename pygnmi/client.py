@@ -63,9 +63,7 @@ class gNMIclient(object):
         """
         Building the connectivity towards network element over gNMI (used in the with ... as ... context manager)
         """
-        self.connect()
-
-        return self
+        return self.connect()
 
 
     def connect(self):
@@ -319,14 +317,32 @@ class gNMIclient(object):
                                     elif update_msg.val.HasField('json_val'):
                                         update_container.update({'val': json.loads(update_msg.val.json_val)})
 
-                                    elif update_msg.val.HasField('ascii_val'):
-                                        update_container.update({'val': json.loads(update_msg.val.ascii_val)})
+                                    elif update_msg.val.HasField('string_val'):
+                                        update_container.update({'val':update_msg.val.string_val})
 
-                                    elif update_msg.val.HasField('bytes_val'):
-                                        update_container.update({'val': json.loads(update_msg.val.bytes_val)})
+                                    elif update_msg.val.HasField('int_val'):
+                                        update_container.update({'val': update_msg.val.int_val})
+
+                                    elif update_msg.val.HasField('uint_val'):
+                                        update_container.update({'val': update_msg.val.uint_val})
+
+                                    elif update_msg.val.HasField('bool_val'):
+                                        update_container.update({'val': update_msg.val.bool_val})
+
+                                    elif update_msg.val.HasField('float_val'):
+                                        update_container.update({'val': update_msg.val.float_val})
+
+                                    elif update_msg.val.HasField('decimal_val'):
+                                        update_container.update({'val': update_msg.val.decimal_val})
+
+                                    elif update_msg.val.HasField('any_val'):
+                                        update_container.update({'val': update_msg.val.any_val})
+
+                                    elif update_msg.val.HasField('ascii_val'):
+                                        update_container.update({'val': update_msg.val.ascii_val})
 
                                     elif update_msg.val.HasField('proto_bytes'):
-                                        update_container.update({'val': json.loads(update_msg.val.proto_bytes)})
+                                        update_container.update({'val': update_msg.val.proto_bytes})
 
                                 notification_container['update'].append(update_container)
 

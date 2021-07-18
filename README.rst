@@ -76,6 +76,11 @@ Contributors
 Dev Log
 =======
 
+Release **0.5.3**:
+
+- Minor improvements and bug fixing.
+- Full coverage of unit tests for all operations (Capabilities, Get, Set(Update, Replace, Delete), Subscribe) and all notations of GNMI Path
+
 Release **0.5.2**:
 
 - Minor bug fixing.
@@ -269,7 +274,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.5.2&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.5.3&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
