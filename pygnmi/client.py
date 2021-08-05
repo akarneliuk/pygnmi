@@ -11,10 +11,22 @@ import json
 import logging
 import time
 
+import queue
+import time
+import kthread
+
+# Those three modules are required to retrieve cert from the router and extract cn name
+import ssl
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 
 # Own modules
 from pygnmi.path_generator import gnmi_path_generator
 
+
+# Logger
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 # Classes
 class gNMIclient(object):
@@ -22,7 +34,9 @@ class gNMIclient(object):
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
     def __init__(self, target: tuple, username: str = None, password: str = None, 
-                 debug: bool = False, insecure: bool = False, path_cert: str = None, override: str = None):
+                 debug: bool = False, insecure: bool = False, path_cert: str = None, path_key: str = None, path_root: str = None, override: str = None,
+                 gnmi_timeout: int = 5):
+
         """
         Initializing the object
         """
@@ -31,37 +45,74 @@ class gNMIclient(object):
         self.__debug = debug
         self.__insecure = insecure
         self.__path_cert = path_cert
-        self.__override = override
-        self.__options=[('grpc.ssl_target_name_override', self.__override)]
+        self.__path_key = path_key
+        self.__path_root = path_root
+        self.__options=[('grpc.ssl_target_name_override', override)] if override else None
+        self.__gnmi_timeout = gnmi_timeout
 
-        if re.match('.*:.*', target[0]):
+        self.__target_path = f'{target[0]}:{target[1]}'
+        if re.match('unix:.*', target[0]):
+            self.__target = target
+            self.__target_path = target[0]
+        elif re.match('.*:.*', target[0]):
             self.__target = (f'[{target[0]}]', target[1])
         else:
             self.__target = target
 
-    
     def __enter__(self):
+        """
+        Building the connectivity towards network element over gNMI (used in the with ... as ... context manager)
+        """
+        return self.connect()
+
+
+    def connect(self):
         """
         Building the connectivity towards network element over gNMI
         """
 
         if self.__insecure:
-            self.__channel = grpc.insecure_channel(f'{self.__target[0]}:{self.__target[1]}', self.__metadata)
-            grpc.channel_ready_future(self.__channel).result(timeout=5)
+            self.__channel = grpc.insecure_channel(self.__target_path, self.__metadata)
+            grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
             self.__stub = gNMIStub(self.__channel)
 
         else:
-            if self.__path_cert:
+            if self.__path_cert and self.__path_key and self.__path_root:
+                try:
+                    cert = open(self.__path_cert, 'rb').read()
+                    key = open(self.__path_key, 'rb').read()
+                    root_cert = open(self.__path_root, 'rb').read()
+                    cert = grpc.ssl_channel_credentials(root_certificates=root_cert, private_key=key, certificate_chain=cert)
+                except:
+                    logging.error('The SSL certificate cannot be opened.')
+                    raise Exception('The SSL certificate cannot be opened.')
+
+            elif self.__path_cert:
                 try:
                     with open(self.__path_cert, 'rb') as f:
                         cert = grpc.ssl_channel_credentials(f.read())
 
                 except:
-                    logging.error('The SSL certificate cannot be opened.')
-                    sys.exit(10)
+                    logger.error('The SSL certificate cannot be opened.')
+                    raise Exception('The SSL certificate cannot be opened.')
+                    
+            else:
+                try:
+                    ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
+                    ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
+                    ssl_cert_common_names = ssl_cert_deserialized.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
+                    ssl_target_name_override = ssl_cert_common_names[0].value
+                    self.__options = [("grpc.ssl_target_name_override", ssl_target_name_override)]
+                    logger.warning('ssl_target_name_override is applied, should be used for testing only!')
+                    cert = grpc.ssl_channel_credentials(ssl_cert)
 
-            self.__channel = grpc.secure_channel(f'{self.__target[0]}:{self.__target[1]}', cert, self.__options)
-            grpc.channel_ready_future(self.__channel).result(timeout=5)
+                except:
+                    logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
+                    raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}') 
+
+            self.__channel = grpc.secure_channel(self.__target_path, 
+                                                 credentials=cert, options=self.__options)
+            grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
             self.__stub = gNMIStub(self.__channel)
 
         return self
@@ -72,22 +123,26 @@ class gNMIclient(object):
         Collecting the gNMI capabilities of the network device.
         There are no arguments needed for this call
         """
-        logging.info(f'Collecting Capabilities...')
+        logger.info(f'Collecting Capabilities...')
 
         try:
             gnmi_message_request = CapabilityRequest()
-            gnmi_message_response = self.__stub.Capabilities(gnmi_message_request, metadata=self.__metadata)
 
             if self.__debug:
                 print("gNMI request:\n------------------------------------------------")
                 print(gnmi_message_request)
-                print("------------------------------------------------\n\n\ngNMI response:\n------------------------------------------------")
+                print("------------------------------------------------")
+
+            gnmi_message_response = self.__stub.Capabilities(gnmi_message_request, metadata=self.__metadata)
+
+            if self.__debug:
+                print("\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
                 print("------------------------------------------------")
 
             if gnmi_message_response:
                 response = {}
-                
+
                 if gnmi_message_response.supported_models:
                     response.update({'supported_models': []})
 
@@ -114,18 +169,19 @@ class gNMIclient(object):
                 if gnmi_message_response.gNMI_version:
                     response.update({'gnmi_version': gnmi_message_response.gNMI_version})
 
-            logging.info(f'Collection of Capabilities is successfull')
+            logger.info(f'Collection of Capabilities is successfull')
 
             self.__capabilities = response
             return response
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
-            sys.exit(10)
+            print(f"Host: {self.__target_path}\nError: {err.details()}")
+            logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
+
+            raise Exception (err)
 
         except:
-            logging.error(f'Collection of Capabilities is failed.')
+            logger.error(f'Collection of Capabilities is failed.')
 
             return None
 
@@ -134,9 +190,16 @@ class gNMIclient(object):
         """
         Collecting the information about the resources from defined paths.
 
-        Path is provided as a list in the following format: 
+        Path is provided as a list in the following format:
           path = ['yang-module:container/container[key=value]', 'yang-module:container/container[key=value]', ..]
-        
+
+        Available path formats:
+          - yang-module:container/container[key=value]
+          - /yang-module:container/container[key=value]
+          - /yang-module:/container/container[key=value]
+          - /container/container[key=value]
+          - /
+
         The datatype argument may have the following values per gNMI specification:
           - all
           - config
@@ -150,7 +213,7 @@ class gNMIclient(object):
           - ascii
           - json_ietf
         """
-        logging.info(f'Collecting info from requested paths (Get opertaion)...')
+        logger.info(f'Collecting info from requested paths (Get operation)...')
 
         datatype = datatype.lower()
         type_dict = {'all', 'config', 'state', 'operational'}
@@ -166,7 +229,7 @@ class gNMIclient(object):
             elif datatype == 'operational':
                 pb_datatype = 3
             else:
-                logging.error('The GetRequst data type is not within the dfined range')
+                logger.error('The GetRequst data type is not within the dfined range')
 
         if encoding in encoding_set:
             if encoding.lower() == 'json':
@@ -188,8 +251,8 @@ class gNMIclient(object):
                 protobuf_paths = [gnmi_path_generator(pe) for pe in path]
 
         except:
-            logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
-            sys.exit(10)
+            logger.error(f'Conversion of gNMI paths to the Protobuf format failed')
+            raise Exception ('Conversion of gNMI paths to the Protobuf format failed')
 
         if self.__capabilities and 'supported_encodings' in self.__capabilities:
             if 'json' in self.__capabilities['supported_encodings']:
@@ -199,12 +262,16 @@ class gNMIclient(object):
 
         try:
             gnmi_message_request = GetRequest(path=protobuf_paths, type=pb_datatype, encoding=pb_encoding)
-            gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
 
             if self.__debug:
                 print("gNMI request:\n------------------------------------------------")
                 print(gnmi_message_request)
-                print("------------------------------------------------\n\n\ngNMI response:\n------------------------------------------------")
+                print("------------------------------------------------")
+
+            gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
+
+            if self.__debug:
+                print("\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
                 print("------------------------------------------------")
 
@@ -237,7 +304,7 @@ class gNMIclient(object):
                                                 tp += f'[{pk_name}={pk_value}]'
 
                                         resource_path.append(tp)
-                                
+
                                     update_container.update({'path': '/'.join(resource_path)})
 
                                 else:
@@ -250,14 +317,32 @@ class gNMIclient(object):
                                     elif update_msg.val.HasField('json_val'):
                                         update_container.update({'val': json.loads(update_msg.val.json_val)})
 
-                                    elif update_msg.val.HasField('ascii_val'):
-                                        update_container.update({'val': json.loads(update_msg.val.ascii_val)})
+                                    elif update_msg.val.HasField('string_val'):
+                                        update_container.update({'val':update_msg.val.string_val})
 
-                                    elif update_msg.val.HasField('bytes_val'):
-                                        update_container.update({'val': json.loads(update_msg.val.bytes_val)})
+                                    elif update_msg.val.HasField('int_val'):
+                                        update_container.update({'val': update_msg.val.int_val})
+
+                                    elif update_msg.val.HasField('uint_val'):
+                                        update_container.update({'val': update_msg.val.uint_val})
+
+                                    elif update_msg.val.HasField('bool_val'):
+                                        update_container.update({'val': update_msg.val.bool_val})
+
+                                    elif update_msg.val.HasField('float_val'):
+                                        update_container.update({'val': update_msg.val.float_val})
+
+                                    elif update_msg.val.HasField('decimal_val'):
+                                        update_container.update({'val': update_msg.val.decimal_val})
+
+                                    elif update_msg.val.HasField('any_val'):
+                                        update_container.update({'val': update_msg.val.any_val})
+
+                                    elif update_msg.val.HasField('ascii_val'):
+                                        update_container.update({'val': update_msg.val.ascii_val})
 
                                     elif update_msg.val.HasField('proto_bytes'):
-                                        update_container.update({'val': json.loads(update_msg.val.proto_bytes)})
+                                        update_container.update({'val': update_msg.val.proto_bytes})
 
                                 notification_container['update'].append(update_container)
 
@@ -266,12 +351,13 @@ class gNMIclient(object):
             return response
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
-            sys.exit(10)
+            print(f"Host: {self.__target_path}\nError: {err.details()}")
+            logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
+
+            raise Exception (err)
 
         except:
-            logging.error(f'Collection of Get information failed is failed.')
+            logger.error(f'Collection of Get information failed is failed.')
 
             return None
 
@@ -305,8 +391,8 @@ class gNMIclient(object):
         encoding_set = {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}
 
         if encoding not in encoding_set:
-            logging.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
-            sys.exit(11)
+            logger.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
+            raise Exception (f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
 
         if delete:
             if isinstance(delete, list):
@@ -314,12 +400,12 @@ class gNMIclient(object):
                     del_protobuf_paths = [gnmi_path_generator(pe) for pe in delete]
 
                 except:
-                    logging.error(f'Conversion of gNMI paths to the Protobuf format failed')
-                    sys.exit(10)
+                    logger.error(f'Conversion of gNMI paths to the Protobuf format failed')
+                    raise Exception (f'Conversion of gNMI paths to the Protobuf format failed')
 
             else:
-                logging.error(f'The provided input for Set message (delete operation) is not list.')
-                sys.exit(10)
+                logger.error(f'The provided input for Set message (delete operation) is not list.')
+                raise Exception (f'The provided input for Set message (delete operation) is not list.')
 
         if replace:
             if isinstance(replace, list):
@@ -340,12 +426,12 @@ class gNMIclient(object):
                             replace_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
 
                     else:
-                        logging.error(f'The input element for Update message must be tuple, got {ue}.')
-                        sys.exit(10)
+                        logger.error(f'The input element for Update message must be tuple, got {ue}.')
+                        raise Exception (f'The input element for Update message must be tuple, got {ue}.')
 
             else:
-                logging.error(f'The provided input for Set message (replace operation) is not list.')
-                sys.exit(10)
+                logger.error(f'The provided input for Set message (replace operation) is not list.')
+                raise Exception ('The provided input for Set message (replace operation) is not list.')
 
         if update:
             if isinstance(update, list):
@@ -366,21 +452,25 @@ class gNMIclient(object):
                             update_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
 
                     else:
-                        logging.error(f'The input element for Update message must be tuple, got {ue}.')
-                        sys.exit(10)
+                        logger.error(f'The input element for Update message must be tuple, got {ue}.')
+                        raise Exception (f'The input element for Update message must be tuple, got {ue}.')
 
             else:
-                logging.error(f'The provided input for Set message (update operation) is not list.')
-                sys.exit(10)
+                logger.error(f'The provided input for Set message (update operation) is not list.')
+                raise Exception ('The provided input for Set message (replace operation) is not list.')
 
         try:
             gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
-            gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
 
             if self.__debug:
                 print("gNMI request:\n------------------------------------------------")
                 print(gnmi_message_request)
-                print("------------------------------------------------\n\n\ngNMI response:\n------------------------------------------------")
+                print("------------------------------------------------")
+
+            gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
+
+            if self.__debug:
+                print("\n\n\ngNMI response:\n------------------------------------------------")
                 print(gnmi_message_response)
                 print("------------------------------------------------")
 
@@ -405,7 +495,7 @@ class gNMIclient(object):
                                         tp += f'[{pk_name}={pk_value}]'
 
                                 resource_path.append(tp)
-                        
+
                             response_container.update({'path': '/'.join(resource_path)})
 
                         else:
@@ -428,24 +518,25 @@ class gNMIclient(object):
                 return response
 
             else:
-                logging.error('Failed parsing the SetResponse.')
+                logger.error('Failed parsing the SetResponse.')
                 return None
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target[0]}:{self.__target[1]}\nError: {err.details()}")
-            logging.critical(f"Host: {self.__target[0]}:{self.__target[1]}, Error: {err.details()}")
-            sys.exit(10)
+            print(f"Host: {self.__target_path}\nError: {err.details()}")
+            logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
+
+            raise Exception (err)
 
         except:
-            logging.error(f'Collection of Set information failed is failed.')
+            logger.error(f'Collection of Set information failed is failed.')
             return None
 
 
-    def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None):
+    def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None, timeout: float = 0.0):
         """
         Implentation of the subsrcibe gNMI RPC to pool
         """
-        logging.info(f'Collecting Telemetry...')
+        logger.info(f'Collecting Telemetry...')
 
         if (subscribe and poll) or (subscribe and aliases) or (poll and aliases):
             raise Exception('Subscribe request supports only one request at a time.')
@@ -458,7 +549,7 @@ class gNMIclient(object):
                     gnmi_message_request = SubscribeRequest(poll=request)
 
             else:
-                logging.error('Subscribe pool request is specificed, but the value is not boolean.')
+                logger.error('Subscribe pool request is specificed, but the value is not boolean.')
 
         if aliases:
             if isinstance(aliases, list):
@@ -474,7 +565,7 @@ class gNMIclient(object):
                 gnmi_message_request = SubscribeRequest(aliases=request)
 
             else:
-                logging.error('Subscribe aliases request is specified, but the value is not list.')
+                logger.error('Subscribe aliases request is specified, but the value is not list.')
 
         if subscribe:
             if isinstance(subscribe, dict):
@@ -608,8 +699,7 @@ class gNMIclient(object):
                 gnmi_message_request = SubscribeRequest(subscribe=request)
 
             else:
-                logging.error('Subscribe subscribe requst is specified, but the value is not list.')
-
+                logger.error('Subscribe subscribe requst is specified, but the value is not list.')
 
             if self.__debug:
                 print("gNMI request:\n------------------------------------------------")
@@ -618,12 +708,12 @@ class gNMIclient(object):
 
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
-
     def __generator(self, in_message=None):
         """
         Private method used in the telemetry as the input to the stream RPC requires iterator
         rather than a standard element.
         """
+
         yield in_message
 
 
@@ -650,7 +740,7 @@ def telemetryParser(in_message=None, debug: bool = False):
         response = {}
         if in_message.HasField('update'):
             response.update({'update': {'update': []}})
-            
+
             response['update'].update({'timestamp': in_message.update.timestamp}) if in_message.update.timestamp else in_message.update({'timestamp': 0})
 
             if in_message.update.HasField('prefix'):
@@ -683,7 +773,7 @@ def telemetryParser(in_message=None, debug: bool = False):
                                 tp += f'[{pk_name}={pk_value}]'
 
                         resource_path.append(tp)
-                
+
                     update_container.update({'path': '/'.join(resource_path)})
 
                 else:
@@ -733,6 +823,7 @@ def telemetryParser(in_message=None, debug: bool = False):
             return response
 
     except:
-        logging.error(f'Parsing of telemetry information is failed.')
+        logger.error(f'Parsing of telemetry information is failed.')
 
         return None
+

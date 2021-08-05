@@ -4,7 +4,7 @@
 # Modules
 import re
 from getpass import getpass
-import logging
+from .client import logger
 import sys
 
 # Classes
@@ -38,7 +38,7 @@ class NFData(object):
 
                     except IndexError:
                         print(msg['not_enough_arg'])
-                        logging.critical(msg['not_enough_arg'])
+                        logger.critical(msg['not_enough_arg'])
                         sys.exit(3)
 
                 elif input_vars[ind] == '-p' or input_vars[ind] == '--pass':
@@ -48,13 +48,13 @@ class NFData(object):
 
                     except IndexError:
                         print(msg['not_enough_arg'])
-                        logging.critical(msg['not_enough_arg'])
+                        logger.critical(msg['not_enough_arg'])
                         sys.exit(3)
 
                 elif input_vars[ind] == '-t' or input_vars[ind] == '--target':
                     try:
-                        if re.match('\[.*\]', input_vars[ind + 1]):
-                            self.targets = re.sub('^\[([0-9a-f:]+?)\]:(\d+?)$', '\g<1> \g<2>', input_vars[ind + 1]).split(' ')
+                        if re.match(r'\[.*\]', input_vars[ind + 1]):
+                            self.targets = re.sub(r'^\[([0-9a-f:]+?)\]:(\d+?)$', r'\g<1> \g<2>', input_vars[ind + 1]).split(' ')
 
                         else:
                             self.targets = (str(input_vars[ind + 1].split(':')[0]), int(input_vars[ind + 1].split(':')[1]))
@@ -63,12 +63,12 @@ class NFData(object):
 
                     except IndexError:
                         print(msg['bad_host'])
-                        logging.error(msg['bad_host'])
+                        logger.error(msg['bad_host'])
                         sys.exit(2)
 
                     except ValueError:
                         print(msg['wrong_data'])
-                        logging.error(msg['wrong_data'])
+                        logger.error(msg['wrong_data'])
                         sys.exit(2)
 
 
@@ -78,14 +78,14 @@ class NFData(object):
 
                         if self.operation not in allowed_operations:
                             print(msg['not_allowed_op'])
-                            logging.critical(msg['not_allowed_op'])
+                            logger.critical(msg['not_allowed_op'])
                             sys.exit(2)                            
 
                         ind += 2
 
                     except IndexError:
                         print(msg['not_enough_arg'])
-                        logging.critical(msg['not_enough_arg'])
+                        logger.critical(msg['not_enough_arg'])
                         sys.exit(3)
 
                 elif input_vars[ind] == '-c' or input_vars[ind] == '--cert':
@@ -95,7 +95,7 @@ class NFData(object):
 
                     except IndexError:
                         print(msg['not_enough_arg'])
-                        logging.critical(msg['not_enough_arg'])
+                        logger.critical(msg['not_enough_arg'])
                         sys.exit(3)
 
                 elif input_vars[ind] == '--insecure':
@@ -114,29 +114,29 @@ class NFData(object):
 
                         except IndexError:
                             print(msg['bad_host'])
-                            logging.error(msg['bad_host'])
+                            logger.error(msg['bad_host'])
                             sys.exit(2)
 
                         except ValueError:
                             print(msg['wrong_data'])
-                            logging.error(msg['wrong_data'])
+                            logger.error(msg['wrong_data'])
                             sys.exit(2)
 
                         ind += 2
 
                     except IndexError:
                         print(msg['not_enough_arg'])
-                        logging.critical(msg['not_enough_arg'])
+                        logger.critical(msg['not_enough_arg'])
                         sys.exit(3)
 
                 elif input_vars[ind] == '-h' or input_vars[ind] == '--help':
                     print(msg['help'])
-                    logging.info(f'Help is triggered. The execution is terminated.')
+                    logger.info(f'Help is triggered. The execution is terminated.')
                     sys.exit(2)
 
                 else:
                     print(msg['unknown_arg'])
-                    logging.error(msg['unknown_arg'])
+                    logger.error(msg['unknown_arg'])
                     sys.exit(2)
 
             else:
@@ -145,30 +145,30 @@ class NFData(object):
 
         if not self.username:
             print(msg['not_defined_user'])
-            logging.critical(msg['not_defined_user'])
+            logger.critical(msg['not_defined_user'])
             sys.exit(3)
 
         if not self.password:
             print(msg['not_defined_pass'])
-            logging.warning(msg['not_defined_pass'])
+            logger.warning(msg['not_defined_pass'])
             self.password = str(getpass('gRPC password:'))
 
         if not self.targets:
             print(msg['not_defined_target'])
-            logging.critical(msg['not_defined_target'])
+            logger.critical(msg['not_defined_target'])
             sys.exit(3)
         
         if not self.operation:
             print(msg['not_defined_op'])
-            logging.critical(msg['not_defined_op'])
+            logger.critical(msg['not_defined_op'])
             sys.exit(3)
 
         if not self.gnmi_path and (self.operation == 'get' or self.operation == 'set'):
             print(msg['not_defined_path'])
-            logging.critical(msg['not_defined_path'])
+            logger.critical(msg['not_defined_path'])
             sys.exit(3)
 
         if self.operation == 'set' and not (self.update or self.gnmi_path or self.replace):
             print(msg['not_defined_set'])
-            logging.critical(msg['not_defined_set'])
+            logger.critical(msg['not_defined_set'])
             sys.exit(3)

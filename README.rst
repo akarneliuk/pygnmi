@@ -50,21 +50,96 @@ Tested Network Operating Systems (NOS)
 - Arista EOS
 - Nokia SR OS
 - Cisco IOS XR
+- Juniper JUNOS
 
 Network Operating Systems (NOS) in test
 ---------------------------------------
 - Nokia SRLinux
 - Cisco Nexus
-- Juniper JUNOS
 
 =======
 License
 =======
 By using the pyGNMI tool you agree with `the license <LICENSE.txt>`_.
 
+============
+Contributors
+============
+
+- `Anton Karneliuk <https://github.com/akarneliuk>`_
+- `Stefan Lieberth <https://github.com/slieberth>`_
+- `Prem Anand Haridoss <https://github.com/hprem>`_
+- `Andrew Southard <https://github.com/andsouth44>`_
+- `Jeroen van Bemme <https://github.com/jbemmel>`_
+
 =======
 Dev Log
 =======
+
+Release **0.5.3**:
+
+- Minor improvements and bug fixing.
+- Full coverage of unit tests for all operations (Capabilities, Get, Set(Update, Replace, Delete), Subscribe) and all notations of GNMI Path
+
+Release **0.5.2**:
+
+- Minor bug fixing.
+- First release with unit tests.
+
+Release **0.5.1**:
+
+- Added example for non-blocking iterator for telemetry.
+- Added the extra support for Juniper TLS certificates.
+- Fixed regexp warnings.
+- Changed the logging functionality.
+- Enabled Unix domain socket.
+- Added ``close()`` 
+- Many thanks for all contributors to make this release happen.
+
+Release **0.5.0**:
+
+- Added possibility to extract certificate from the destination network function.
+
+Release **0.4.8**:
+
+- Added documentation in module regading supported the different paths naming conventions. Supported options: ``yang-module:container/container[key=value]``, ``/yang-module:container/container[key=value]``, ``/yang-module:/container/container[key=value]``, ``/container/container[key=value]``
+
+Release **0.4.6**:
+
+- Fixed `gNMI Path issue <https://github.com/akarneliuk/pygnmi/issues/13>`_.
+
+Release **0.4.6**:
+
+- Replaced the ``sys.exit`` with raising exceptions.
+- Minor bug fix.
+- Brought the gNMI path to the canonical format: ``/origin:element1/element2...``.
+- Added possibility to omit the YANG module name, as some vendors doesn't include that in the request per their gNMI implementation: ``/element1/element2...``.
+
+Release **0.4.5**:
+
+- Minor bug fix.
+
+Release **0.4.4**:
+
+- Minor bug fix.
+
+Release **0.4.3**:
+
+- Added possibility to modify the timeout (default value is 5 seconds) for the session using ``gnmi_timeout`` key for ``gNMIclient`` class.
+
+Release **0.4.2**:
+
+- Modified the path generation to comply with `gNMI Path encoding conventions <https://github.com/openconfig/reference/blob/master/rpc/gnmi/gnmi-path-conventions.md>`_.
+- Fixed the problem ``debug`` output, where the requests where not printed in case of response failing.
+
+Release **0.4.1**:
+
+- Minor bug fix.
+
+Release **0.4.0**:
+
+- Added support for Juniper JUNOS
+- Fixed the issue with ``override`` for PKI-based certificates
 
 Release **0.3.12**:
 
@@ -199,9 +274,9 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.3.12&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.5.3&color=success
 .. _version: https://pypi.org/project/pygnmi/
-.. |tag| image:: https://img.shields.io/static/v1?label=status&message=in%20development&color=yellow
+.. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
 .. |license| image:: https://img.shields.io/static/v1?label=license&message=BSD-3-clause&color=success
 .. _license: https://github.com/akarneliuk/pygnmi/blob/master/LICENSE.txt
