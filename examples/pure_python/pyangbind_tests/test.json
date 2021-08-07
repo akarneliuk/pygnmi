@@ -1,0 +1,14 @@
+{
+    "Cisco-IOS-XR-ifmgr-cfg:interface-configurations": {
+        "interface-configuration": [
+            {
+                "shutdown": [
+                    null
+                ],
+                "secondary-admin-state": "maintenance",
+                "active": "act",
+                "interface-name": "Optics0/2/0/0"
+            }
+        ]
+    }
+}
