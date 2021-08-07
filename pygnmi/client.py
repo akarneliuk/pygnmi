@@ -531,6 +531,20 @@ class gNMIclient(object):
             logger.error(f'Collection of Set information failed is failed.')
             return None
 
+    def set_with_retry(self, delete: list = None, replace: list = None, update: list = None, encoding: str = 'json', retry_delay: int = 3):
+        """
+        Performs a set and retries (once) after a temporary failure with StatusCode.FAILED_PRECONDITION
+        """
+        try:
+            return self.set( delete=delete, replace=replace, update=update, encoding=encoding )
+        except Exception as rpc_ex:
+            grpc_error = rpc_ex.__context__ # pygnmi wrapped this on line 528 above
+            # May happen e.g. during system startup or due to lock contention, retry once
+            if grpc_error.code() == grpc.StatusCode.FAILED_PRECONDITION:
+                logger.warning( f'FAILED_PRECONDITION exception during set, retrying in {retry_delay}s...' )
+                time.sleep( retry_delay )
+                return self.set( delete=delete, replace=replace, update=update, encoding=encoding )
+            raise rpc_ex
 
     def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None, timeout: float = 0.0):
         """
