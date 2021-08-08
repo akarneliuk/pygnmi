@@ -14,6 +14,7 @@ import time
 import queue
 import time
 import kthread
+import threading
 
 # Those three modules are required to retrieve cert from the router and extract cn name
 import ssl
@@ -33,7 +34,7 @@ class gNMIclient(object):
     """
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
-    def __init__(self, target: tuple, username: str = None, password: str = None, 
+    def __init__(self, target: tuple, username: str = None, password: str = None,
                  debug: bool = False, insecure: bool = False, path_cert: str = None, path_key: str = None, path_root: str = None, override: str = None,
                  gnmi_timeout: int = 5):
 
@@ -50,6 +51,8 @@ class gNMIclient(object):
         self.__options=[('grpc.ssl_target_name_override', override)] if override else None
         self.__gnmi_timeout = gnmi_timeout
 
+        self.__per_thread = threading.local()
+
         self.__target_path = f'{target[0]}:{target[1]}'
         if re.match('unix:.*', target[0]):
             self.__target = target
@@ -58,6 +61,15 @@ class gNMIclient(object):
             self.__target = (f'[{target[0]}]', target[1])
         else:
             self.__target = target
+
+    def __get_stub__(self):
+        """
+        Internal method to lazily create a per-thread gNMI stub instance.
+        All stubs share the same underlying channel/connection
+        """
+        if not self.__per_thread.stub:
+            self.__per_thread.stub = gNMIStub(self.__channel)
+        return self.__per_thread.stub
 
     def __enter__(self):
         """
@@ -74,7 +86,7 @@ class gNMIclient(object):
         if self.__insecure:
             self.__channel = grpc.insecure_channel(self.__target_path, self.__metadata)
             grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
-            self.__stub = gNMIStub(self.__channel)
+            # self.__stub = gNMIStub(self.__channel)
 
         else:
             if self.__path_cert and self.__path_key and self.__path_root:
@@ -95,7 +107,7 @@ class gNMIclient(object):
                 except:
                     logger.error('The SSL certificate cannot be opened.')
                     raise Exception('The SSL certificate cannot be opened.')
-                    
+
             else:
                 try:
                     ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
@@ -108,12 +120,12 @@ class gNMIclient(object):
 
                 except:
                     logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
-                    raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}') 
+                    raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}')
 
-            self.__channel = grpc.secure_channel(self.__target_path, 
+            self.__channel = grpc.secure_channel(self.__target_path,
                                                  credentials=cert, options=self.__options)
             grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
-            self.__stub = gNMIStub(self.__channel)
+            # self.__stub = gNMIStub(self.__channel)
 
         return self
 
@@ -133,7 +145,7 @@ class gNMIclient(object):
                 print(gnmi_message_request)
                 print("------------------------------------------------")
 
-            gnmi_message_response = self.__stub.Capabilities(gnmi_message_request, metadata=self.__metadata)
+            gnmi_message_response = self.__get_stub__().Capabilities(gnmi_message_request, metadata=self.__metadata)
 
             if self.__debug:
                 print("\n\n\ngNMI response:\n------------------------------------------------")
@@ -268,7 +280,7 @@ class gNMIclient(object):
                 print(gnmi_message_request)
                 print("------------------------------------------------")
 
-            gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
+            gnmi_message_response = self.__get_stub__().Get(gnmi_message_request, metadata=self.__metadata)
 
             if self.__debug:
                 print("\n\n\ngNMI response:\n------------------------------------------------")
@@ -467,7 +479,7 @@ class gNMIclient(object):
                 print(gnmi_message_request)
                 print("------------------------------------------------")
 
-            gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
+            gnmi_message_response = self.__get_stub__().Set(gnmi_message_request, metadata=self.__metadata)
 
             if self.__debug:
                 print("\n\n\ngNMI response:\n------------------------------------------------")
@@ -720,7 +732,7 @@ class gNMIclient(object):
                 print(gnmi_message_request)
                 print("------------------------------------------------")
 
-        return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
+        return self.__get_stub__().Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
     def __generator(self, in_message=None):
         """
@@ -840,4 +852,3 @@ def telemetryParser(in_message=None, debug: bool = False):
         logger.error(f'Parsing of telemetry information is failed.')
 
         return None
-
