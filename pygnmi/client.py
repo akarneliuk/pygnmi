@@ -1,19 +1,18 @@
-#!/usr/bin/env python
 #(c)2019-2021, karneliuk.com
 
 # Modules
 import grpc
 from pygnmi.spec.gnmi_pb2_grpc import gNMIStub
-from pygnmi.spec.gnmi_pb2 import CapabilityRequest, GetRequest, SetRequest, Update, TypedValue, SubscribeRequest, Poll, Subscription, SubscriptionList, SubscriptionMode, Alias, AliasList, QOSMarking, SubscribeResponse
+from pygnmi.spec.gnmi_pb2 import (CapabilityRequest, Encoding, GetRequest, \
+    SetRequest, Update, TypedValue, SubscribeRequest, Poll, SubscriptionList, \
+    SubscriptionMode, AliasList, UpdateResult)
 import re
 import sys
 import json
 import logging
-import time
-
 import queue
 import time
-import kthread
+import threading
 
 # Those three modules are required to retrieve cert from the router and extract cn name
 import ssl
@@ -546,9 +545,125 @@ class gNMIclient(object):
                 return self.set( delete=delete, replace=replace, update=update, encoding=encoding )
             raise rpc_ex
 
+    def _build_subscriptionrequest(self, subscribe: dict):
+
+        if not isinstance(subscribe, dict):
+            raise ValueError('Subscribe subscribe request is specified, but the value is not dict.')
+        request = SubscriptionList()
+
+        # use_alias
+        if 'use_aliases' not in subscribe:
+            subscribe.update({'use_aliases': False})
+
+        if isinstance(subscribe['use_aliases'], bool):
+            request.use_aliases = subscribe['use_aliases']
+        else:
+            raise ValueError('Subsricbe use_aliases should have boolean type.')
+
+        # mode
+        if 'mode' not in subscribe:
+            subscribe.update({'mode': 'stream'})
+
+        if subscribe['mode'].lower() in {'stream', 'once', 'poll'}:
+            if subscribe['mode'].lower() == 'stream':
+                request.mode = 0
+            elif subscribe['mode'].lower() == 'once':
+                request.mode = 1
+            elif subscribe['mode'].lower() == 'poll':
+                request.mode = 2
+        else:
+            raise ValueError('Subscribe mode is out of allowed ranges.')
+
+        # allow_aggregation
+        if 'allow_aggregation' not in subscribe:
+            subscribe.update({'allow_aggregation': False})
+
+        if isinstance(subscribe['allow_aggregation'], bool):
+            request.allow_aggregation = subscribe['allow_aggregation']
+        else:
+            raise ValueError('Subsricbe allow_aggregation should have boolean type.')
+
+        # updates_only
+        if 'updates_only' not in subscribe:
+            subscribe.update({'updates_only': False})
+
+        if isinstance(subscribe['updates_only'], bool):
+            request.updates_only = subscribe['updates_only']
+        else:
+            raise ValueError('Subsricbe updates_only should have boolean type.')
+
+        # encoding
+        if 'encoding' not in subscribe:
+            subscribe.update({'encoding': 'proto'})
+
+        if subscribe['encoding'].upper() in Encoding.keys():
+            request.encoding = Encoding.Value(subscribe['encoding'].upper())
+        else:
+            raise ValueError(f'Subscribe encoding {subscribe["encoding"]} is out of allowed ranges.')
+
+        # qos
+        if 'qos' not in subscribe:
+            subscribe.update({'qos': 0})
+
+        #            if subscribe['qos'] >= 0 and subscribe['qos'] <= 64:
+        #                request.qos = QOSMarking(marking=subscribe['qos'])
+
+        # use_models
+        if 'use_models' not in subscribe:
+            subscribe.update({'use_models': []})
+
+        if isinstance(subscribe['use_models'], list) and subscribe['use_models']:
+            raise NotImplementedError('This will be done later at some point, if there is a need.')
+
+        # prefix
+        if 'prefix' not in subscribe:
+            subscribe.update({'prefix': None})
+
+        if subscribe['prefix']:
+            request.prefix = gnmi_path_generator(subscribe['prefix'])
+
+        # subscription
+        if 'subscription' not in subscribe or not subscribe['subscription']:
+            raise ValueError('Subscribe:subscription value is missing.')
+
+        for se in subscribe['subscription']:
+            # path for that subscription
+            if 'path' not in se:
+                raise ValueError('Subscribe:subscription:path is missing')
+            se_path = gnmi_path_generator(se['path'])
+
+            # subscription entry mode; only relevent when the subscription request is stream
+            if subscribe['mode'].lower() == 'stream':
+                if 'mode' not in se:
+                    raise ValueError('Subscribe:subscription:mode is missing')
+
+                se_mode = SubscriptionMode.Value(se['mode'].upper())
+            else:
+                se_mode = 0
+
+            if 'sample_interval' in se and isinstance(se['sample_interval'], int):
+                se_sample_interval = se['sample_interval']
+            else:
+                se_sample_interval = 0
+
+            if 'suppress_redundant' in se and isinstance(se['suppress_redundant'], bool):
+                se_suppress_redundant = se['suppress_redundant']
+            else:
+                se_suppress_redundant = False
+
+            if 'heartbeat_interval' in se and isinstance(se['heartbeat_interval'], int):
+                se_heartbeat_interval = se['heartbeat_interval']
+            else:
+                se_heartbeat_interval = 0
+
+            request.subscription.add(path=se_path, mode=se_mode, sample_interval=se_sample_interval,
+                                     suppress_redundant=se_suppress_redundant, heartbeat_interval=se_heartbeat_interval)
+
+        return SubscribeRequest(subscribe=request)
+
     def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None, timeout: float = 0.0):
         """
-        Implentation of the subsrcibe gNMI RPC to pool
+        Implementation of the subscribe gNMI RPC to pool
         """
         logger.info(f'Collecting Telemetry...')
 
@@ -582,147 +697,34 @@ class gNMIclient(object):
                 logger.error('Subscribe aliases request is specified, but the value is not list.')
 
         if subscribe:
-            if isinstance(subscribe, dict):
-                request = SubscriptionList()
+            gnmi_message_request = self._build_subscriptionrequest(subscribe)
 
-                # use_alias
-                if 'use_aliases' not in subscribe:
-                    subscribe.update({'use_aliases': False})
-
-                if isinstance(subscribe['use_aliases'], bool):
-                    request.use_aliases = subscribe['use_aliases']
-                else:
-                    raise ValueError('Subsricbe use_aliases should have boolean type.')
-
-                # mode
-                if 'mode' not in subscribe:
-                    subscribe.update({'mode': 'stream'})
-
-                if subscribe['mode'].lower() in {'stream', 'once', 'poll'}:
-                    if subscribe['mode'].lower() == 'stream':
-                        request.mode = 0
-                    elif subscribe['mode'].lower() == 'once':
-                        request.mode = 1
-                    elif subscribe['mode'].lower() == 'poll':
-                        request.mode = 2
-                else:
-                    raise ValueError('Subscribe mode is out of allowed ranges.')
-
-                # allow_aggregation
-                if 'allow_aggregation' not in subscribe:
-                    subscribe.update({'allow_aggregation': False})
-
-                if isinstance(subscribe['allow_aggregation'], bool):
-                    request.allow_aggregation = subscribe['allow_aggregation']
-                else:
-                    raise ValueError('Subsricbe allow_aggregation should have boolean type.')
-
-                # updates_only
-                if 'updates_only' not in subscribe:
-                    subscribe.update({'updates_only': False})
-
-                if isinstance(subscribe['updates_only'], bool):
-                    request.updates_only = subscribe['updates_only']
-                else:
-                    raise ValueError('Subsricbe updates_only should have boolean type.')
-
-                # encoding
-                if 'encoding' not in subscribe:
-                    subscribe.update({'encoding': 'proto'})
-
-                if subscribe['encoding'].lower() in {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}:
-                    if subscribe['encoding'].lower() == 'json':
-                        request.encoding = 0
-                    elif subscribe['encoding'].lower() == 'bytes':
-                        request.encoding = 1
-                    elif subscribe['encoding'].lower() == 'proto':
-                        request.encoding = 2
-                    elif subscribe['encoding'].lower() == 'ascii':
-                        request.encoding = 3
-                    elif subscribe['encoding'].lower() == 'json_ietf':
-                        request.encoding = 4
-                else:
-                    raise ValueError('Subscribe encoding is out of allowed ranges.')
-
-                # qos
-                if 'qos' not in subscribe:
-                    subscribe.update({'qos': 0})
-
-    #            if subscribe['qos'] >= 0 and subscribe['qos'] <= 64:
-    #                request.qos = QOSMarking(marking=subscribe['qos'])
-
-                # use_models
-                if 'use_models' not in subscribe:
-                    subscribe.update({'use_models': []})
-
-                if isinstance(subscribe['use_models'], list) and subscribe['use_models']:
-                    raise NotImplementedError('This will be done later at some point, if there is a need.')
-
-                # prefix
-                if 'prefix' not in subscribe:
-                    subscribe.update({'prefix': None})
-
-                if subscribe['prefix']:
-                    request.prefix = gnmi_path_generator(subscribe['prefix'])
-
-                # subscription
-                if 'subscription' not in subscribe:
-                    subscribe.update({'subscription': []})
-
-                if subscribe['subscription']:
-                    for se in subscribe['subscription']:
-                        if 'path' in se:
-                            v1 = gnmi_path_generator(se['path'])
-                        else:
-                            raise ValueError('Subscribe:subscription:path is missing')
-
-                        if 'mode' in se:
-                            if se['mode'].lower() in {'target_defined', 'on_change', 'sample'}:
-                                if se['mode'].lower() == 'target_defined':
-                                    v2 = 0
-                                elif se['mode'].lower() == 'on_change':
-                                    v2 = 1
-                                elif se['mode'].lower() == 'sample':
-                                    v2 = 2
-
-                            else:
-                                raise ValueError('Subscribe:subscription:mode is not inside allowed range')
-                        else:
-                            raise ValueError('Subscribe:subscription:mode is missing')
-
-                        if 'sample_interval' in se and isinstance(se['sample_interval'], int):
-                            v3 = se['sample_interval']
-                        else:
-                            v3 = 0
-
-                        if 'suppress_redundant' in se and isinstance(se['suppress_redundant'], bool):
-                            v4 = se['suppress_redundant']
-                        else:
-                            v4 = False
-
-                        if 'heartbeat_interval' in se and isinstance(se['heartbeat_interval'], int):
-                            v5 = se['heartbeat_interval']
-                        else:
-                            v5 = 0
-
-                        request.subscription.add(path=v1, mode=v2, sample_interval=v3, suppress_redundant=v4, heartbeat_interval=v5)
-
-                else:
-                    raise ValueError('Subscribe:subscription value is missing.')
-
-                gnmi_message_request = SubscribeRequest(subscribe=request)
-
-            else:
-                logger.error('Subscribe subscribe requst is specified, but the value is not list.')
-
-            if self.__debug:
-                print("gNMI request:\n------------------------------------------------")
-                print(gnmi_message_request)
-                print("------------------------------------------------")
+        if self.__debug:
+            print("gNMI request:\n------------------------------------------------")
+            print(gnmi_message_request)
+            print("------------------------------------------------")
 
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
-    def __generator(self, in_message=None):
+    def subscribe_stream(self, subscribe: dict):
+        if 'mode' not in subscribe:
+            subscribe['mode'] = 'STREAM'
+        gnmi_message_request = self._build_subscriptionrequest(subscribe)
+        return StreamSubscriber(self.__channel, gnmi_message_request, self.__metadata)
+
+    def subscribe_poll(self, subscribe: dict):
+        if 'mode' not in subscribe:
+            subscribe['mode'] = 'POLL'
+        gnmi_message_request = self._build_subscriptionrequest(subscribe)
+        return PollSubscriber(self.__channel, gnmi_message_request, self.__metadata)
+
+    def subscribe_once(self, subscribe: dict):
+        if 'mode' not in subscribe:
+            subscribe['mode'] = 'ONCE'
+        gnmi_message_request = self._build_subscriptionrequest(subscribe)
+        return OnceSubscriber(self.__channel, gnmi_message_request, self.__metadata)
+
+    def __generator(self, in_message):
         """
         Private method used in the telemetry as the input to the stream RPC requires iterator
         rather than a standard element.
@@ -730,13 +732,191 @@ class gNMIclient(object):
 
         yield in_message
 
-
     def __exit__(self, type, value, traceback):
         self.__channel.close()
 
 
     def close(self):
         self.__channel.close()
+
+class _Subscriber:
+    """Represent a subscription to a list of paths.
+
+    The object can be iterated over to process updates from the target as they
+    are available.
+
+    `peek` and `get_update(timeout)` allow to read updates in a time-bound
+    fashion.
+    """
+    def __init__(self, channel, request, metadata):
+        """
+        Create a new object.
+
+        channel: GRPC channel attached to a target
+        request: SubscribeRequest
+        metadata: gNMI metadata for that target
+        """
+
+        # Enqueue a 'POLL' when we should send an empty Poll to the
+        # target, assuming the subscription has mode Poll.
+        # Enqueue a 'STOP' to signal we want to stop the subscription;
+        # when the grpc client sees the end of the iterator, it will
+        # send a close to the target.
+        self._msgs = queue.Queue()
+
+        # updates from the target. The subscript thread pushes updates to that
+        # queue, and get_one_update (called from next()) dequeues them,
+        # decodes them using telemetryParser, then returns to the calling code.
+        self._updates = queue.Queue()
+
+        # start the subscription in a separate thread
+        _client_stream = self._create_client_stream(request)
+        def enqueue_updates():
+            stub = gNMIStub(channel)
+            subscription = stub.Subscribe(_client_stream, metadata=metadata)
+            for update in subscription:
+                self._updates.put(update)
+
+        self._subscribe_thread = threading.Thread(target=enqueue_updates)
+        self._subscribe_thread.start()
+
+    def _create_client_stream(self, request):
+        """Iterator that yields the request, then poll messages when requested.
+
+        This iterator is consumed by grpc. Returning from this
+        iterator will cancel the RPC (grpc will send_close_from_client).
+        """
+
+        def client_stream(request):
+            yield request
+            while True:
+                msg = self._msgs.get(block=True)
+                if msg == 'POLL':
+                    yield SubscribeRequest(poll=Poll())
+                elif msg == 'STOP':
+                    return
+
+        return client_stream(request)
+
+    def _get_one_update(self, timeout=None):
+        return telemetryParser(self._updates.get(block=True, timeout=timeout))
+
+    def _get_updates_till_sync(self, timeout=None):
+        """Read updates from streaming subscriptions, until sync_response
+
+        Successive updates are coalesced together by merging the update/delete
+        lists. Scalar values (timestamp etc.) are set to that of the last
+        update.
+        """
+        resp = {'update': {}}
+        while not 'sync_response' in resp:
+            new_resp = self._get_one_update(timeout=timeout)
+            self._merge_updates(resp, new_resp)
+        return resp
+
+    def _merge_updates(self, resp, new_resp):
+        if 'update' in new_resp:
+            for key in new_resp['update']:
+                if key.upper() in UpdateResult.Operation.keys():
+                    if key not in resp['update']:
+                        resp['update'][key] = []
+                    resp['update'][key] += new_resp['update'][key]
+                else:
+                    resp['update'][key] = new_resp['update'][key]
+        if 'sync_response' in new_resp:
+            resp['sync_response'] = new_resp['sync_response']
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.next()
+
+    def next(self):
+        """Get the next update from the target.
+
+        Blocks until one is available."""
+        return self._next_update(timeout=None)
+
+    def _next_update(self, timeout=None): ...
+    # Overridden by each concrete class, as they each have slightly different
+    # behaviour around waiting (or not) for a sync_response flag
+
+    def get_update(self, timeout):
+        """Get the next update from the target.
+
+        Blocks at most `timeout` seconds; raises TimeoutError if that delay
+        elapsed without having gotten a update from the target.
+        """
+        try:
+            return self._next_update(timeout=timeout)
+        except queue.Empty:
+            raise TimeoutError(f'No update from target after {timeout}s')
+
+    def peek(self) -> bool:
+        """Return True if there are updates from the target that have not yet been
+        received.
+        """
+        return not self._updates.empty()
+
+    def close(self):
+        """Close the subscription.
+
+        This cancels only that SubscribeRequest RPC, but keeps the
+        client session alive.
+        """
+        self._msgs.put('STOP')
+        self._subscribe_thread.join(1)
+
+class StreamSubscriber(_Subscriber):
+    """Stream of updates from the target.
+
+    The first time next() is called (or this object is iterated), updates from
+    the target are coalesced until a message with the sync_response field is
+    seen, and the update is returned. Further calls to next() return messages
+    from the target as they arrive. If there has been no update from the
+    target yet, next() will block.
+
+    """
+    def __init__(self, *args):
+        self._first_update_seen = False
+        super().__init__(*args)
+
+    def _next_update(self, timeout):
+        if not self._first_update_seen:
+            self._first_update_seen = True
+            return self._get_updates_till_sync(timeout=timeout)
+        else:
+            return self._get_one_update(timeout=timeout)
+
+class OnceSubscriber(_Subscriber):
+    """Stream of updates from the target.
+
+    When next() is called (or this object is iterated), updates from the
+    target are returned as they are received. Unlike StreamSubscriber and
+    PollSubscriber, updates from the target are never coalesced. The last
+    update should have the sync_response field set, at which point the calling
+    code should close the subscription.
+
+    'Once' subscriptions are used for potentially large requests, where the
+    updates should be streamed in chunks.
+
+    """
+    def _next_update(self, timeout):
+        return self._get_one_update(timeout=timeout)
+
+class PollSubscriber(_Subscriber):
+    """Poll stream of updates from the target.
+
+    Each time next() is called (or this object is iterated), an empty Poll
+    message is sent to the target. Updates from the target are coalesced until
+    a message with the sync_response field is seen, then the update is
+    returned.
+
+    """
+    def _next_update(self, timeout):
+        self._msgs.put('POLL')
+        return self._get_updates_till_sync(timeout=timeout)
 
 
 # User-defined functions
