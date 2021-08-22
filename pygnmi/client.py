@@ -35,7 +35,7 @@ class gNMIclient(object):
     """
     def __init__(self, target: tuple, username: str = None, password: str = None, 
                  debug: bool = False, insecure: bool = False, path_cert: str = None, path_key: str = None, path_root: str = None, override: str = None,
-                 gnmi_timeout: int = 5):
+                 gnmi_timeout: int = 5, grpc_options=[]):
 
         """
         Initializing the object
@@ -47,7 +47,7 @@ class gNMIclient(object):
         self.__path_cert = path_cert
         self.__path_key = path_key
         self.__path_root = path_root
-        self.__options=[('grpc.ssl_target_name_override', override)] if override else None
+        self.__options=([('grpc.ssl_target_name_override', override)]+grpc_options) if override else grpc_options
         self.__gnmi_timeout = gnmi_timeout
 
         self.__target_path = f'{target[0]}:{target[1]}'
@@ -72,7 +72,7 @@ class gNMIclient(object):
         """
 
         if self.__insecure:
-            self.__channel = grpc.insecure_channel(self.__target_path, self.__metadata)
+            self.__channel = grpc.insecure_channel(self.__target_path, self.__metadata + self.__options)
             grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
             self.__stub = gNMIStub(self.__channel)
 
@@ -102,7 +102,7 @@ class gNMIclient(object):
                     ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
                     ssl_cert_common_names = ssl_cert_deserialized.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
                     ssl_target_name_override = ssl_cert_common_names[0].value
-                    self.__options = [("grpc.ssl_target_name_override", ssl_target_name_override)]
+                    self.__options += [("grpc.ssl_target_name_override", ssl_target_name_override)]
                     logger.warning('ssl_target_name_override is applied, should be used for testing only!')
                     cert = grpc.ssl_channel_credentials(ssl_cert)
 
