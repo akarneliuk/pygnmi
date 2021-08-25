@@ -300,7 +300,7 @@ class gNMIclient(object):
                                             tp += path_elem.name
 
                                         if path_elem.key:
-                                            for pk_name, pk_value in path_elem.key.items():
+                                            for pk_name, pk_value in sorted(path_elem.key.items()):
                                                 tp += f'[{pk_name}={pk_value}]'
 
                                         resource_path.append(tp)
@@ -491,7 +491,7 @@ class gNMIclient(object):
                                     tp += path_elem.name
 
                                 if path_elem.key:
-                                    for pk_name, pk_value in path_elem.key.items():
+                                    for pk_name, pk_value in sorted(path_elem.key.items()):
                                         tp += f'[{pk_name}={pk_value}]'
 
                                 resource_path.append(tp)
