@@ -300,7 +300,7 @@ class gNMIclient(object):
                                             tp += path_elem.name
 
                                         if path_elem.key:
-                                            for pk_name, pk_value in path_elem.key.items():
+                                            for pk_name, pk_value in sorted(path_elem.key.items()):
                                                 tp += f'[{pk_name}={pk_value}]'
 
                                         resource_path.append(tp)
@@ -491,7 +491,7 @@ class gNMIclient(object):
                                     tp += path_elem.name
 
                                 if path_elem.key:
-                                    for pk_name, pk_value in path_elem.key.items():
+                                    for pk_name, pk_value in sorted(path_elem.key.items()):
                                         tp += f'[{pk_name}={pk_value}]'
 
                                 resource_path.append(tp)
@@ -765,7 +765,8 @@ def telemetryParser(in_message=None, debug: bool = False):
                         tp += prefix_elem.name
 
                     if prefix_elem.key:
-                        for pk_name, pk_value in prefix_elem.key.items():
+                        # Use 'sorted' to have a consistent ordering of keys
+                        for pk_name, pk_value in sorted(prefix_elem.key.items()):
                             tp += f'[{pk_name}={pk_value}]'
 
                     resource_prefix.append(tp)
@@ -783,7 +784,8 @@ def telemetryParser(in_message=None, debug: bool = False):
                             tp += path_elem.name
 
                         if path_elem.key:
-                            for pk_name, pk_value in path_elem.key.items():
+                            # Use 'sorted' to have a consistent ordering of keys
+                            for pk_name, pk_value in sorted(path_elem.key.items()):
                                 tp += f'[{pk_name}={pk_value}]'
 
                         resource_path.append(tp)
