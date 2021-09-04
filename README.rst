@@ -2,7 +2,7 @@
 pyGNMI: Python gNMI client
 ==========================
 
-|project|_ |version|_ |tag|_ |license|_
+|project|_ |version|_ |coverage|_ |tag|_ |license|_
 
 This repository contains pure Python implementation of the gNMI client to interact with the network functions.
 
@@ -71,15 +71,23 @@ Contributors
 - `Prem Anand Haridoss <https://github.com/hprem>`_
 - `Andrew Southard <https://github.com/andsouth44>`_
 - `Jeroen van Bemme <https://github.com/jbemmel>`_
+- `Frédéric Perrin <https://github.com/fperrin>`_
 
 =======
 Dev Log
 =======
 
+Release **0.6.0**:
+
+- Significant improvements in telemetry capabilities of the pygnmi. Now you can use ``subscribe2`` method by simply providing the a corredponding dictionary at input and all modes (STREA, ONCE, POLL) are working correctly.
+- Function ``telemetryParser`` is now automatically used inside ``subscribe2``.
+- Telemetry is now implemeted using ``threading``.
+- Added new unit tests with ``pytest`` and added code coverage with ``coverage.py``.
+
 Release **0.5.3**:
 
 - Minor improvements and bug fixing.
-- Full coverage of unit tests for all operations (Capabilities, Get, Set(Update, Replace, Delete), Subscribe) and all notations of GNMI Path
+- Full coverage of unit tests for all operations (Capabilities, Get, Set(Update, Replace, Delete), Subscribe) and all notations of GNMI Path.
 
 Release **0.5.2**:
 
@@ -282,3 +290,5 @@ Release **0.1.0**:
 .. _license: https://github.com/akarneliuk/pygnmi/blob/master/LICENSE.txt
 .. |project| image:: https://img.shields.io/badge/akarneliuk%2Fpygnmi-blueviolet.svg?logo=github&color=success
 .. _project: https://github.com/akarneliuk/pygnmi/
+.. |version| image:: https://img.shields.io/static/v1?label=coverage&message=62%&color=yellow
+.. _version: https://github.com/nedbat/coveragepy

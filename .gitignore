@@ -6,3 +6,6 @@ log/
 .vscode/
 **/.env
 **/.pytest_cache/
+**/.coverage
+**/htmlcov/
+**/coverage.json

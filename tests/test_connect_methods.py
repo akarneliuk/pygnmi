@@ -5,14 +5,15 @@ from pygnmi.client import gNMIclient
 from dotenv import load_dotenv
 import os
 
+
 # User-defined functions (Tests)
 def test_capabilities_connect_method():
     load_dotenv()
-    username_str = os.getenv("USER")
-    password_str = os.getenv("PASS")
-    hostname_str = os.getenv("HOST")
-    port_str = os.getenv("PORT")
-    path_cert_str = os.getenv("CERT")
+    username_str = os.getenv("PYGNMI_USER")
+    password_str = os.getenv("PYGNMI_PASS")
+    hostname_str = os.getenv("PYGNMI_HOST")
+    port_str = os.getenv("PYGNMI_PORT")
+    path_cert_str = os.getenv("PYGNMI_CERT")
 
     gc = gNMIclient(target=(hostname_str, port_str), username=username_str, password=password_str, path_cert=path_cert_str)
     gc.connect()
@@ -25,12 +26,13 @@ def test_capabilities_connect_method():
     assert "supported_encodings" in result
     assert "gnmi_version" in result
 
+
 def test_get_connect_method():
     load_dotenv()
-    username_str = os.getenv("USER")
-    password_str = os.getenv("PASS")
-    hostname_str = os.getenv("HOST")
-    port_str = os.getenv("PORT")
+    username_str = os.getenv("PYGNMI_USER")
+    password_str = os.getenv("PYGNMI_PASS")
+    hostname_str = os.getenv("PYGNMI_HOST")
+    port_str = os.getenv("PYGNMI_PORT")
     path_cert_str = os.getenv("CERT")
 
     gc = gNMIclient(target=(hostname_str, port_str), username=username_str, password=password_str, path_cert=path_cert_str)

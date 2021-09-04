@@ -66,7 +66,7 @@ if __name__ == "__main__":
                                 }
                             ], 
                             'use_aliases': False, 
-                            'mode': 'stream', 
+                            'mode': 'once', 
                             'encoding': 'proto'}
 
             subscribe2 = {
@@ -81,10 +81,17 @@ if __name__ == "__main__":
                             'mode': 'stream', 
                             'encoding': 'json'}
 
-            result = GC.subscribe(subscribe=subscribe1)
-            for ent in result:
-                print(telemetryParser(ent))
+            result = GC.subscribe2(subscribe=subscribe1)
 
+            if subscribe1["mode"] == "stream":
+                for ent in result:
+                    print(ent)
+
+            elif subscribe1["mode"] == "once":
+                for ent in result:
+                    print(ent)
+                    if "sync_response" in ent:
+                        break
 
         if result:
             print(result)

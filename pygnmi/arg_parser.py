@@ -55,6 +55,7 @@ class NFData(object):
                     try:
                         if re.match(r'\[.*\]', input_vars[ind + 1]):
                             self.targets = re.sub(r'^\[([0-9a-f:]+?)\]:(\d+?)$', r'\g<1> \g<2>', input_vars[ind + 1]).split(' ')
+                            self.targets = (str(self.targets[0]), int(self.targets[1]))
 
                         else:
                             self.targets = (str(input_vars[ind + 1].split(':')[0]), int(input_vars[ind + 1].split(':')[1]))

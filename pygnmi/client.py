@@ -14,10 +14,12 @@ import queue
 import time
 import threading
 
+
 # Those three modules are required to retrieve cert from the router and extract cn name
 import ssl
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+
 
 # Own modules
 from pygnmi.path_generator import gnmi_path_generator
@@ -34,7 +36,7 @@ class gNMIclient(object):
     """
     def __init__(self, target: tuple, username: str = None, password: str = None, 
                  debug: bool = False, insecure: bool = False, path_cert: str = None, path_key: str = None, path_root: str = None, override: str = None,
-                 gnmi_timeout: int = 5, grpc_options=[]):
+                 gnmi_timeout: int = 5, grpc_options: list = []):
 
         """
         Initializing the object
@@ -57,6 +59,7 @@ class gNMIclient(object):
             self.__target = (f'[{target[0]}]', target[1])
         else:
             self.__target = target
+
 
     def __enter__(self):
         """
@@ -530,25 +533,31 @@ class gNMIclient(object):
             logger.error(f'Collection of Set information failed is failed.')
             return None
 
+
     def set_with_retry(self, delete: list = None, replace: list = None, update: list = None, encoding: str = 'json', retry_delay: int = 3):
         """
         Performs a set and retries (once) after a temporary failure with StatusCode.FAILED_PRECONDITION
         """
         try:
             return self.set( delete=delete, replace=replace, update=update, encoding=encoding )
+
         except Exception as rpc_ex:
             grpc_error = rpc_ex.__context__ # pygnmi wrapped this on line 528 above
             # May happen e.g. during system startup or due to lock contention, retry once
+
             if grpc_error.code() == grpc.StatusCode.FAILED_PRECONDITION:
                 logger.warning( f'FAILED_PRECONDITION exception during set, retrying in {retry_delay}s...' )
                 time.sleep( retry_delay )
+
                 return self.set( delete=delete, replace=replace, update=update, encoding=encoding )
+
             raise rpc_ex
 
-    def _build_subscriptionrequest(self, subscribe: dict):
 
+    def _build_subscriptionrequest(self, subscribe: dict):
         if not isinstance(subscribe, dict):
             raise ValueError('Subscribe subscribe request is specified, but the value is not dict.')
+
         request = SubscriptionList()
 
         # use_alias
@@ -661,6 +670,7 @@ class gNMIclient(object):
 
         return SubscribeRequest(subscribe=request)
 
+
     def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None, timeout: float = 0.0):
         """
         Implementation of the subscribe gNMI RPC to pool
@@ -706,11 +716,35 @@ class gNMIclient(object):
 
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
+
+    def subscribe2(self, subscribe: dict):
+        """
+        New High-level method to serve temetry based on recent additions
+        """
+
+        if 'mode' not in subscribe:
+            subscribe.update({'mode': 'stream'})
+
+        if subscribe['mode'].lower() in {'stream', 'once', 'poll'}:
+            if subscribe['mode'].lower() == 'stream':
+                return self.subscribe_stream(subscribe=subscribe)
+
+            elif subscribe['mode'].lower() == 'poll':
+                return self.subscribe_poll(subscribe=subscribe)
+
+            elif subscribe['mode'].lower() == 'once':
+                return self.subscribe_once(subscribe=subscribe)
+
+        else:
+            raise Exception('Unknown subscription request mode.')
+
+
     def subscribe_stream(self, subscribe: dict):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'STREAM'
         gnmi_message_request = self._build_subscriptionrequest(subscribe)
         return StreamSubscriber(self.__channel, gnmi_message_request, self.__metadata)
+
 
     def subscribe_poll(self, subscribe: dict):
         if 'mode' not in subscribe:
@@ -718,11 +752,13 @@ class gNMIclient(object):
         gnmi_message_request = self._build_subscriptionrequest(subscribe)
         return PollSubscriber(self.__channel, gnmi_message_request, self.__metadata)
 
+
     def subscribe_once(self, subscribe: dict):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'ONCE'
         gnmi_message_request = self._build_subscriptionrequest(subscribe)
         return OnceSubscriber(self.__channel, gnmi_message_request, self.__metadata)
+
 
     def __generator(self, in_message):
         """
@@ -732,12 +768,14 @@ class gNMIclient(object):
 
         yield in_message
 
+
     def __exit__(self, type, value, traceback):
         self.__channel.close()
 
 
     def close(self):
         self.__channel.close()
+
 
 class _Subscriber:
     """Represent a subscription to a list of paths.
@@ -780,6 +818,7 @@ class _Subscriber:
         self._subscribe_thread = threading.Thread(target=enqueue_updates)
         self._subscribe_thread.start()
 
+
     def _create_client_stream(self, request):
         """Iterator that yields the request, then poll messages when requested.
 
@@ -798,8 +837,10 @@ class _Subscriber:
 
         return client_stream(request)
 
+
     def _get_one_update(self, timeout=None):
         return telemetryParser(self._updates.get(block=True, timeout=timeout))
+
 
     def _get_updates_till_sync(self, timeout=None):
         """Read updates from streaming subscriptions, until sync_response
@@ -814,6 +855,7 @@ class _Subscriber:
             self._merge_updates(resp, new_resp)
         return resp
 
+
     def _merge_updates(self, resp, new_resp):
         if 'update' in new_resp:
             for key in new_resp['update']:
@@ -826,11 +868,14 @@ class _Subscriber:
         if 'sync_response' in new_resp:
             resp['sync_response'] = new_resp['sync_response']
 
+
     def __iter__(self):
         return self
 
+
     def __next__(self):
         return self.next()
+
 
     def next(self):
         """Get the next update from the target.
@@ -838,9 +883,11 @@ class _Subscriber:
         Blocks until one is available."""
         return self._next_update(timeout=None)
 
+
     def _next_update(self, timeout=None): ...
     # Overridden by each concrete class, as they each have slightly different
     # behaviour around waiting (or not) for a sync_response flag
+
 
     def get_update(self, timeout):
         """Get the next update from the target.
@@ -853,11 +900,13 @@ class _Subscriber:
         except queue.Empty:
             raise TimeoutError(f'No update from target after {timeout}s')
 
+
     def peek(self) -> bool:
         """Return True if there are updates from the target that have not yet been
         received.
         """
         return not self._updates.empty()
+
 
     def close(self):
         """Close the subscription.
@@ -867,6 +916,7 @@ class _Subscriber:
         """
         self._msgs.put('STOP')
         self._subscribe_thread.join(1)
+
 
 class StreamSubscriber(_Subscriber):
     """Stream of updates from the target.
@@ -882,12 +932,14 @@ class StreamSubscriber(_Subscriber):
         self._first_update_seen = False
         super().__init__(*args)
 
+
     def _next_update(self, timeout):
         if not self._first_update_seen:
             self._first_update_seen = True
             return self._get_updates_till_sync(timeout=timeout)
         else:
             return self._get_one_update(timeout=timeout)
+
 
 class OnceSubscriber(_Subscriber):
     """Stream of updates from the target.
@@ -904,6 +956,7 @@ class OnceSubscriber(_Subscriber):
     """
     def _next_update(self, timeout):
         return self._get_one_update(timeout=timeout)
+
 
 class PollSubscriber(_Subscriber):
     """Poll stream of updates from the target.

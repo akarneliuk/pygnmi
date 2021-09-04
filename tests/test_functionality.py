@@ -13,11 +13,11 @@ from tests.messages import test_set_update_tuple, test_set_replace_tuple, test_d
 # User-defined functions (Tests)
 def test_capabilities():
     load_dotenv()
-    username_str = os.getenv("USER")
-    password_str = os.getenv("PASS")
-    hostname_str = os.getenv("HOST")
-    port_str = os.getenv("PORT")
-    path_cert_str = os.getenv("CERT")
+    username_str = os.getenv("PYGNMI_USER")
+    password_str = os.getenv("PYGNMI_PASS")
+    hostname_str = os.getenv("PYGNMI_HOST")
+    port_str = os.getenv("PYGNMI_PORT")
+    path_cert_str = os.getenv("PYGNMI_CERT")
 
     with gNMIclient(target=(hostname_str, port_str), username=username_str, 
                     password=password_str, path_cert=path_cert_str) as gc:
@@ -30,11 +30,11 @@ def test_capabilities():
 
 def test_get_signle_path_all_path_formats():
     load_dotenv()
-    username_str = os.getenv("USER")
-    password_str = os.getenv("PASS")
-    hostname_str = os.getenv("HOST")
-    port_str = os.getenv("PORT")
-    path_cert_str = os.getenv("CERT")
+    username_str = os.getenv("PYGNMI_USER")
+    password_str = os.getenv("PYGNMI_PASS")
+    hostname_str = os.getenv("PYGNMI_HOST")
+    port_str = os.getenv("PYGNMI_PORT")
+    path_cert_str = os.getenv("PYGNMI_CERT")
 
     with gNMIclient(target=(hostname_str, port_str), username=username_str, 
                     password=password_str, path_cert=path_cert_str) as gc:
@@ -115,11 +115,11 @@ def test_get_signle_path_all_path_formats():
 
 def test_get_multiple_paths():
     load_dotenv()
-    username_str = os.getenv("USER")
-    password_str = os.getenv("PASS")
-    hostname_str = os.getenv("HOST")
-    port_str = os.getenv("PORT")
-    path_cert_str = os.getenv("CERT")
+    username_str = os.getenv("PYGNMI_USER")
+    password_str = os.getenv("PYGNMI_PASS")
+    hostname_str = os.getenv("PYGNMI_HOST")
+    port_str = os.getenv("PYGNMI_PORT")
+    path_cert_str = os.getenv("PYGNMI_CERT")
 
     with gNMIclient(target=(hostname_str, port_str), username=username_str, 
                     password=password_str, path_cert=path_cert_str) as gc:
@@ -140,11 +140,11 @@ def test_get_multiple_paths():
 
 def test_set_update(msg1: tuple = test_set_update_tuple):
     load_dotenv()
-    username_str = os.getenv("USER")
-    password_str = os.getenv("PASS")
-    hostname_str = os.getenv("HOST")
-    port_str = os.getenv("PORT")
-    path_cert_str = os.getenv("CERT")
+    username_str = os.getenv("PYGNMI_USER")
+    password_str = os.getenv("PYGNMI_PASS")
+    hostname_str = os.getenv("PYGNMI_HOST")
+    port_str = os.getenv("PYGNMI_PORT")
+    path_cert_str = os.getenv("PYGNMI_CERT")
 
     with gNMIclient(target=(hostname_str, port_str), username=username_str, 
                     password=password_str, path_cert=path_cert_str) as gc:
@@ -173,11 +173,11 @@ def test_set_update(msg1: tuple = test_set_update_tuple):
 
 def test_set_replace(msg1: tuple = test_set_update_tuple, msg2: tuple = test_set_replace_tuple):
     load_dotenv()
-    username_str = os.getenv("USER")
-    password_str = os.getenv("PASS")
-    hostname_str = os.getenv("HOST")
-    port_str = os.getenv("PORT")
-    path_cert_str = os.getenv("CERT")
+    username_str = os.getenv("PYGNMI_USER")
+    password_str = os.getenv("PYGNMI_PASS")
+    hostname_str = os.getenv("PYGNMI_HOST")
+    port_str = os.getenv("PYGNMI_PORT")
+    path_cert_str = os.getenv("PYGNMI_CERT")
 
     with gNMIclient(target=(hostname_str, port_str), username=username_str, 
                     password=password_str, path_cert=path_cert_str) as gc:
@@ -213,11 +213,11 @@ def test_set_replace(msg1: tuple = test_set_update_tuple, msg2: tuple = test_set
 
 def test_set_delete(msg1: tuple = test_set_update_tuple, path2: str = test_delete_second_str):
     load_dotenv()
-    username_str = os.getenv("USER")
-    password_str = os.getenv("PASS")
-    hostname_str = os.getenv("HOST")
-    port_str = os.getenv("PORT")
-    path_cert_str = os.getenv("CERT")
+    username_str = os.getenv("PYGNMI_USER")
+    password_str = os.getenv("PYGNMI_PASS")
+    hostname_str = os.getenv("PYGNMI_HOST")
+    port_str = os.getenv("PYGNMI_PORT")
+    path_cert_str = os.getenv("PYGNMI_CERT")
 
     with gNMIclient(target=(hostname_str, port_str), username=username_str, 
                     password=password_str, path_cert=path_cert_str) as gc:
@@ -246,11 +246,11 @@ def test_set_delete(msg1: tuple = test_set_update_tuple, path2: str = test_delet
 
 def test_telemetry(subscribe1: dict = test_telemetry_dict):
     load_dotenv()
-    username_str = os.getenv("USER")
-    password_str = os.getenv("PASS")
-    hostname_str = os.getenv("HOST")
-    port_str = os.getenv("PORT")
-    path_cert_str = os.getenv("CERT")
+    username_str = os.getenv("PYGNMI_USER")
+    password_str = os.getenv("PYGNMI_PASS")
+    hostname_str = os.getenv("PYGNMI_HOST")
+    port_str = os.getenv("PYGNMI_PORT")
+    path_cert_str = os.getenv("PYGNMI_CERT")
 
     with gNMIclient(target=(hostname_str, port_str), username=username_str, 
                     password=password_str, path_cert=path_cert_str) as gc:

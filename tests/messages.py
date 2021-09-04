@@ -34,3 +34,16 @@ test_telemetry_dict = {
                 'use_aliases': False, 
                 'mode': 'stream', 
                 'encoding': 'proto'}
+
+test_telemetry_dict_once = {
+                'subscription': [
+                    {
+                        'path': 'openconfig-interfaces:interfaces/interface[name=Ethernet1]',
+                        'mode': 'sample',
+                        'sample_interval': 10000000000,
+                        'heartbeat_interval': 30000000000
+                    }
+                ], 
+                'use_aliases': False, 
+                'mode': 'once', 
+                'encoding': 'proto'}

@@ -3,3 +3,5 @@ grpcio-tools
 twine
 pytest
 python-dotenv
+coverage
+kthread

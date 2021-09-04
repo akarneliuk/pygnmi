@@ -30,10 +30,12 @@ for host_entry in hosts:
 
             while True:
                 cmd = input(prompt_msg)
+
                 if cmd.isnumeric():
                     pathid = int(cmd)
                     notification = polls[pathid].get_update(timeout=5)
                     print(notification)
+                    
                 elif cmd == "STOP":
                     [poll.close() for poll in polls]
                     break
