@@ -291,4 +291,4 @@ Release **0.1.0**:
 .. |project| image:: https://img.shields.io/badge/akarneliuk%2Fpygnmi-blueviolet.svg?logo=github&color=success
 .. _project: https://github.com/akarneliuk/pygnmi/
 .. |coverage| image:: https://img.shields.io/static/v1?label=coverage&message=62%&color=yellow
-.. _coverage: https://github.com/akarneliuk/pygnmi/blob/master/htmlcov/index.html
+.. _coverage: https://github.com/nedbat/coveragepy
