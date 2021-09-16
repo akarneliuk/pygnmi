@@ -75,8 +75,6 @@ class gNMIclient(object):
 
         if self.__insecure:
             self.__channel = grpc.insecure_channel(self.__target_path, self.__metadata + self.__options)
-            grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
-            self.__stub = gNMIStub(self.__channel)
 
         else:
             if self.__path_cert and self.__path_key and self.__path_root:
@@ -114,11 +112,18 @@ class gNMIclient(object):
 
             self.__channel = grpc.secure_channel(self.__target_path, 
                                                  credentials=cert, options=self.__options)
-            grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
-            self.__stub = gNMIStub(self.__channel)
+
+        if self.__gnmi_timeout is None or self.__gnmi_timeout > 0:
+           self.wait_for_connect()
+        self.__stub = gNMIStub(self.__channel)
 
         return self
 
+    def wait_for_connect(self):
+        """
+        Wait for the gNMI connection to the server to come up, with timeout given in init
+        """
+        grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
 
     def capabilities(self):
         """
