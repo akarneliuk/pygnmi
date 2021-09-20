@@ -8,7 +8,7 @@ msg = {
     'not_defined_pass': 'The password is not defined.',
     'not_defined_target': 'There are no hosts provided. The execution is terminated.',
     'not_enough_arg': 'There are not enough arguments.',
-    'wrong_data': 'The argument is provided in thw wrong type (e.g. string instead of integer).',
+    'wrong_data': 'The argument is provided in the wrong type (e.g. string instead of integer).',
     'not_allowed_op': 'The request gNMI operation type is now allowed.',
     'not_defined_op': 'The gNMI operation type is not defined.',
     'not_defined_path': 'The gNMI path is ot defined with Get or Set operation.',
