@@ -114,16 +114,16 @@ class gNMIclient(object):
                                                  credentials=cert, options=self.__options)
 
         if self.__gnmi_timeout is None or self.__gnmi_timeout > 0:
-           self.wait_for_connect()
+           self.wait_for_connect(self.__gnmi_timeout)
         self.__stub = gNMIStub(self.__channel)
 
         return self
 
-    def wait_for_connect(self):
+    def wait_for_connect(self, timeout: int):
         """
-        Wait for the gNMI connection to the server to come up, with timeout given in init
+        Wait for the gNMI connection to the server to come up, with given timeout
         """
-        grpc.channel_ready_future(self.__channel).result(timeout=self.__gnmi_timeout)
+        grpc.channel_ready_future(self.__channel).result(timeout=timeout)
 
     def capabilities(self):
         """
