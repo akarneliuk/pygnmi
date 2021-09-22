@@ -3,97 +3,115 @@
 
 
 # Modules
-import sys
+import json
 import logging
 import os
 
-
 # Own modules
-from pygnmi.arg_parser import NFData
+from pygnmi.arg_parser import parse_args
 from pygnmi.client import gNMIclient, telemetryParser
 from pygnmi.artefacts.messages import msg
 
-
 # Variables
-path_msg = 'artefacts/messages.json'
 path_log = 'log/execution.log'
 
 
 # Body
-if __name__ == "__main__":
+def main():
+
     # Setting logger
     if not os.path.exists(path_log.split('/')[0]):
         os.mkdir(path_log.split('/')[0])
 
-    logging.basicConfig(filename=path_log, level=logging.INFO, format='%(asctime)s.%(msecs)03d+01:00,%(levelname)s,%(message)s', datefmt='%Y-%m-%dT%H:%M:%S')
+    logging.basicConfig(
+        filename=path_log,
+        level=logging.INFO,
+        format='%(asctime)s.%(msecs)03d+01:00,%(levelname)s,%(message)s',
+        datefmt='%Y-%m-%dT%H:%M:%S'
+    )
     logging.info('Starting application...')
 
     # Collecting inputs
-    del sys.argv[0]
-    DD = NFData(sys.argv, msg)
+    args = parse_args(msg)
 
     # gNMI operation
-    with gNMIclient(DD.targets, username=DD.username, password=DD.password, 
-                    debug=DD.to_print, insecure=DD.insecure, path_cert="./cert.pem") as GC:
+    with gNMIclient(
+        target=args.target, username=args.username, password=args.password,
+        path_cert=args.path_cert, path_key=args.path_key, path_root=args.path_root,
+        override=args.override, insecure=args.insecure, debug=args.print,
+    ) as GC:
+
         result = None
-        
-        if DD.operation == 'capabilities':
-            print(f'Doing {DD.operation} request to {DD.targets}...')
+
+        if args.operation == 'capabilities':
+            print(f'Doing {args.operation} request to {args.target}...')
             result = GC.capabilities()
 
-        elif DD.operation == 'get':
-            print(f'Doing {DD.operation} request to {DD.targets}...')
-            result = GC.get(DD.gnmi_path, datatype='all', encoding='json')
+        elif args.operation == 'get':
+            print(f'Doing {args.operation} request to {args.target}...')
+            result = GC.get(args.gnmi_path, datatype=args.datastore, encoding='json')
 
-        elif DD.operation == 'set':
-            print(f'Doing {DD.operation} request to {DD.targets}...')
-            deletes = DD.gnmi_path if DD.gnmi_path else None
-            updates = DD.update if DD.update else None
-            replaces = DD.replace if DD.replace else None
-            encoding = 'json_ietf'
+        elif args.operation.startswith('set'):
+            print(f'Doing {args.operation} request to {args.target}...')
+            mode = args.operation.split("-")[1]
+            kwargs = {}
+            if mode == "delete":
+                # For a delete request, give kwarg delete=[path]
+                kwargs[mode] = args.gnmi_path
+            else:
+                # For update (or replace) request, give kwarg update=[(path, data)]
+                with open(args.file, "r") as f:
+                    data = f.read()
+                jdata = json.loads(data)
+                kwargs[mode] = [(args.gnmi_path[0], jdata)]
+            result = GC.set(encoding="json_ietf", **kwargs)
 
-            result = GC.set(delete=deletes, update=updates, replace=replaces, encoding=encoding)
+        elif args.operation.startswith('subscribe'):
+            mode = args.operation.split("-")[1]
+            subscription_list = [
+                {
+                    'path': xpath,
+                    'mode': 'sample',
+                    'sample_interval': 10000000000,
+                    'heartbeat_interval': 30000000000
+                }
+                for xpath in args.gnmi_path
+            ]
+            subscribe = {
+                'subscription': subscription_list,
+                'use_aliases': False,
+                'mode': mode,
+                'encoding': 'json'
+            }
 
-        elif DD.operation == 'subscribe':
-#            aliases = [('openconfig-interfaces:interfaces', '#interfaces'), ('openconfig-acl:acl', '#acl')]
-            subscribe1 = {
-                            'subscription': [
-                                {
-                                    'path': 'openconfig-interfaces:interfaces/interface[name=Ethernet1]',
-                                    'mode': 'sample',
-                                    'sample_interval': 10000000000,
-                                    'heartbeat_interval': 30000000000
-                                }
-                            ], 
-                            'use_aliases': False, 
-                            'mode': 'once', 
-                            'encoding': 'proto'}
+            result = GC.subscribe2(subscribe=subscribe)
 
-            subscribe2 = {
-                            'subscription': [
-                                {
-                                    'path': 'openconfig-interfaces:interfaces/interface[name=1/1/c1/1]',
-                                    'mode': 'sample',
-                                    'sample_interval': 10000000000
-                                }
-                            ], 
-                            'use_aliases': False, 
-                            'mode': 'stream', 
-                            'encoding': 'json'}
+            if mode == "stream":
+                try:
+                    for ent in result:
+                        print(ent)
+                except KeyboardInterrupt:
+                    result.close()
 
-            result = GC.subscribe2(subscribe=subscribe1)
-
-            if subscribe1["mode"] == "stream":
-                for ent in result:
-                    print(ent)
-
-            elif subscribe1["mode"] == "once":
+            elif mode == "once":
                 for ent in result:
                     print(ent)
                     if "sync_response" in ent:
+                        break
+
+            elif mode == "poll":
+                while True:
+                    try:
+                        input("Press enter to poll, ctrl+c to quit")
+                        ent = result.get_update(timeout=5)
+                        print(ent)
+                    except KeyboardInterrupt:
+                        result.close()
                         break
 
         if result:
             print(result)
 
 
+if __name__ == "__main__":
+    main()
