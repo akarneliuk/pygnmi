@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #(c)2019-2021, karneliuk.com
 
 # Modules
@@ -6,7 +5,24 @@ from pygnmi.spec.gnmi_pb2 import *
 import re, sys
 
 # User-defined functions
-def gnmi_path_generator(path_in_question: list):
+def gnmi_path_generator(path_in_question: str):
+    """Parses an XPath expression into a gNMI Path
+
+    Accepted syntaxes:
+
+    - "" or "/" for the empty path;
+
+    - "rfc7951:/" for the empty path with origin set to rfc7951
+
+    - "yang-module:container/container[key=value]/other-module:leaf";
+      the origin set to yang-module, and specify a key-value selector
+
+    - "/yang-module:container/container[key=value]/other-module:leaf";
+       identical to the previous
+
+    - "/container/container[key=value]"; the origin left empty
+
+    """
     gnmi_path = Path()
     keys = []
     temp_path = ''
@@ -32,15 +48,19 @@ def gnmi_path_generator(path_in_question: list):
         path_elements = path_in_question.split('/')
         path_elements = list(filter(None, path_elements))
 
+        # Check if first path element contains a colon, and use that to set origin
+        if path_elements and re.match('.+?:.*?', path_elements[0]):
+            pe_entry = path_elements[0]
+            parts = pe_entry.split(':', 1)
+            gnmi_path.origin = parts[0]
+
+            if len(parts) > 1 and parts[1]:
+                path_elements[0] = parts[1]
+            else:
+                del path_elements[0]
+
         for pe_entry in path_elements:
-            if re.match('.+?:.*?', pe_entry):
-                parts = pe_entry.split(':')
-                gnmi_path.origin = parts[0]
-
-                if len(parts) > 1 and parts[1]:
-                    gnmi_path.elem.add(name=parts[1])
-
-            elif re.match(r'.+?\[\d+?\]', pe_entry):
+            if re.match(r'.+?\[\d+?\]', pe_entry):
                 element_keys = {}
                 path_info = [re.sub(']', '', en) for en in pe_entry.split('[')]
                 element = path_info.pop(0)
