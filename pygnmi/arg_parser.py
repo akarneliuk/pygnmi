@@ -54,7 +54,7 @@ def parse_args(msg):
         type=str,
         required=False,
         choices=[
-            "get", "set-update", "set-replace", "set-delete",
+            "capabilities", "get", "set-update", "set-replace", "set-delete",
             "subscribe-stream", "subscribe-poll", "subscribe-once"
         ],
         default="get",
@@ -63,7 +63,7 @@ def parse_args(msg):
     parser.add_argument(
         "-x", "--gnmi_path",
         type=str,
-        required=True,
+        required=False,
         default="", nargs="+",
         help="gNMI paths of interest in XPath format, space separated"
     )
@@ -93,7 +93,7 @@ def parse_args(msg):
     targets = args.target
     try:
         if re.match(r'\[.*\]', targets):
-            args.target = re.sub(r'^\[([0-9a-f:]+?)\]:(\d+?)$', r'\g<1> \g<2>', targets).split(' ')
+            args.target = re.sub(r'^\[([0-9a-fA-F:]+?)\]:(\d+?)$', r'\g<1> \g<2>', targets).split(' ')
             args.target = (str(args.target[0]), int(args.target[1]))
         else:
             args.target = (str(targets.split(':')[0]), int(targets.split(':')[1]))

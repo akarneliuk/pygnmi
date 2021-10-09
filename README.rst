@@ -77,6 +77,12 @@ Contributors
 Dev Log
 =======
 
+Release **0.6.1**:
+
+- Added support of origin per RFC7951.
+- Added timeout to the initial setup useful for long-living connections.
+- Minor bug-fixing.
+
 Release **0.6.0**:
 
 - Significant improvements in telemetry capabilities of the pygnmi. Now you can use ``subscribe2`` method by simply providing the a corredponding dictionary at input and all modes (STREA, ONCE, POLL) are working correctly.
@@ -282,7 +288,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.5.3&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.6.1&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
