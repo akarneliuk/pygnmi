@@ -15,7 +15,7 @@ setup(
   author_email = 'anton@karneliuk.com',
   url = 'https://github.com/akarneliuk/pygnmi',
   download_url = 'https://github.com/akarneliuk/pygnmi/archive/v0.6.1.tar.gz',
-  keywords = ['gnmi', 'automation', 'grpc', 'network'], 
+  keywords = ['gnmi', 'automation', 'grpc', 'network'],
   install_requires=[
           'grpcio',
           'grpcio-tools',
@@ -34,5 +34,6 @@ setup(
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9'
-  ]
+  ],
+  scripts=['scripts/pygnmicli']
 )
