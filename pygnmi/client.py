@@ -1069,6 +1069,27 @@ def telemetryParser(in_message=None, debug: bool = False):
 
                 response['update']['update'].append(update_container)
 
+            if in_message.update.delete:
+                response['update']['delete'] = []
+                for delete_msg in in_message.update.delete:
+                    delete_container = {}
+                    resource_path = []
+
+                    for path_elem in delete_msg.elem:
+                        tp = ''
+                        if path_elem.name:
+                            tp += path_elem.name
+
+                        if path_elem.key:
+                            # Use 'sorted' to have a consistent ordering of keys
+                            for pk_name, pk_value in sorted(path_elem.key.items()):
+                                tp += f'[{pk_name}={pk_value}]'
+
+                        resource_path.append(tp)
+
+                    delete_container.update({'path': '/'.join(resource_path)})
+                    response['update']['delete'].append(delete_container)
+
             return response
 
         elif in_message.HasField('sync_response'):
