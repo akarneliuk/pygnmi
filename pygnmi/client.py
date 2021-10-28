@@ -34,9 +34,9 @@ class gNMIclient(object):
     """
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
-    def __init__(self, target: tuple, username: str = None, password: str = None, 
+    def __init__(self, target: tuple, username: str = None, password: str = None,
                  debug: bool = False, insecure: bool = False, path_cert: str = None, path_key: str = None, path_root: str = None, override: str = None,
-                 gnmi_timeout: int = 5, grpc_options: list = []):
+                 gnmi_timeout: int = 5, grpc_options: list = [], **kwargs ):
 
         """
         Initializing the object
@@ -60,6 +60,26 @@ class gNMIclient(object):
         else:
             self.__target = target
 
+        if 'interval_ms' in kwargs:
+            self.configureKeepalive( kwargs )
+
+    def configureKeepalive(self, interval_ms: int, timeout_ms: int = 20000,
+                           max_pings_without_data: int = 0,
+                           permit_without_calls: bool = True):
+        """
+        Helper method to set relevant client-side gRPC options to control keep-alive messages
+        Must be called before connect()
+
+        See https://github.com/grpc/grpc/blob/master/doc/keepalive.md
+
+        max_pings_without_data: default 0 to enable long idle connections
+        """
+        self.__options += [
+          ("grpc.keepalive_time_ms", interval_ms),
+          ("grpc.keepalive_timeout_ms", timeout_ms),
+          ("grpc.keepalive_permit_without_calls", 1 if permit_without_calls else 0),
+          ("grpc.http2.max_pings_without_data", max_pings_without_data),
+        ]
 
     def __enter__(self):
         """
@@ -95,7 +115,7 @@ class gNMIclient(object):
                 except:
                     logger.error('The SSL certificate cannot be opened.')
                     raise Exception('The SSL certificate cannot be opened.')
-                    
+
             else:
                 try:
                     ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
@@ -108,9 +128,9 @@ class gNMIclient(object):
 
                 except:
                     logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
-                    raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}') 
+                    raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}')
 
-            self.__channel = grpc.secure_channel(self.__target_path, 
+            self.__channel = grpc.secure_channel(self.__target_path,
                                                  credentials=cert, options=self.__options)
 
         if self.__gnmi_timeout is None or self.__gnmi_timeout > 0:
@@ -1101,4 +1121,3 @@ def telemetryParser(in_message=None, debug: bool = False):
         logger.error(f'Parsing of telemetry information is failed.')
 
         return None
-
