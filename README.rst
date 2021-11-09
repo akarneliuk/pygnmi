@@ -72,10 +72,18 @@ Contributors
 - `Andrew Southard <https://github.com/andsouth44>`_
 - `Jeroen van Bemme <https://github.com/jbemmel>`_
 - `Frédéric Perrin <https://github.com/fperrin>`_
+- `Malanovo <https://github.com/malanovo>`_
 
 =======
 Dev Log
 =======
+
+Release **0.6.2**:
+
+- Added support of keepalive timer for gRPC session to prevent automatic clousere each 2 hours.
+- Fixed issue with ``Subscribe`` RPC not sending delete notification in case of a path is removed from the node.
+- Added the CLI based tool.
+- Minor bug-fixing.
 
 Release **0.6.1**:
 
@@ -288,7 +296,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.6.1&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.6.2&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
@@ -296,5 +304,5 @@ Release **0.1.0**:
 .. _license: https://github.com/akarneliuk/pygnmi/blob/master/LICENSE.txt
 .. |project| image:: https://img.shields.io/badge/akarneliuk%2Fpygnmi-blueviolet.svg?logo=github&color=success
 .. _project: https://github.com/akarneliuk/pygnmi/
-.. |coverage| image:: https://img.shields.io/static/v1?label=coverage&message=62%&color=yellow
+.. |coverage| image:: https://img.shields.io/static/v1?label=coverage&message=64%&color=yellow
 .. _coverage: https://github.com/nedbat/coveragepy
