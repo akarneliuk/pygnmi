@@ -10,3 +10,4 @@ pygnmi/spec/gnmi_ext_pb2.py
 pygnmi/spec/gnmi_ext_pb2_grpc.py
 pygnmi/spec/gnmi_pb2.py
 pygnmi/spec/gnmi_pb2_grpc.py
+scripts/pygnmicli

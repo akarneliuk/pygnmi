@@ -80,7 +80,7 @@ Dev Log
 
 Release **0.6.2**:
 
-- Added support of keepalive timer for gRPC session to prevent automatic clousere each 2 hours.
+- Added support of keepalive timer for gRPC session to prevent automatic closure each 2 hours.
 - Fixed issue with ``Subscribe`` RPC not sending delete notification in case of a path is removed from the node.
 - Added the CLI based tool.
 - Minor bug-fixing.
