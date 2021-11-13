@@ -49,7 +49,7 @@ def main():
 
         elif args.operation == 'get':
             print(f'Doing {args.operation} request to {args.target}...')
-            result = GC.get(args.gnmi_path, datatype=args.datastore, encoding='json')
+            result = GC.get(path=args.gnmi_path, datatype=args.datastore, encoding='json')
 
         elif args.operation.startswith('set'):
             print(f'Doing {args.operation} request to {args.target}...')

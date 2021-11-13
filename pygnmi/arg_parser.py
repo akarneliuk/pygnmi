@@ -19,7 +19,7 @@ def parse_args(msg):
     parser.add_argument(
         "-u", "--user",
         type=str,
-        required=False,
+        required=True,
         help="Username to use when connecting",
         dest="username"
     )
