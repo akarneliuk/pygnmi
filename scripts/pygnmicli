@@ -109,8 +109,8 @@ def main():
                         result.close()
                         break
 
-        if result:
-            print(result)
+        if result and not args.print:
+            print(json.dumps(result, indent=4))
 
 
 if __name__ == "__main__":
