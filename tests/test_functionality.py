@@ -172,7 +172,6 @@ def test_get_prefix_and_path():
 
         # "/yang-model:top_element/next_element" GNMI path notation
         result = gc.get(prefix="/openconfig-interfaces:interfaces", path=["interface[name=Loopback51]"])
-        open("log/execution.log", "w").write(json.dumps(result, indent=4))
         assert "notification" in result
         assert isinstance(result["notification"], list)
         assert len(result["notification"]) == 1
