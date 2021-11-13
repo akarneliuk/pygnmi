@@ -9,3 +9,4 @@ log/
 **/.coverage
 **/coverage.json
 **/htmlcov/
+dist/

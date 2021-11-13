@@ -4,8 +4,10 @@
 # Modules
 import argparse
 import re
+from getpass import getpass
 
 
+# Functions
 def parse_args(msg):
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -55,9 +57,9 @@ def parse_args(msg):
         required=False,
         choices=[
             "capabilities", "get", "set-update", "set-replace", "set-delete",
-            "subscribe-stream", "subscribe-poll", "subscribe-once"
+            "subscribe-stream", "subscribe-poll", "subscribe-once", "subscribe2"
         ],
-        default="get",
+        default="capabilities",
         help="gNMI Request type",
     )
     parser.add_argument(
@@ -107,5 +109,8 @@ def parse_args(msg):
             parser.error(f"--file is required when doing a {args.operation} operation")
         if len(args.gnmi_path) > 1:
             parser.error(f"Only one path supported when doing a {args.operation} operation")
+
+    if not args.password:
+        args.password = getpass("Device password: ")
 
     return args

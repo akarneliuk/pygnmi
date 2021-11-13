@@ -74,3 +74,25 @@ def gnmi_path_generator(path_in_question: str):
                 gnmi_path.elem.add(name=pe_entry)
 
     return gnmi_path
+
+
+def gnmi_path_degenerator(gnmi_path) -> str:
+    """Parses a gNMI Path int an XPath expression
+    """ 
+    result = None
+    if gnmi_path and gnmi_path.elem:
+        resource_path = []
+        for path_elem in gnmi_path.elem:
+            tp = ''
+            if path_elem.name:
+                tp += path_elem.name
+
+            if path_elem.key:
+                for pk_name, pk_value in sorted(path_elem.key.items()):
+                    tp += f'[{pk_name}={pk_value}]'
+
+            resource_path.append(tp)
+
+        result = '/'.join(resource_path)
+
+    return result

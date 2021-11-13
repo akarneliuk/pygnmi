@@ -4,6 +4,7 @@
 from pygnmi.client import gNMIclient, telemetryParser
 from dotenv import load_dotenv
 import os
+import json
 
 
 # Messages
@@ -21,6 +22,23 @@ def test_capabilities():
 
     with gNMIclient(target=(hostname_str, port_str), username=username_str, 
                     password=password_str, path_cert=path_cert_str) as gc:
+        result = gc.capabilities()
+
+    assert "supported_models" in result
+    assert "supported_encodings" in result
+    assert "gnmi_version" in result
+
+
+def test_connectivity_custom_keepalive():
+    load_dotenv()
+    username_str = os.getenv("PYGNMI_USER")
+    password_str = os.getenv("PYGNMI_PASS")
+    hostname_str = os.getenv("PYGNMI_HOST")
+    port_str = os.getenv("PYGNMI_PORT")
+    path_cert_str = os.getenv("PYGNMI_CERT")
+
+    with gNMIclient(target=(hostname_str, port_str), username=username_str, 
+                    password=password_str, path_cert=path_cert_str, keepalive_time_ms=1000) as gc:
         result = gc.capabilities()
 
     assert "supported_models" in result
@@ -105,6 +123,56 @@ def test_get_signle_path_all_path_formats():
 
         # "/top_element/next_element" GNMI path notation
         result = gc.get(path=["/interfaces/interface"])
+        assert "notification" in result
+        assert isinstance(result["notification"], list)
+        assert len(result["notification"]) == 1
+        assert "update" in result["notification"][0]
+        assert isinstance(result["notification"][0]["update"], list)
+        assert len(result["notification"][0]["update"]) > 0
+
+
+def test_get_prefix_and_path():
+    load_dotenv()
+    username_str = os.getenv("PYGNMI_USER")
+    password_str = os.getenv("PYGNMI_PASS")
+    hostname_str = os.getenv("PYGNMI_HOST")
+    port_str = os.getenv("PYGNMI_PORT")
+    path_cert_str = os.getenv("PYGNMI_CERT")
+
+    with gNMIclient(target=(hostname_str, port_str), username=username_str, 
+                    password=password_str, path_cert=path_cert_str) as gc:
+        gc.capabilities()
+
+        # Default GNMI path
+        result = gc.get(prefix="/")
+        assert "notification" in result
+        assert isinstance(result["notification"], list)
+        assert len(result["notification"]) == 1
+        assert "update" in result["notification"][0]
+        assert isinstance(result["notification"][0]["update"], list)
+        assert len(result["notification"][0]["update"]) > 0
+
+        # "yang-model:top_element" GNMI path notation
+        result = gc.get(prefix="openconfig-interfaces:interfaces")
+        assert "notification" in result
+        assert isinstance(result["notification"], list)
+        assert len(result["notification"]) == 1
+        assert "update" in result["notification"][0]
+        assert isinstance(result["notification"][0]["update"], list)
+        assert len(result["notification"][0]["update"]) == 1
+
+        # "yang-model:top_element/next_element" GNMI path notation
+        result = gc.get(prefix="openconfig-interfaces:interfaces", path=["interface"])
+        assert "notification" in result
+        assert isinstance(result["notification"], list)
+        assert len(result["notification"]) == 1
+        assert "update" in result["notification"][0]
+        assert isinstance(result["notification"][0]["update"], list)
+        assert len(result["notification"][0]["update"]) > 0
+
+        # "/yang-model:top_element/next_element" GNMI path notation
+        result = gc.get(prefix="/openconfig-interfaces:interfaces", path=["interface[name=Loopback51]"])
+        open("log/execution.log", "w").write(json.dumps(result, indent=4))
         assert "notification" in result
         assert isinstance(result["notification"], list)
         assert len(result["notification"]) == 1

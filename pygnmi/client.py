@@ -22,7 +22,7 @@ from cryptography.hazmat.backends import default_backend
 
 
 # Own modules
-from pygnmi.path_generator import gnmi_path_generator
+from pygnmi.path_generator import gnmi_path_generator, gnmi_path_degenerator
 
 
 # Logger
@@ -61,11 +61,11 @@ class gNMIclient(object):
             self.__target = target
 
         if 'interval_ms' in kwargs:
-            self.configureKeepalive( kwargs )
+            self.configureKeepalive(**kwargs)
 
-    def configureKeepalive(self, interval_ms: int, timeout_ms: int = 20000,
+    def configureKeepalive(self, keepalive_time_ms: int, keepalive_timeout_ms: int = 20000,
                            max_pings_without_data: int = 0,
-                           permit_without_calls: bool = True):
+                           keepalive_permit_without_calls: bool = True):
         """
         Helper method to set relevant client-side gRPC options to control keep-alive messages
         Must be called before connect()
@@ -75,9 +75,9 @@ class gNMIclient(object):
         max_pings_without_data: default 0 to enable long idle connections
         """
         self.__options += [
-          ("grpc.keepalive_time_ms", interval_ms),
-          ("grpc.keepalive_timeout_ms", timeout_ms),
-          ("grpc.keepalive_permit_without_calls", 1 if permit_without_calls else 0),
+          ("grpc.keepalive_time_ms", keepalive_time_ms),
+          ("grpc.keepalive_timeout_ms", keepalive_timeout_ms),
+          ("grpc.keepalive_permit_without_calls", 1 if keepalive_permit_without_calls else 0),
           ("grpc.http2.max_pings_without_data", max_pings_without_data),
         ]
 
@@ -213,7 +213,7 @@ class gNMIclient(object):
             return None
 
 
-    def get(self, path: list, datatype: str = 'all', encoding: str = 'json'):
+    def get(self, prefix: str = "", path: list = [], datatype: str = 'all', encoding: str = 'json'):
         """
         Collecting the information about the resources from defined paths.
 
@@ -270,6 +270,15 @@ class gNMIclient(object):
             else:
                 pb_encoding = 4
 
+        ## Gnmi PREFIX
+        try:
+            protobuf_prefix = gnmi_path_generator(prefix) if prefix else gnmi_path_generator([])
+
+        except:
+            logger.error(f'Conversion of gNMI prefix to the Protobuf format failed')
+            raise Exception ('Conversion of gNMI prefix to the Protobuf format failed')
+
+        ## Gnmi PATH
         try:
             if not path:
                 protobuf_paths = []
@@ -288,7 +297,8 @@ class gNMIclient(object):
                 pb_encoding = 4
 
         try:
-            gnmi_message_request = GetRequest(path=protobuf_paths, type=pb_datatype, encoding=pb_encoding)
+            gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths, 
+                                              type=pb_datatype, encoding=pb_encoding)
 
             if self.__debug:
                 print("gNMI request:\n------------------------------------------------")
@@ -311,32 +321,23 @@ class gNMIclient(object):
                     for notification in gnmi_message_response.notification:
                         notification_container = {}
 
+                        ## Message Notification, Key timestamp
                         notification_container.update({'timestamp': notification.timestamp}) if notification.timestamp else notification_container.update({'timestamp': 0})
 
+                        ## Message Notification, Key prefix
+                        notification_container.update({'prefix': gnmi_path_degenerator(notification.prefix)}) if notification.prefix else notification_container.update({'prefix': None})
+
+                        ## Message Notification, Key update
                         if notification.update:
                             notification_container.update({'update': []})
 
                             for update_msg in notification.update:
                                 update_container = {}
 
-                                if update_msg.path and update_msg.path.elem:
-                                    resource_path = []
-                                    for path_elem in update_msg.path.elem:
-                                        tp = ''
-                                        if path_elem.name:
-                                            tp += path_elem.name
+                                ## Message Update, Key path
+                                update_container.update({'path': gnmi_path_degenerator(update_msg.path )}) if update_msg.path else update_container.update({'path': None})
 
-                                        if path_elem.key:
-                                            for pk_name, pk_value in sorted(path_elem.key.items()):
-                                                tp += f'[{pk_name}={pk_value}]'
-
-                                        resource_path.append(tp)
-
-                                    update_container.update({'path': '/'.join(resource_path)})
-
-                                else:
-                                    update_container.update({'path': None})
-
+                                ## Message Update, Key val
                                 if update_msg.HasField('val'):
                                     if update_msg.val.HasField('json_ietf_val'):
                                         update_container.update({'val': json.loads(update_msg.val.json_ietf_val)})
