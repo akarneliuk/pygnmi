@@ -38,7 +38,7 @@ def main():
     with gNMIclient(
         target=args.target, username=args.username, password=args.password,
         path_cert=args.path_cert, path_key=args.path_key, path_root=args.path_root,
-        override=args.override, insecure=args.insecure, debug=args.print,
+        override=args.override, insecure=args.insecure, debug=args.debug,
     ) as GC:
 
         result = None

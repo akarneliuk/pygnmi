@@ -84,7 +84,7 @@ def parse_args(msg):
         help="Path to file containing JSON data to use in a set request",
     )
     parser.add_argument(
-        "-D", "--print",
+        "-D", "--debug",
         action="store_true",
         default=False,
         help="Set to enable printing of Protobuf messages to STDOUT",

@@ -35,7 +35,8 @@ class gNMIclient(object):
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
     def __init__(self, target: tuple, username: str = None, password: str = None,
-                 debug: bool = False, insecure: bool = False, path_cert: str = None, path_key: str = None, path_root: str = None, override: str = None,
+                 debug: bool = False, insecure: bool = False, path_cert: str = None, 
+                 path_key: str = None, path_root: str = None, override: str = None,
                  gnmi_timeout: int = 5, grpc_options: list = [], **kwargs ):
 
         """
@@ -256,7 +257,7 @@ class gNMIclient(object):
             elif datatype == 'operational':
                 pb_datatype = 3
             else:
-                logger.error('The GetRequst data type is not within the dfined range')
+                logger.error('The GetRequst data type is not within the defined range')
 
         if encoding in encoding_set:
             if encoding.lower() == 'json':
@@ -315,6 +316,7 @@ class gNMIclient(object):
             if gnmi_message_response:
                 response = {}
 
+                ## Message GetRespone, Key notification
                 if gnmi_message_response.notification:
                     response.update({'notification': []})
 
@@ -327,6 +329,12 @@ class gNMIclient(object):
                         ## Message Notification, Key prefix
                         notification_container.update({'prefix': gnmi_path_degenerator(notification.prefix)}) if notification.prefix else notification_container.update({'prefix': None})
 
+                        ## Message Notification, Key alias
+                        notification_container.update({'alias': notification.alias}) if notification.alias else notification_container.update({'alias': None})
+
+                        ## Message Notification, Key atomic
+                        notification_container.update({'atomic': notification.atomic })
+
                         ## Message Notification, Key update
                         if notification.update:
                             notification_container.update({'update': []})
@@ -335,7 +343,7 @@ class gNMIclient(object):
                                 update_container = {}
 
                                 ## Message Update, Key path
-                                update_container.update({'path': gnmi_path_degenerator(update_msg.path )}) if update_msg.path else update_container.update({'path': None})
+                                update_container.update({'path': gnmi_path_degenerator(update_msg.path)}) if update_msg.path else update_container.update({'path': None})
 
                                 ## Message Update, Key val
                                 if update_msg.HasField('val'):
@@ -505,30 +513,22 @@ class gNMIclient(object):
             if gnmi_message_response:
                 response = {}
 
+                ## Message SetResponse, Key timestamp
+                response.update({'timestamp': gnmi_message_response.timestamp}) if gnmi_message_response.timestamp else response.update({'timestamp': 0})
+
+                ## Message SetResponse, Key prefix
+                response.update({'prefix': gnmi_path_degenerator(gnmi_message_response.prefix)}) if gnmi_message_response.prefix else response.update({'prefix': None})
+
                 if gnmi_message_response.response:
                     response.update({'response': []})
 
                     for response_entry in gnmi_message_response.response:
                         response_container = {}
 
-                        if response_entry.path and response_entry.path.elem:
-                            resource_path = []
-                            for path_elem in response_entry.path.elem:
-                                tp = ''
-                                if path_elem.name:
-                                    tp += path_elem.name
+                        ## Message UpdateResult, Key path
+                        response_container.update({'path': gnmi_path_degenerator(response_entry.path)}) if response_entry.path else response_container.update({'path': None})
 
-                                if path_elem.key:
-                                    for pk_name, pk_value in sorted(path_elem.key.items()):
-                                        tp += f'[{pk_name}={pk_value}]'
-
-                                resource_path.append(tp)
-
-                            response_container.update({'path': '/'.join(resource_path)})
-
-                        else:
-                            response_container.update({'path': None})
-
+                        ## Message UpdateResult, Key op
                         if response_entry.op:
                             if response_entry.op == 1:
                                 res_op = 'DELETE'

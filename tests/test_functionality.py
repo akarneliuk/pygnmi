@@ -4,7 +4,6 @@
 from pygnmi.client import gNMIclient, telemetryParser
 from dotenv import load_dotenv
 import os
-import json
 
 
 # Messages
@@ -149,6 +148,10 @@ def test_get_prefix_and_path():
         assert isinstance(result["notification"], list)
         assert len(result["notification"]) == 1
         assert "update" in result["notification"][0]
+        assert "timestamp" in result["notification"][0]
+        assert "prefix" in result["notification"][0]
+        assert "alias" in result["notification"][0]
+        assert "atomic" in result["notification"][0]
         assert isinstance(result["notification"][0]["update"], list)
         assert len(result["notification"][0]["update"]) > 0
 
@@ -158,6 +161,10 @@ def test_get_prefix_and_path():
         assert isinstance(result["notification"], list)
         assert len(result["notification"]) == 1
         assert "update" in result["notification"][0]
+        assert "timestamp" in result["notification"][0]
+        assert "prefix" in result["notification"][0]
+        assert "alias" in result["notification"][0]
+        assert "atomic" in result["notification"][0]
         assert isinstance(result["notification"][0]["update"], list)
         assert len(result["notification"][0]["update"]) == 1
 
@@ -167,15 +174,23 @@ def test_get_prefix_and_path():
         assert isinstance(result["notification"], list)
         assert len(result["notification"]) == 1
         assert "update" in result["notification"][0]
+        assert "timestamp" in result["notification"][0]
+        assert "prefix" in result["notification"][0]
+        assert "alias" in result["notification"][0]
+        assert "atomic" in result["notification"][0]
         assert isinstance(result["notification"][0]["update"], list)
         assert len(result["notification"][0]["update"]) > 0
 
         # "/yang-model:top_element/next_element" GNMI path notation
-        result = gc.get(prefix="/openconfig-interfaces:interfaces", path=["interface[name=Loopback51]"])
+        result = gc.get(prefix="/openconfig-interfaces:interfaces", path=["interface[name=Management1]"])
         assert "notification" in result
         assert isinstance(result["notification"], list)
         assert len(result["notification"]) == 1
         assert "update" in result["notification"][0]
+        assert "timestamp" in result["notification"][0]
+        assert "prefix" in result["notification"][0]
+        assert "alias" in result["notification"][0]
+        assert "atomic" in result["notification"][0]
         assert isinstance(result["notification"][0]["update"], list)
         assert len(result["notification"][0]["update"]) > 0
 
@@ -224,6 +239,8 @@ def test_set_update(msg1: tuple = test_set_update_tuple):
         # Set update
         result = gc.set(update=[msg1])
         assert "response" in result
+        assert "timestamp" in result
+        assert "prefix" in result
         assert isinstance(result["response"], list)
         assert len(result["response"]) == 1
         assert "op" in result["response"][0]  
@@ -262,6 +279,8 @@ def test_set_replace(msg1: tuple = test_set_update_tuple, msg2: tuple = test_set
         # Set replace
         result = gc.set(replace=[msg2])
         assert "response" in result
+        assert "timestamp" in result
+        assert "prefix" in result
         assert isinstance(result["response"], list)
         assert len(result["response"]) == 1
         assert "op" in result["response"][0]  
@@ -299,6 +318,8 @@ def test_set_delete(msg1: tuple = test_set_update_tuple, path2: str = test_delet
         # Set delete
         result = gc.set(delete=[path2, msg1[0]])
         assert "response" in result
+        assert "timestamp" in result
+        assert "prefix" in result
         assert isinstance(result["response"], list)
         assert len(result["response"]) == 2
         assert "op" in result["response"][0]  

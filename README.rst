@@ -78,6 +78,12 @@ Contributors
 Dev Log
 =======
 
+Release **0.6.5**:
+
+- Implemented ``prefix`` and ``timestamp`` in ``SetResponse`` message.
+- Implemented ``alias`` and ``atomic`` in ``Notification`` message.
+- Minor bug-fixing.
+
 Release **0.6.4**:
 
 - Minor bug-fixing.
@@ -306,7 +312,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.6.4a&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.6.5&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
