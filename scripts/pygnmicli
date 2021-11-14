@@ -109,7 +109,7 @@ def main():
                         result.close()
                         break
 
-        if result and not args.print:
+        if result and not args.debug:
             print(json.dumps(result, indent=4))
 
 
