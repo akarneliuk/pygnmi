@@ -89,9 +89,10 @@ class gNMIclient(object):
         return self.connect()
 
 
-    def connect(self):
+    def connect(self,timeout:int = None):
         """
         Building the connectivity towards network element over gNMI
+        timeout: optional override of the time to wait for connection, defaults to init parameter
         """
 
         if self.__insecure:
@@ -134,8 +135,10 @@ class gNMIclient(object):
             self.__channel = grpc.secure_channel(self.__target_path,
                                                  credentials=cert, options=self.__options)
 
-        if self.__gnmi_timeout is None or self.__gnmi_timeout > 0:
-           self.wait_for_connect(self.__gnmi_timeout)
+        if timeout is None:
+           timeout = self.__gnmi_timeout
+        if timeout is None or timeout > 0:
+           self.wait_for_connect(timeout)
         self.__stub = gNMIStub(self.__channel)
 
         return self
