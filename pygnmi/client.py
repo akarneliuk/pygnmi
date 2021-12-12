@@ -23,11 +23,13 @@ from cryptography.hazmat.backends import default_backend
 
 # Own modules
 from pygnmi.path_generator import gnmi_path_generator, gnmi_path_degenerator
+from pygnmi.tools import openconfig_diff
 
 
 # Logger
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
+
 
 # Classes
 class gNMIclient(object):
@@ -37,7 +39,7 @@ class gNMIclient(object):
     def __init__(self, target: tuple, username: str = None, password: str = None,
                  debug: bool = False, insecure: bool = False, path_cert: str = None, 
                  path_key: str = None, path_root: str = None, override: str = None,
-                 gnmi_timeout: int = 5, grpc_options: list = [], **kwargs ):
+                 gnmi_timeout: int = 5, grpc_options: list = [], show_diff: bool = False, **kwargs ):
 
         """
         Initializing the object
@@ -51,6 +53,7 @@ class gNMIclient(object):
         self.__path_root = path_root
         self.__options=([('grpc.ssl_target_name_override', override)]+grpc_options) if override else grpc_options
         self.__gnmi_timeout = gnmi_timeout
+        self.__show_diff = show_diff
 
         self.__target_path = f'{target[0]}:{target[1]}'
         if re.match('unix:.*', target[0]):
@@ -143,11 +146,13 @@ class gNMIclient(object):
 
         return self
 
+
     def wait_for_connect(self, timeout: int):
         """
         Wait for the gNMI connection to the server to come up, with given timeout
         """
         grpc.channel_ready_future(self.__channel).result(timeout=timeout)
+
 
     def capabilities(self):
         """
@@ -499,6 +504,16 @@ class gNMIclient(object):
                 raise Exception ('The provided input for Set message (replace operation) is not list.')
 
         try:
+            ## Adding collection of data for diff before the change
+            if self.__show_diff:
+                paths_to_collect_list = []
+
+                if delete: paths_to_collect_list.extend(delete)
+                if update: paths_to_collect_list.extend([path_tuple[0] for path_tuple in update])
+                if replace: paths_to_collect_list.extend([path_tuple[0] for path_tuple in replace])
+
+                pre_change_dict = self.get(path=paths_to_collect_list)
+
             gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
 
             if self.__debug:
@@ -546,6 +561,14 @@ class gNMIclient(object):
 
                         response['response'].append(response_container)
 
+                ## Adding collection of data for diff before the change
+                if self.__show_diff:
+                    post_change_dict = self.get(path=paths_to_collect_list)
+
+                    openconfig_diff(pre_dict=pre_change_dict,
+                                    post_dict=post_change_dict,
+                                    is_printable=True)
+
                 return response
 
             else:
@@ -558,9 +581,9 @@ class gNMIclient(object):
 
             raise Exception (err)
 
-        except:
-            logger.error(f'Collection of Set information failed is failed.')
-            return None
+        # except:
+        #     logger.error(f'Collection of Set information failed is failed.')
+        #     return None
 
 
     def set_with_retry(self, delete: list = None, replace: list = None, update: list = None, encoding: str = 'json', retry_delay: int = 3):

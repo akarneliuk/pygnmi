@@ -78,6 +78,12 @@ Contributors
 Dev Log
 =======
 
+Release **0.6.7**:
+
+- Added new ``oc_diff`` key to ``gNMIclient`` object. When applied, it shows the changes happened to all keys following XPath from all arguments to ``Set()`` RPC at the network devices.
+- Added an optional timeout to ``connect()`` method.
+- Minor bug-fixing.
+
 Release **0.6.6**:
 
 - Minor bug-fixing.
@@ -316,7 +322,7 @@ Release **0.1.0**:
 
 (c)2020-2021, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.6.6&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.6.7&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
