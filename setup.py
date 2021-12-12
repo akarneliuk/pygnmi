@@ -5,7 +5,7 @@ with open('README.rst') as fh:
 
 setup(
   name = 'pygnmi',
-  packages = ['pygnmi', 'pygnmi.spec', 'pygnmi.artefacts', 'pygnmi.tools'],
+  packages = ['pygnmi', 'pygnmi.spec', 'pygnmi.artefacts', 'pygnmi'],
   version = '0.6.7',
   license='bsd-3-clause',
   description = 'This repository contains pure Python implementation of the gNMI client to interact with the network functions.',
