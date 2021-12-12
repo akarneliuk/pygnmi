@@ -39,6 +39,7 @@ def main():
         target=args.target, username=args.username, password=args.password,
         path_cert=args.path_cert, path_key=args.path_key, path_root=args.path_root,
         override=args.override, insecure=args.insecure, debug=args.debug,
+        show_diff=args.compare
     ) as GC:
 
         result = None

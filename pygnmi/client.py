@@ -23,7 +23,7 @@ from cryptography.hazmat.backends import default_backend
 
 # Own modules
 from pygnmi.path_generator import gnmi_path_generator, gnmi_path_degenerator
-from pygnmi.tools import openconfig_diff
+from pygnmi.tools import diff_openconfig
 
 
 # Logger
@@ -39,7 +39,7 @@ class gNMIclient(object):
     def __init__(self, target: tuple, username: str = None, password: str = None,
                  debug: bool = False, insecure: bool = False, path_cert: str = None, 
                  path_key: str = None, path_root: str = None, override: str = None,
-                 gnmi_timeout: int = 5, grpc_options: list = [], show_diff: bool = False, **kwargs ):
+                 gnmi_timeout: int = 5, grpc_options: list = [], show_diff: str = "", **kwargs ):
 
         """
         Initializing the object
@@ -53,7 +53,7 @@ class gNMIclient(object):
         self.__path_root = path_root
         self.__options=([('grpc.ssl_target_name_override', override)]+grpc_options) if override else grpc_options
         self.__gnmi_timeout = gnmi_timeout
-        self.__show_diff = show_diff
+        self.__show_diff = show_diff if show_diff in {"get", "print"} else ""
 
         self.__target_path = f'{target[0]}:{target[1]}'
         if re.match('unix:.*', target[0]):
@@ -433,6 +433,7 @@ class gNMIclient(object):
         replace_msg = []
         update_msg = []
         encoding_set = {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}
+        diff_list = []
 
         if encoding not in encoding_set:
             logger.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
@@ -565,11 +566,17 @@ class gNMIclient(object):
                 if self.__show_diff:
                     post_change_dict = self.get(path=paths_to_collect_list)
 
-                    openconfig_diff(pre_dict=pre_change_dict,
-                                    post_dict=post_change_dict,
-                                    is_printable=True)
+                    is_printable = True if self.__show_diff == "print" else False
 
-                return response
+                    diff_list = diff_openconfig(pre_dict=pre_change_dict,
+                                                post_dict=post_change_dict,
+                                                is_printable=is_printable)
+
+                if diff_list and self.__show_diff == "get":
+                    return response, diff_list
+
+                else:
+                    return response
 
             else:
                 logger.error('Failed parsing the SetResponse.')

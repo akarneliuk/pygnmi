@@ -80,7 +80,7 @@ Dev Log
 
 Release **0.6.7**:
 
-- Added new ``oc_diff`` key to ``gNMIclient`` object. When applied, it shows the changes happened to all keys following XPath from all arguments to ``Set()`` RPC at the network devices.
+- Added new ``show_diff`` key to ``gNMIclient`` object (supported values ``print`` and ``get``). When applied, it shows the changes happened to all keys following XPath from all arguments to ``Set()`` RPC at the network devices. It is so fair tailored to OpenConfig YANG modules as it uses some architectural principles of OpenConfig YANG module to re-construct XPath.
 - Added an optional timeout to ``connect()`` method.
 - Minor bug-fixing.
 
@@ -330,5 +330,5 @@ Release **0.1.0**:
 .. _license: https://github.com/akarneliuk/pygnmi/blob/master/LICENSE.txt
 .. |project| image:: https://img.shields.io/badge/akarneliuk%2Fpygnmi-blueviolet.svg?logo=github&color=success
 .. _project: https://github.com/akarneliuk/pygnmi/
-.. |coverage| image:: https://img.shields.io/static/v1?label=coverage&message=64%&color=yellow
+.. |coverage| image:: https://img.shields.io/static/v1?label=coverage&message=68%&color=yellow
 .. _coverage: https://github.com/nedbat/coveragepy

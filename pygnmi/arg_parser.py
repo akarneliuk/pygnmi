@@ -89,6 +89,16 @@ def parse_args(msg):
         default=False,
         help="Set to enable printing of Protobuf messages to STDOUT",
     )
+    parser.add_argument(
+        "-C", "--compare",
+        type=str,
+        required=False,
+        choices=[
+            "get", "print", ""
+        ],
+        default="",
+        help="Compare the states of the devices before and after change to show difference in XPaths' values",
+    )
 
     args = parser.parse_args()
 
