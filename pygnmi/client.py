@@ -64,8 +64,9 @@ class gNMIclient(object):
         else:
             self.__target = target
 
-        if 'interval_ms' in kwargs:
+        if 'keepalive_time_ms' in kwargs:
             self.configureKeepalive(**kwargs)
+
 
     def configureKeepalive(self, keepalive_time_ms: int, keepalive_timeout_ms: int = 20000,
                            max_pings_without_data: int = 0,
@@ -84,6 +85,7 @@ class gNMIclient(object):
           ("grpc.keepalive_permit_without_calls", 1 if keepalive_permit_without_calls else 0),
           ("grpc.http2.max_pings_without_data", max_pings_without_data),
         ]
+
 
     def __enter__(self):
         """
