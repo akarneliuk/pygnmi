@@ -6,7 +6,7 @@ pyGNMI: Python gNMI client
    :width: 300
    :height: 300
    :alt: pyGNMI logo
-   :align: center
+   :align: right
 
 |project|_ |version|_ |coverage|_ |tag|_ |license|_
 
