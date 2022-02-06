@@ -2,6 +2,11 @@
 pyGNMI: Python gNMI client
 ==========================
 
+..image:: logo.png
+  :width: 300
+  :alt: pyGNMI logo
+  :align: center
+
 |project|_ |version|_ |coverage|_ |tag|_ |license|_
 
 This repository contains pure Python implementation of the gNMI client to interact with the network functions.
