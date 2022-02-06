@@ -2,10 +2,11 @@
 pyGNMI: Python gNMI client
 ==========================
 
-..image:: logo.png
-  :width: 300
-  :alt: pyGNMI logo
-  :align: center
+.. image:: https://github.com/akarneliuk/pygnmi/blob/master/logo.png
+   :width: 300
+   :height: 300
+   :alt: pyGNMI logo
+   :align: center
 
 |project|_ |version|_ |coverage|_ |tag|_ |license|_
 
