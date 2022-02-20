@@ -588,7 +588,7 @@ class gNMIclient(object):
             print(f"Host: {self.__target_path}\nError: {err.details()}")
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
 
-            raise Exception (err)
+            return err
 
         # except:
         #     logger.error(f'Collection of Set information failed is failed.')
