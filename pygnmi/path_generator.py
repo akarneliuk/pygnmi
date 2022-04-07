@@ -12,7 +12,7 @@ def gnmi_path_generator(path_in_question: str):
 
     - "" or "/" for the empty path;
 
-    - "rfc7951:/" for the empty path with origin set to rfc7951
+    - "origin://" or "/origin://" for the empty path with origin set to `origin` (e.g., `rfc7951`)
 
     - "yang-module:container/container[key=value]/other-module:leaf";
       the origin set to yang-module, and specify a key-value selector
