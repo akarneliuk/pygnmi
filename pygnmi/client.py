@@ -468,7 +468,7 @@ class gNMIclient(object):
                         elif encoding == 'proto':
                             replace_msg.append(Update(path=u_path, val=TypedValue(proto_bytes=u_val)))
                         elif encoding == 'ascii':
-                            replace_msg.append(Update(path=u_path, val=TypedValue(ascii_val=u_val)))
+                            replace_msg.append(Update(path=u_path, val=TypedValue(ascii_val=u_val[1:-1])))
                         elif encoding == 'json_ietf':
                             replace_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
 
@@ -494,7 +494,7 @@ class gNMIclient(object):
                         elif encoding == 'proto':
                             update_msg.append(Update(path=u_path, val=TypedValue(proto_bytes=u_val)))
                         elif encoding == 'ascii':
-                            update_msg.append(Update(path=u_path, val=TypedValue(ascii_val=u_val)))
+                            update_msg.append(Update(path=u_path, val=TypedValue(ascii_val=u_val[1:-1])))
                         elif encoding == 'json_ietf':
                             update_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
 
