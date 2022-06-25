@@ -25,21 +25,21 @@ test_delete_second_str = "openconfig-network-instance:network-instances/network-
 test_telemetry_dict = {
                         'subscription': [
                             {
-                                'path': 'openconfig-interfaces:interfaces/interface[name=Ethernet1]',
+                                'path': '/interfaces/interface[name=Ethernet1]',
                                 'mode': 'sample',
                                 'sample_interval': 10000000000,
                                 'heartbeat_interval': 30000000000
                             }
-                        ], 
-                        'use_aliases': False, 
-                        'mode': 'stream', 
+                        ],
+                        'use_aliases': False,
+                        'mode': 'stream',
                         'encoding': 'proto'
                       }
 
 test_telemetry_dict_once = {
                             'subscription': [
                                 {
-                                    'path': 'openconfig-interfaces:interfaces/interface[name=Ethernet1]',
+                                    'path': '/interfaces/interface[name=Ethernet1]',
                                     'mode': 'sample',
                                     'sample_interval': 10000000000,
                                     'heartbeat_interval': 30000000000

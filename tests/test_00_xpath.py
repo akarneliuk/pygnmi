@@ -1,7 +1,11 @@
+"""
+Collection of unit tests to test generation of XPath
+"""
 import pytest
 
 from pygnmi.path_generator import gnmi_path_generator
 from pygnmi.spec.gnmi_pb2 import Path, PathElem
+
 
 def compare_paths(actual: Path, expected: Path):
     assert expected.origin == actual.origin
@@ -13,6 +17,7 @@ def compare_paths(actual: Path, expected: Path):
         for key in exp_elem.key:
             assert key in actual_elem.key
             assert exp_elem.key[key] == actual_elem.key[key]
+
 
 test_paths = [
     # empty path, with / without an origin
@@ -105,8 +110,7 @@ test_paths = [
 
 ]
 
+
 @pytest.mark.parametrize("xpath, yangpath", test_paths)
 def test_xpath(xpath, yangpath):
     compare_paths(gnmi_path_generator(xpath), yangpath)
-            
-    

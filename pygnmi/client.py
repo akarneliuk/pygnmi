@@ -89,19 +89,22 @@ class gNMIclient(object):
 
     def __enter__(self):
         """
-        Building the connectivity towards network element over gNMI (used in the with ... as ... context manager)
+        Building the connectivity towards network element over gNMI 
+        (used in the with ... as ... context manager)
         """
         return self.connect()
 
 
-    def connect(self,timeout:int = None):
+    def connect(self,timeout: int = None):
         """
         Building the connectivity towards network element over gNMI
-        timeout: optional override of the time to wait for connection, defaults to init parameter
+        timeout: optional override of the time to wait for connection,
+        defaults to init parameter
         """
 
         if self.__insecure:
-            self.__channel = grpc.insecure_channel(self.__target_path, self.__metadata + self.__options)
+            self.__channel = grpc.insecure_channel(self.__target_path,
+                                                   self.__metadata + self.__options)
 
         else:
             if self.__path_cert and self.__path_key and self.__path_root:
@@ -109,7 +112,8 @@ class gNMIclient(object):
                     cert = open(self.__path_cert, 'rb').read()
                     key = open(self.__path_key, 'rb').read()
                     root_cert = open(self.__path_root, 'rb').read()
-                    cert = grpc.ssl_channel_credentials(root_certificates=root_cert, private_key=key, certificate_chain=cert)
+                    cert = grpc.ssl_channel_credentials(root_certificates=root_cert,
+                                                        private_key=key, certificate_chain=cert)
                 except:
                     logging.error('The SSL certificate cannot be opened.')
                     raise Exception('The SSL certificate cannot be opened.')
