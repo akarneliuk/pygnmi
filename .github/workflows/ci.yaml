@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      PYGNMI_HOST: ${{ secrets.PYGNMI_HOST }}
+      PYGNMI_NAME: ${{ secrets.PYGNMI_NAME }}
+      PYGNMI_PORT: ${{ secrets.PYGNMI_PORT }}
+      PYGNMI_CERT: ${{ secrets.PYGNMI_CERT }}
+      PYGNMI_USER: ${{ secrets.PYGNMI_USER }}
+      PYGNMI_PASS: ${{ secrets.PYGNMI_PASS }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Perform linting validation
+        run: |
+          pylint pygnmi
+
+      - name: Perform unit testing
+        run: |
+          coverage run --branch --source pygnmi --omit main.py -m pytest
+          coverage report --fail-under 80

@@ -10,4 +10,3 @@ log/
 **/coverage.json
 **/htmlcov/
 dist/
-pygnmi_dev.py
