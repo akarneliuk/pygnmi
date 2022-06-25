@@ -14,12 +14,11 @@ setup(
   author = 'Anton Karneliuk',
   author_email = 'anton@karneliuk.com',
   url = 'https://github.com/akarneliuk/pygnmi',
-  download_url = 'https://github.com/akarneliuk/pygnmi/archive/v0.6.9.tar.gz',
+  download_url = 'https://github.com/akarneliuk/pygnmi/archive/v0.7.0.tar.gz',
   keywords = ['gnmi', 'automation', 'grpc', 'network'],
   install_requires=[
           'grpcio',
           'grpcio-tools',
-          'kthread',
           'cryptography',
           'dictdiffer'
   ],

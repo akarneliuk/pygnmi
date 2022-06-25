@@ -10,7 +10,7 @@ from pygnmi.client import gNMIclient
 ENV_USERNAME = os.getenv("PYGNMI_USER")
 ENV_PASSWORD = os.getenv("PYGNMI_PASS")
 ENV_ADDRESS = os.getenv("PYGNMI_HOST")
-ENV_HOSTNAME = os.getenv("PYGNMI_HOST")
+ENV_HOSTNAME = os.getenv("PYGNMI_NAME")
 ENV_PORT = os.getenv("PYGNMI_PORT")
 ENV_PATH_CERT = os.getenv("PYGNMI_CERT")
 
@@ -23,7 +23,8 @@ def test_ipv4_address_certificate_download():
     """
     gconn = gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
                        username=ENV_USERNAME,
-                       password=ENV_PASSWORD)
+                       password=ENV_PASSWORD,
+                       override=ENV_ADDRESS)
     gconn.connect()
 
     result = gconn.capabilities()

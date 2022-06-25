@@ -1,20 +1,24 @@
 #(c)2019-2021, karneliuk.com
 
 # Modules
-from dictdiffer import diff
-from copy import deepcopy
 import re
+from copy import deepcopy
+from dictdiffer import diff
 
 
 # User-defined functions
-def _dict_to_xpath(input_dict: dict, parent_type_class: type, pre_parent_type_class: type = dict) -> list:
+def _dict_to_xpath(input_dict: dict,
+                   parent_type_class: type, 
+                   pre_parent_type_class: type = dict) -> list:
     result = []
     unique_id = ""
 
     if isinstance(input_dict, dict):
         for k1, v1 in input_dict.items():
             if isinstance(v1, dict):
-                next_level_list = _dict_to_xpath(input_dict=v1, parent_type_class=type(v1), pre_parent_type_class=type(input_dict))
+                next_level_list = _dict_to_xpath(input_dict=v1,
+                                                 parent_type_class=type(v1),
+                                                 pre_parent_type_class=type(input_dict))
 
                 for nested_list in next_level_list:
                     result.append(["/" + k1 + nested_list[0], nested_list[1]])
@@ -22,7 +26,9 @@ def _dict_to_xpath(input_dict: dict, parent_type_class: type, pre_parent_type_cl
             elif isinstance(v1, list):
                 for v2 in v1:
                     if isinstance(v2, dict):
-                        next_level_list = _dict_to_xpath(input_dict=v2, parent_type_class=type(v2), pre_parent_type_class=type(v1))
+                        next_level_list = _dict_to_xpath(input_dict=v2, 
+                                                         parent_type_class=type(v2),
+                                                         pre_parent_type_class=type(v1))
                         
                         for nested_list in next_level_list:
                             result.append(["/" + k1 + nested_list[0], nested_list[1]])
@@ -61,7 +67,7 @@ def diff_openconfig(pre_dict: dict, post_dict: dict, is_printable: bool = True) 
         pre_path_list = []
 
         if entry_tuple[1] and isinstance(entry_tuple[1], list):
-            ## Looking for prefix attribuate
+            # Looking for prefix attribuate
             if "notification" in entry_tuple[1]:
                 while entry_tuple[1][0] != "notification":
                     pre_path_list.append(entry_tuple[1].pop(0))
@@ -76,7 +82,7 @@ def diff_openconfig(pre_dict: dict, post_dict: dict, is_printable: bool = True) 
                 if "prefix" in temp_dict and temp_dict["prefix"]:
                     xpath_str += "/" + temp_dict["prefix"]
 
-            ## Looking for path attribute
+            # Looking for path attribute
             if "update" in entry_tuple[1]:
                 while entry_tuple[1][0] != "update":
                     pre_path_list.append(entry_tuple[1].pop(0))
@@ -91,7 +97,7 @@ def diff_openconfig(pre_dict: dict, post_dict: dict, is_printable: bool = True) 
                 if "path" in temp_dict and temp_dict["path"]:
                     xpath_str += "/" + temp_dict["path"]
 
-                ## Looking for the rest path
+                # Looking for the rest path
                 if "val" in entry_tuple[1]:
                     while entry_tuple[1][0] != "val":
                         pre_path_list.append(entry_tuple[1].pop(0))
@@ -108,25 +114,29 @@ def diff_openconfig(pre_dict: dict, post_dict: dict, is_printable: bool = True) 
                             xpath_str += "/" + elem
 
                 if entry_tuple[0] in {"remove", "add"}:
-                    ## Looking for the rest path and value
+                    # Looking for the rest path and value
                     if entry_tuple[2] and isinstance(entry_tuple[2], list):
                         for elem_list in entry_tuple[2]:
                             pre_path_list.append(elem_list[0])
 
                             if entry_tuple[0] == "remove":
-                                result_list = _dict_to_xpath(input_dict=elem_list[-1], parent_type_class=type(elem_list[-1]))
-                                result_list = [["-", xpath_str + _get_unique_id(path_list=pre_path_list, temp_elem=pre_dict) + nl[0], nl[1]] for nl in result_list]
+                                result_list = _dict_to_xpath(input_dict=elem_list[-1],
+                                                             parent_type_class=type(elem_list[-1]))
+                                result_list = [["-", xpath_str + _get_unique_id(path_list=pre_path_list,
+                                                                                temp_elem=pre_dict) + nl[0], nl[1]] for nl in result_list]
 
                             elif entry_tuple[0] == "add":
-                                result_list = _dict_to_xpath(input_dict=elem_list[-1], parent_type_class=type(elem_list[-1]))
-                                result_list = [["+", xpath_str + _get_unique_id(path_list=pre_path_list, temp_elem=post_dict) + nl[0], nl[1]] for nl in result_list]
+                                result_list = _dict_to_xpath(input_dict=elem_list[-1],
+                                                             parent_type_class=type(elem_list[-1]))
+                                result_list = [["+", xpath_str + _get_unique_id(path_list=pre_path_list,
+                                                                                temp_elem=post_dict) + nl[0], nl[1]] for nl in result_list]
 
                 else:
                     result_list = []
                     result_list.append(["-", xpath_str, entry_tuple[2][0]])
                     result_list.append(["+", xpath_str, entry_tuple[2][1]])
 
-            ## Adding significant config part (e.g., creating new interface entirely) -> new element in ordered list
+            # Adding significant config part (e.g., creating new interface entirely) -> new element in ordered list
             else:
                 if entry_tuple[2] and isinstance(entry_tuple[2], list):
                     for update_msg_list in entry_tuple[2]:

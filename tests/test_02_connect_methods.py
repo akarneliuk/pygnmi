@@ -11,7 +11,7 @@ from pygnmi.client import gNMIclient
 ENV_USERNAME = os.getenv("PYGNMI_USER")
 ENV_PASSWORD = os.getenv("PYGNMI_PASS")
 ENV_ADDRESS = os.getenv("PYGNMI_HOST")
-ENV_HOSTNAME = os.getenv("PYGNMI_HOST")
+ENV_HOSTNAME = os.getenv("PYGNMI_NAME")
 ENV_PORT = os.getenv("PYGNMI_PORT")
 ENV_PATH_CERT = os.getenv("PYGNMI_CERT")
 
@@ -19,9 +19,9 @@ ENV_PATH_CERT = os.getenv("PYGNMI_CERT")
 # Tests
 def test_capabilities_connect_method():
     """
-    Unit test: test Capabilities() RPC
+    Unit test: test Capabilities() RPCs
     """
-    gconn = gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
+    gconn = gNMIclient(target=(ENV_ADDRESS, ENV_PORT),
                        username=ENV_USERNAME,
                        password=ENV_PASSWORD,
                        path_cert=ENV_PATH_CERT)
@@ -43,8 +43,7 @@ def test_get_connect_method():
     gconn = gNMIclient(target=(ENV_ADDRESS, ENV_PORT),
                        username=ENV_USERNAME,
                        password=ENV_PASSWORD,
-                       path_cert=ENV_PATH_CERT,
-                       override=ENV_HOSTNAME)
+                       path_cert=ENV_PATH_CERT)
     gconn.connect()
 
     gconn.capabilities()

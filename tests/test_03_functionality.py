@@ -15,17 +15,17 @@ from tests.messages import test_set_update_tuple, test_set_replace_tuple,\
 ENV_USERNAME = os.getenv("PYGNMI_USER")
 ENV_PASSWORD = os.getenv("PYGNMI_PASS")
 ENV_ADDRESS = os.getenv("PYGNMI_HOST")
-ENV_HOSTNAME = os.getenv("PYGNMI_HOST")
+ENV_HOSTNAME = os.getenv("PYGNMI_NAME")
 ENV_PORT = os.getenv("PYGNMI_PORT")
 ENV_PATH_CERT = os.getenv("PYGNMI_CERT")
 
 
-# Test
+# Tests
 def test_capabilities():
     """
     Unit test: Testing Capabilities with with/as context manager
     """
-    with gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
+    with gNMIclient(target=(ENV_ADDRESS, ENV_PORT),
                     username=ENV_USERNAME,
                     password=ENV_PASSWORD,
                     path_cert=ENV_PATH_CERT) as gconn:
@@ -42,7 +42,7 @@ def test_connectivity_custom_keepalive():
     """
     Unit test: Testing Capabilities with with/as context manager and custom keepalive
     """
-    with gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
+    with gNMIclient(target=(ENV_ADDRESS, ENV_PORT),
                     username=ENV_USERNAME,
                     password=ENV_PASSWORD,
                     path_cert=ENV_PATH_CERT,
@@ -60,7 +60,7 @@ def test_get_signle_path_all_path_formats():
     """
     Unit test: Testing Get with multiple path formats
     """
-    with gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
+    with gNMIclient(target=(ENV_ADDRESS, ENV_PORT),
                     username=ENV_USERNAME,
                     password=ENV_PASSWORD,
                     path_cert=ENV_PATH_CERT) as gconn:
@@ -145,7 +145,7 @@ def test_get_prefix_and_path():
     """
     Unit test: Testing Get with using Prefix and Path
     """
-    with gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
+    with gNMIclient(target=(ENV_ADDRESS, ENV_PORT),
                     username=ENV_USERNAME,
                     password=ENV_PASSWORD,
                     path_cert=ENV_PATH_CERT) as gconn:
@@ -212,7 +212,7 @@ def test_get_multiple_paths():
     """
     Unit test: Testing Get with multiple path arguments in one collection
     """
-    with gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
+    with gNMIclient(target=(ENV_ADDRESS, ENV_PORT),
                     username=ENV_USERNAME,
                     password=ENV_PASSWORD,
                     path_cert=ENV_PATH_CERT) as gconn:
@@ -238,7 +238,7 @@ def test_set_update(msg1: tuple = test_set_update_tuple):
     """
     Unit test: Testing Set/Update RPC
     """
-    with gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
+    with gNMIclient(target=(ENV_ADDRESS, ENV_PORT),
                     username=ENV_USERNAME,
                     password=ENV_PASSWORD,
                     path_cert=ENV_PATH_CERT) as gconn:
@@ -246,7 +246,8 @@ def test_set_update(msg1: tuple = test_set_update_tuple):
 
         # Pre-change state
         result = gconn.get(path=[msg1[0]])
-        assert "update" not in result["notification"][0]
+        assert isinstance(result, dict)
+        assert isinstance(result["notification"], list)
 
         # Set update
         result = gconn.set(update=[msg1])
@@ -273,7 +274,7 @@ def test_set_replace(msg1: tuple = test_set_update_tuple, msg2: tuple = test_set
     """
     Unit test: Testing Set/Replace RPC
     """
-    with gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
+    with gNMIclient(target=(ENV_ADDRESS, ENV_PORT),
                     username=ENV_USERNAME,
                     password=ENV_PASSWORD,
                     path_cert=ENV_PATH_CERT) as gconn:
@@ -315,7 +316,7 @@ def test_set_delete(msg1: tuple = test_set_update_tuple, path2: str = test_delet
     """
     Unit test: Testing Set/Delete RPC
     """
-    with gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
+    with gNMIclient(target=(ENV_ADDRESS, ENV_PORT),
                     username=ENV_USERNAME,
                     password=ENV_PASSWORD,
                     path_cert=ENV_PATH_CERT) as gconn:
@@ -350,7 +351,7 @@ def test_telemetry(subscribe1: dict = test_telemetry_dict):
     """
     Unit test: Testing Subscribe RPC
     """
-    with gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
+    with gNMIclient(target=(ENV_ADDRESS, ENV_PORT),
                     username=ENV_USERNAME,
                     password=ENV_PASSWORD,
                     path_cert=ENV_PATH_CERT) as gconn:

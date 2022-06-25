@@ -4,5 +4,4 @@ twine
 pytest
 python-dotenv
 coverage
-kthread
 dictdiffer

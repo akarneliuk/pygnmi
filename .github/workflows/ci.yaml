@@ -18,6 +18,7 @@ jobs:
       PYGNMI_CERT: ${{ secrets.PYGNMI_CERT }}
       PYGNMI_USER: ${{ secrets.PYGNMI_USER }}
       PYGNMI_PASS: ${{ secrets.PYGNMI_PASS }}
+      PYGNMI_CERT_CONTENT: ${{ secrets.PYGNMI_CERT_CONTENT }}
     steps:
       - uses: actions/checkout@v3
 
@@ -35,7 +36,15 @@ jobs:
         run: |
           pylint pygnmi
 
+      - name: Create certificate
+        run: |
+          echo "${{ secrets.PYGNMI_CERT_CONTENT }}" > "${{ secrets.PYGNMI_CERT }}"
+
+      - name: Amend hosts
+        run: |
+          sudo echo "${{ secrets.PYGNMI_HOST }} ${{ secrets.PYGNMI_NAME }}" | sudo tee -a /etc/hosts
+
       - name: Perform unit testing
         run: |
-          coverage run --branch --source pygnmi --omit main.py -m pytest
-          coverage report --fail-under 80
+          coverage run --branch --source pygnmi -m pytest
+          coverage report --fail-under 70
