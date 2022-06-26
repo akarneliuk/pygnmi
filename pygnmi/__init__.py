@@ -1,3 +1,5 @@
-#(c)2019-2021, karneliuk.com
-
-__version__ = "0.6.9"
+"""
+pyGNMI module to manage network devices with gNMI
+(c)2020-2022, Karneliuk
+"""
+__version__ = "0.7.0"

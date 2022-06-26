@@ -1,5 +1,7 @@
-#!/usr/bin/env python
-#(c)2019-2021, karneliuk.com
+"""
+Module to process arguments used in pygnmi cli
+"""
+
 
 # Modules
 import argparse
@@ -9,6 +11,9 @@ from getpass import getpass
 
 # Functions
 def parse_args(msg):
+    """
+    Function to collect user arguments when using pygnmi cli
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-t", "--target",
@@ -31,13 +36,22 @@ def parse_args(msg):
         dest="password"
     )
     parser.add_argument(
-        "-c", "--path_cert", type=str, required=False, help="Path to certificate chain file",
+        "-c", "--path_cert",
+        type=str,
+        required=False,
+        help="Path to certificate chain file",
     )
     parser.add_argument(
-        "-k", "--path_key", type=str, required=False, help="Path to private key file"
+        "-k", "--path_key",
+        type=str,
+        required=False,
+        help="Path to private key file"
     )
     parser.add_argument(
-        "-r", "--path_root", type=str, required=False, help="Path to root CA file"
+        "-r", "--path_root",
+        type=str,
+        required=False,
+        help="Path to root CA file"
     )
     parser.add_argument(
         "-O", "--override",
@@ -97,7 +111,7 @@ def parse_args(msg):
             "get", "print", ""
         ],
         default="",
-        help="Compare the states of the devices before and after change to show difference in XPaths' values",
+        help="Compare the states of the devices before and after change to show difference",
     )
 
     args = parser.parse_args()
@@ -105,7 +119,8 @@ def parse_args(msg):
     targets = args.target
     try:
         if re.match(r'\[.*\]', targets):
-            args.target = re.sub(r'^\[([0-9a-fA-F:]+?)\]:(\d+?)$', r'\g<1> \g<2>', targets).split(' ')
+            parsed_args = re.sub(r'^\[([0-9a-fA-F:]+?)\]:(\d+?)$', r'\g<1> \g<2>', targets)
+            args.target = parsed_args.split(' ')
             args.target = (str(args.target[0]), int(args.target[1]))
         else:
             args.target = (str(targets.split(':')[0]), int(targets.split(':')[1]))
