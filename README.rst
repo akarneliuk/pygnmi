@@ -84,6 +84,11 @@ Contributors
 Dev Log
 =======
 
+Release **0.7.0**:
+
+- Added authentication with Token using ``Authorization: Bearer TOKEN``, where ``TOKEN`` is a variable provided as ``gNMIclient(token=TOKEN)`` key (needed for Arista CVP).
+- Added functionality to change  ``GRPC_SSL_CIPHER_SUITES`` dynamically to ``HIGH`` value (needed for Nokia SR OS)
+
 Release **0.6.9**:
 
 - Adding new documentation for mutual TLS feature.
@@ -336,7 +341,7 @@ Release **0.1.0**:
 
 (c)2020-2022, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.6.9&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.7.0&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
