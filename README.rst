@@ -344,5 +344,5 @@ Release **0.1.0**:
 .. _license: https://github.com/akarneliuk/pygnmi/blob/master/LICENSE.txt
 .. |project| image:: https://img.shields.io/badge/akarneliuk%2Fpygnmi-blueviolet.svg?logo=github&color=success
 .. _project: https://github.com/akarneliuk/pygnmi/
-.. |coverage| image:: https://img.shields.io/static/v1?label=coverage&message=68%&color=yellow
+.. |coverage| image:: https://img.shields.io/static/v1?label=coverage&message=71%&color=yellow
 .. _coverage: https://github.com/nedbat/coveragepy

@@ -1,11 +1,6 @@
 #(c)2019-2021, karneliuk.com
 
 # Modules
-import grpc
-from pygnmi.spec.gnmi_pb2_grpc import gNMIStub
-from pygnmi.spec.gnmi_pb2 import (CapabilityRequest, Encoding, GetRequest, \
-    SetRequest, Update, TypedValue, SubscribeRequest, Poll, SubscriptionList, \
-    SubscriptionMode, AliasList, UpdateResult)
 import re
 import sys
 import json
@@ -13,6 +8,12 @@ import logging
 import queue
 import time
 import threading
+import os
+import grpc
+from pygnmi.spec.gnmi_pb2_grpc import gNMIStub
+from pygnmi.spec.gnmi_pb2 import (CapabilityRequest, Encoding, GetRequest,\
+    SetRequest, Update, TypedValue, SubscribeRequest, Poll, SubscriptionList,\
+    SubscriptionMode, AliasList, UpdateResult)
 
 
 # Those three modules are required to retrieve cert from the router and extract cn name
@@ -37,9 +38,10 @@ class gNMIclient(object):
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
     def __init__(self, target: tuple, username: str = None, password: str = None,
-                 debug: bool = False, insecure: bool = False, path_cert: str = None, 
+                 debug: bool = False, insecure: bool = False, path_cert: str = None,
                  path_key: str = None, path_root: str = None, override: str = None,
-                 gnmi_timeout: int = 5, grpc_options: list = [], show_diff: str = "", **kwargs ):
+                 gnmi_timeout: int = 5, grpc_options: list = [], show_diff: str = "", 
+                 token: str = None, **kwargs):
 
         """
         Initializing the object
@@ -51,7 +53,8 @@ class gNMIclient(object):
         self.__path_cert = path_cert
         self.__path_key = path_key
         self.__path_root = path_root
-        self.__options=([('grpc.ssl_target_name_override', override)]+grpc_options) if override else grpc_options
+        self.__options = ([('grpc.ssl_target_name_override', override)]+grpc_options) if override else grpc_options
+        self.__token = token
         self.__gnmi_timeout = gnmi_timeout
         self.__show_diff = show_diff if show_diff in {"get", "print"} else ""
 
@@ -66,7 +69,6 @@ class gNMIclient(object):
 
         if 'keepalive_time_ms' in kwargs:
             self.configureKeepalive(**kwargs)
-
 
     def configureKeepalive(self, keepalive_time_ms: int, keepalive_timeout_ms: int = 20000,
                            max_pings_without_data: int = 0,
@@ -86,7 +88,6 @@ class gNMIclient(object):
           ("grpc.http2.max_pings_without_data", max_pings_without_data),
         ]
 
-
     def __enter__(self):
         """
         Building the connectivity towards network element over gNMI 
@@ -94,19 +95,20 @@ class gNMIclient(object):
         """
         return self.connect()
 
-
-    def connect(self,timeout: int = None):
+    def connect(self, timeout: int = None):
         """
         Building the connectivity towards network element over gNMI
         timeout: optional override of the time to wait for connection,
         defaults to init parameter
         """
-
+        # Insecure GRPC channel
         if self.__insecure:
             self.__channel = grpc.insecure_channel(self.__target_path,
                                                    self.__metadata + self.__options)
 
+        # Secure GRPC channel
         else:
+            # Certificates-based authentication
             if self.__path_cert and self.__path_key and self.__path_root:
                 try:
                     cert = open(self.__path_cert, 'rb').read()
@@ -127,6 +129,7 @@ class gNMIclient(object):
                     logger.error('The SSL certificate cannot be opened.')
                     raise Exception('The SSL certificate cannot be opened.')
 
+            # Download a certficate from device if it is not provided
             else:
                 try:
                     ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
@@ -141,31 +144,48 @@ class gNMIclient(object):
                     logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
                     raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}')
 
+            # Build composed credentials if needed
+            if self.__token:
+                call_credentials = grpc.access_token_call_credentials(access_token=self.__token)
+                credentials = grpc.composite_channel_credentials(cert, call_credentials)
+
+            else:
+                credentials = cert
+
             self.__channel = grpc.secure_channel(self.__target_path,
-                                                 credentials=cert, options=self.__options)
+                                                 credentials=credentials, options=self.__options)
 
         if timeout is None:
-           timeout = self.__gnmi_timeout
+            timeout = self.__gnmi_timeout
         if timeout is None or timeout > 0:
-           self.wait_for_connect(timeout)
+            self.wait_for_connect(timeout)
         self.__stub = gNMIStub(self.__channel)
 
         return self
-
 
     def wait_for_connect(self, timeout: int):
         """
         Wait for the gNMI connection to the server to come up, with given timeout
         """
-        grpc.channel_ready_future(self.__channel).result(timeout=timeout)
+        try:
+            grpc.channel_ready_future(self.__channel).result(timeout=timeout)
 
+        except grpc.FutureTimeoutError:
+            logging.error("Failed to setup gRPC channel, trying change cipher")
+
+            try:
+                os.environ["GRPC_SSL_CIPHER_SUITES"] = "HIGH"
+                grpc.channel_ready_future(self.__channel).result(timeout=timeout)
+
+            except grpc.FutureTimeoutError:
+                raise
 
     def capabilities(self):
         """
         Collecting the gNMI capabilities of the network device.
         There are no arguments needed for this call
         """
-        logger.info(f'Collecting Capabilities...')
+        logger.info('Collecting Capabilities...')
 
         try:
             gnmi_message_request = CapabilityRequest()
@@ -223,10 +243,9 @@ class gNMIclient(object):
             raise Exception (err)
 
         except:
-            logger.error(f'Collection of Capabilities is failed.')
+            logger.error('Collection of Capabilities is failed.')
 
             return None
-
 
     def get(self, prefix: str = "", path: list = [], datatype: str = 'all', encoding: str = 'json'):
         """
@@ -285,7 +304,7 @@ class gNMIclient(object):
             else:
                 pb_encoding = 4
 
-        ## Gnmi PREFIX
+        # Gnmi PREFIX
         try:
             protobuf_prefix = gnmi_path_generator(prefix) if prefix else gnmi_path_generator([])
 
@@ -293,7 +312,7 @@ class gNMIclient(object):
             logger.error(f'Conversion of gNMI prefix to the Protobuf format failed')
             raise Exception ('Conversion of gNMI prefix to the Protobuf format failed')
 
-        ## Gnmi PATH
+        # Gnmi PATH
         try:
             if not path:
                 protobuf_paths = []
@@ -410,7 +429,6 @@ class gNMIclient(object):
             logger.error(f'Collection of Get information failed is failed.')
 
             return None
-
 
     def set(self, delete: list = None, replace: list = None, update: list = None, encoding: str = 'json'):
         """
@@ -594,10 +612,6 @@ class gNMIclient(object):
 
             return err
 
-        # except:
-        #     logger.error(f'Collection of Set information failed is failed.')
-        #     return None
-
 
     def set_with_retry(self, delete: list = None, replace: list = None, update: list = None, encoding: str = 'json', retry_delay: int = 3):
         """
@@ -617,7 +631,6 @@ class gNMIclient(object):
                 return self.set( delete=delete, replace=replace, update=update, encoding=encoding )
 
             raise rpc_ex
-
 
     def _build_subscriptionrequest(self, subscribe: dict):
         if not isinstance(subscribe, dict):
@@ -735,7 +748,6 @@ class gNMIclient(object):
 
         return SubscribeRequest(subscribe=request)
 
-
     def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None, timeout: float = 0.0):
         """
         Implementation of the subscribe gNMI RPC to pool
@@ -781,7 +793,6 @@ class gNMIclient(object):
 
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
-
     def subscribe2(self, subscribe: dict):
         """
         New High-level method to serve temetry based on recent additions
@@ -803,7 +814,6 @@ class gNMIclient(object):
         else:
             raise Exception('Unknown subscription request mode.')
 
-
     def subscribe_stream(self, subscribe: dict):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'STREAM'
@@ -817,13 +827,11 @@ class gNMIclient(object):
         gnmi_message_request = self._build_subscriptionrequest(subscribe)
         return PollSubscriber(self.__channel, gnmi_message_request, self.__metadata)
 
-
     def subscribe_once(self, subscribe: dict):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'ONCE'
         gnmi_message_request = self._build_subscriptionrequest(subscribe)
         return OnceSubscriber(self.__channel, gnmi_message_request, self.__metadata)
-
 
     def __generator(self, in_message):
         """
@@ -833,10 +841,8 @@ class gNMIclient(object):
 
         yield in_message
 
-
     def __exit__(self, type, value, traceback):
         self.__channel.close()
-
 
     def close(self):
         self.__channel.close()
@@ -883,7 +889,6 @@ class _Subscriber:
         self._subscribe_thread = threading.Thread(target=enqueue_updates)
         self._subscribe_thread.start()
 
-
     def _create_client_stream(self, request):
         """Iterator that yields the request, then poll messages when requested.
 
@@ -902,10 +907,8 @@ class _Subscriber:
 
         return client_stream(request)
 
-
     def _get_one_update(self, timeout=None):
         return telemetryParser(self._updates.get(block=True, timeout=timeout))
-
 
     def _get_updates_till_sync(self, timeout=None):
         """Read updates from streaming subscriptions, until sync_response
@@ -920,7 +923,6 @@ class _Subscriber:
             self._merge_updates(resp, new_resp)
         return resp
 
-
     def _merge_updates(self, resp, new_resp):
         if 'update' in new_resp:
             for key in new_resp['update']:
@@ -933,14 +935,11 @@ class _Subscriber:
         if 'sync_response' in new_resp:
             resp['sync_response'] = new_resp['sync_response']
 
-
     def __iter__(self):
         return self
 
-
     def __next__(self):
         return self.next()
-
 
     def next(self):
         """Get the next update from the target.
@@ -948,11 +947,9 @@ class _Subscriber:
         Blocks until one is available."""
         return self._next_update(timeout=None)
 
-
     def _next_update(self, timeout=None): ...
     # Overridden by each concrete class, as they each have slightly different
     # behaviour around waiting (or not) for a sync_response flag
-
 
     def get_update(self, timeout):
         """Get the next update from the target.
@@ -965,13 +962,11 @@ class _Subscriber:
         except queue.Empty:
             raise TimeoutError(f'No update from target after {timeout}s')
 
-
     def peek(self) -> bool:
         """Return True if there are updates from the target that have not yet been
         received.
         """
         return not self._updates.empty()
-
 
     def close(self):
         """Close the subscription.
