@@ -1,5 +1,5 @@
 """
-Collection of unit tests to test various resolutions for connectivity to device
+Collection of unit tests to test various authentication methods
 """
 # Modules
 import os
@@ -16,15 +16,15 @@ ENV_PATH_CERT = os.getenv("PYGNMI_CERT")
 
 
 # Tests
-def test_ipv4_address_certificate_download():
+def test_authentication_token():
     """
-    Unit test to test connectivity to gNMI speaking network function over secure channel
-    with the certificate download
+    Unit test to test authentication with token
     """
     gconn = gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
                        username=ENV_USERNAME,
                        password=ENV_PASSWORD,
-                       override=ENV_ADDRESS)
+                       override=ENV_ADDRESS,
+                       token="ABC")
     gconn.connect()
 
     result = gconn.capabilities()
