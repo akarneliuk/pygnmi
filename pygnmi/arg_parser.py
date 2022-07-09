@@ -66,6 +66,12 @@ def parse_args(msg):
         help="Set to disable TLS encryption on the gRPC channel",
     )
     parser.add_argument(
+        "--skip-verify",
+        action="store_true",
+        default=False,
+        help="Set to disable SSL certificate valication on the encrypted gRPC channel",
+    )
+    parser.add_argument(
         "-o", "--operation",
         type=str,
         required=False,

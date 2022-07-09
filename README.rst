@@ -84,10 +84,15 @@ Contributors
 Dev Log
 =======
 
+Release **0.7.1*:
+
+- Added new argument ``skip_verify`` to ``gNMIclient``, which removes a need to set the ``override`` argument manually. However, the latter one still stays for the backward compatibility.
+- Changed default values for arguments ``username`` and ``password`` from ``None`` to ``""``, as with token-based authentication they don't need to be specified.
+
 Release **0.7.0**:
 
 - Added authentication with Token using ``Authorization: Bearer TOKEN``, where ``TOKEN`` is a variable provided as ``gNMIclient(token=TOKEN)`` key (needed for Arista CVP).
-- Added functionality to change  ``GRPC_SSL_CIPHER_SUITES`` dynamically to ``HIGH`` value (needed for Nokia SR OS)
+- Added functionality to change  ``GRPC_SSL_CIPHER_SUITES`` dynamically to ``HIGH`` value (needed for Nokia SR OS).
 
 Release **0.6.9**:
 

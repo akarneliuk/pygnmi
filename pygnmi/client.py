@@ -37,11 +37,11 @@ class gNMIclient(object):
     """
     This class instantiates the object, which interacts with the network elements over gNMI.
     """
-    def __init__(self, target: tuple, username: str = None, password: str = None,
+    def __init__(self, target: tuple, username: str = "", password: str = "",
                  debug: bool = False, insecure: bool = False, path_cert: str = None,
                  path_key: str = None, path_root: str = None, override: str = None,
-                 gnmi_timeout: int = 5, grpc_options: list = [], show_diff: str = "", 
-                 token: str = None, **kwargs):
+                 skip_verify = False, gnmi_timeout: int = 5, grpc_options: list = [],
+                 show_diff: str = "", token: str = None, **kwargs):
 
         """
         Initializing the object
@@ -53,10 +53,11 @@ class gNMIclient(object):
         self.__path_cert = path_cert
         self.__path_key = path_key
         self.__path_root = path_root
-        self.__options = ([('grpc.ssl_target_name_override', override)]+grpc_options) if override else grpc_options
+        self.__options = ([('grpc.ssl_target_name_override', override)] + grpc_options) if override else grpc_options
         self.__token = token
         self.__gnmi_timeout = gnmi_timeout
         self.__show_diff = show_diff if show_diff in {"get", "print"} else ""
+        self.__skip_verify = skip_verify
 
         self.__target_path = f'{target[0]}:{target[1]}'
         if re.match('unix:.*', target[0]):
@@ -111,21 +112,20 @@ class gNMIclient(object):
             # Certificates-based authentication
             if self.__path_cert and self.__path_key and self.__path_root:
                 try:
-                    cert = open(self.__path_cert, 'rb').read()
+                    ssl_cert = open(self.__path_cert, 'rb').read()
                     key = open(self.__path_key, 'rb').read()
                     root_cert = open(self.__path_root, 'rb').read()
-                    cert = grpc.ssl_channel_credentials(root_certificates=root_cert,
-                                                        private_key=key, certificate_chain=cert)
-                except:
+
+                except FileNotFoundError:
                     logging.error('The SSL certificate cannot be opened.')
                     raise Exception('The SSL certificate cannot be opened.')
 
             elif self.__path_cert:
                 try:
                     with open(self.__path_cert, 'rb') as f:
-                        cert = grpc.ssl_channel_credentials(f.read())
+                        ssl_cert = f.read()
 
-                except:
+                except FileNotFoundError:
                     logger.error('The SSL certificate cannot be opened.')
                     raise Exception('The SSL certificate cannot be opened.')
 
@@ -133,16 +133,42 @@ class gNMIclient(object):
             else:
                 try:
                     ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
-                    ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
-                    ssl_cert_common_names = ssl_cert_deserialized.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
-                    ssl_target_name_override = ssl_cert_common_names[0].value
-                    self.__options += [("grpc.ssl_target_name_override", ssl_target_name_override)]
-                    logger.warning('ssl_target_name_override is applied, should be used for testing only!')
-                    cert = grpc.ssl_channel_credentials(ssl_cert)
 
                 except:
                     logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
                     raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}')
+
+            # Work with the certificate contents
+            ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
+
+            # Collect Certificate's Common Name
+            ssl_cert_common_names = ssl_cert_deserialized.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
+            ssl_target_name_override = ssl_cert_common_names[0].value
+
+            # Collect Certificate's Subject Alternative Names
+            self.__cert_sans = []
+            list_of_sans = [x509.IPAddress, x509.DNSName]
+            ssl_cert_subject_alt_names = ssl_cert_deserialized.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+
+            for entry in list_of_sans:
+                sans = ssl_cert_subject_alt_names.value.get_values_for_type(entry)
+                self.__cert_sans.extend([str(san) for san in sans])
+
+            # Set auto overrides
+            if self.__skip_verify:
+                self.__options.append(("grpc.ssl_target_name_override", ssl_target_name_override))
+                for san in self.__cert_sans:
+                    self.__options.append(("grpc.ssl_target_name_override", san))
+
+                logger.warning('ssl_target_name_override is applied, should be used for testing only!')
+
+            # Set up SSL channel credentials
+            if self.__path_key and self.__path_root:
+                cert = grpc.ssl_channel_credentials(root_certificates=root_cert,
+                                                    private_key=key, certificate_chain=ssl_cert)
+
+            else:
+                cert = grpc.ssl_channel_credentials(ssl_cert)
 
             # Build composed credentials if needed
             if self.__token:

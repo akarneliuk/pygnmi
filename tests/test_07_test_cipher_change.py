@@ -17,7 +17,7 @@ ENV_PATH_CERT = os.getenv("PYGNMI_CERT")
 
 
 # Tests
-def test_authentication_token():
+def test_cipher_change_on_failure():
     """
     Unit test to test authentication with token
     """
@@ -29,6 +29,8 @@ def test_authentication_token():
 
     cipher_value_1 = None
     cipher_value_2 = None
+
+    os.environ["GRPC_SSL_CIPHER_SUITES"] = ""
 
     try:
         cipher_value_1 = os.getenv("GRPC_SSL_CIPHER_SUITES")

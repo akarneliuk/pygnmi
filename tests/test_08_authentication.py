@@ -23,7 +23,6 @@ def test_authentication_token():
     gconn = gNMIclient(target=(ENV_HOSTNAME, ENV_PORT),
                        username=ENV_USERNAME,
                        password=ENV_PASSWORD,
-                       override=ENV_ADDRESS,
                        token="ABC")
     gconn.connect()
 

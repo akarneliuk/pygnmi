@@ -18,6 +18,7 @@ jobs:
       PYGNMI_USER: ${{ secrets.PYGNMI_USER }}
       PYGNMI_PASS: ${{ secrets.PYGNMI_PASS }}
       PYGNMI_CERT_CONTENT: ${{ secrets.PYGNMI_CERT_CONTENT }}
+      PYGNMI_FAKE_NAME: ${{ secrets.PYGNMI_FAKE_NAME }}
     steps:
       - name: Syncronise GitHub repository with the container
         uses: actions/checkout@v3
@@ -41,9 +42,10 @@ jobs:
         run: |
           echo "${{ secrets.PYGNMI_CERT_CONTENT }}" > "${{ secrets.PYGNMI_CERT }}"
 
-      - name: Amend hosts
+      - name: Amend /etc/hosts
         run: |
           sudo echo "${{ secrets.PYGNMI_HOST }} ${{ secrets.PYGNMI_NAME }}" | sudo tee -a /etc/hosts
+          sudo echo "${{ secrets.PYGNMI_HOST }} ${{ secrets.PYGNMI_FAKE_NAME }}" | sudo tee -a /etc/hosts
 
       - name: Perform unit testing
         run: |

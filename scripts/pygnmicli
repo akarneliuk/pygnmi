@@ -9,7 +9,7 @@ import os
 
 # Own modules
 from pygnmi.arg_parser import parse_args
-from pygnmi.client import gNMIclient, telemetryParser
+from pygnmi.client import gNMIclient
 from pygnmi.artefacts.messages import msg
 
 # Variables
@@ -39,7 +39,7 @@ def main():
         target=args.target, username=args.username, password=args.password,
         path_cert=args.path_cert, path_key=args.path_key, path_root=args.path_root,
         override=args.override, insecure=args.insecure, debug=args.debug,
-        show_diff=args.compare
+        show_diff=args.compare, skip_verify=args.skip_verify
     ) as GC:
 
         result = None
