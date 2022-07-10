@@ -84,7 +84,7 @@ Contributors
 Dev Log
 =======
 
-Release **0.7.1*:
+Release **0.7.1**:
 
 - Added new argument ``skip_verify`` to ``gNMIclient``, which removes a need to set the ``override`` argument manually. However, the latter one still stays for the backward compatibility.
 - Changed default values for arguments ``username`` and ``password`` from ``None`` to ``""``, as with token-based authentication they don't need to be specified.
