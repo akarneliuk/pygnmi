@@ -88,7 +88,7 @@ Release **0.7.1*:
 
 - Added new argument ``skip_verify`` to ``gNMIclient``, which removes a need to set the ``override`` argument manually. However, the latter one still stays for the backward compatibility.
 - Changed default values for arguments ``username`` and ``password`` from ``None`` to ``""``, as with token-based authentication they don't need to be specified.
-- Added new argument ``target`` to ``gNMIclient.get()``, ``gNMIclient.set()``, and ``gNMIclient.subscribe2()`` methods. If provided, it adds ``target`` key to ``Path()`` per `GNMI Specification 2.2.2.1 <https://github.com/openconfig/reference/blob/master/rpc/gnmi/gnmi-specification.md#2221-path-target>`
+- Added new argument ``target`` to ``gNMIclient.get()``, ``gNMIclient.set()``, and ``gNMIclient.subscribe2()`` methods. If provided, it adds ``target`` key to ``Path()`` per `GNMI Specification 2.2.2.1 <https://github.com/openconfig/reference/blob/master/rpc/gnmi/gnmi-specification.md#2221-path-target>`_.
 
 Release **0.7.0**:
 
