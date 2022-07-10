@@ -90,6 +90,13 @@ def parse_args(msg):
         help="gNMI paths of interest in XPath format, space separated"
     )
     parser.add_argument(
+        "--gnmi_path_target",
+        type=str,
+        required=False,
+        default="",
+        help="Set target for GNMI path if it is different to the endpoint itself."
+    )
+    parser.add_argument(
         "-d", "--datastore",
         type=str,
         required=False,

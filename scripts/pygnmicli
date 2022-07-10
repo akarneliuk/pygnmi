@@ -50,7 +50,8 @@ def main():
 
         elif args.operation == 'get':
             print(f'Doing {args.operation} request to {args.target}...')
-            result = GC.get(path=args.gnmi_path, datatype=args.datastore, encoding='json')
+            result = GC.get(path=args.gnmi_path, datatype=args.datastore, encoding='json',
+                            target=args.gnmi_path_target)
 
         elif args.operation.startswith('set'):
             print(f'Doing {args.operation} request to {args.target}...')
@@ -65,7 +66,7 @@ def main():
                     data = f.read()
                 jdata = json.loads(data)
                 kwargs[mode] = [(args.gnmi_path[0], jdata)]
-            result = GC.set(encoding="json_ietf", **kwargs)
+            result = GC.set(encoding="json_ietf", target=args.gnmi_path_target, **kwargs)
 
         elif args.operation.startswith('subscribe'):
             mode = args.operation.split("-")[1]
@@ -85,7 +86,8 @@ def main():
                 'encoding': 'json'
             }
 
-            result = GC.subscribe2(subscribe=subscribe)
+            result = GC.subscribe2(subscribe=subscribe,
+                                   target=args.gnmi_path_target)
 
             if mode == "stream":
                 try:
