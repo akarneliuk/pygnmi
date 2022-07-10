@@ -164,8 +164,34 @@ def test_get_prefix_and_path():
         assert isinstance(result["notification"][0]["update"], list)
         assert len(result["notification"][0]["update"]) > 0
 
+        # Default GNMI path with target
+        result = gconn.get(prefix="/", target=ENV_HOSTNAME)
+        assert "notification" in result
+        assert isinstance(result["notification"], list)
+        assert len(result["notification"]) == 1
+        assert "update" in result["notification"][0]
+        assert "timestamp" in result["notification"][0]
+        assert "prefix" in result["notification"][0]
+        assert "alias" in result["notification"][0]
+        assert "atomic" in result["notification"][0]
+        assert isinstance(result["notification"][0]["update"], list)
+        assert len(result["notification"][0]["update"]) > 0
+
         # "yang-model:top_element" GNMI path notation
         result = gconn.get(prefix="openconfig-interfaces:interfaces")
+        assert "notification" in result
+        assert isinstance(result["notification"], list)
+        assert len(result["notification"]) == 1
+        assert "update" in result["notification"][0]
+        assert "timestamp" in result["notification"][0]
+        assert "prefix" in result["notification"][0]
+        assert "alias" in result["notification"][0]
+        assert "atomic" in result["notification"][0]
+        assert isinstance(result["notification"][0]["update"], list)
+        assert len(result["notification"][0]["update"]) == 1
+
+        # "yang-model:top_element" GNMI path notation with target
+        result = gconn.get(prefix="openconfig-interfaces:interfaces", target=ENV_HOSTNAME)
         assert "notification" in result
         assert isinstance(result["notification"], list)
         assert len(result["notification"]) == 1

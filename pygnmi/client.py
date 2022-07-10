@@ -266,14 +266,16 @@ class gNMIclient(object):
             print(f"Host: {self.__target_path}\nError: {err.details()}")
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
 
-            raise Exception (err)
+            raise Exception(err)
 
         except:
             logger.error('Collection of Capabilities is failed.')
 
             return None
 
-    def get(self, prefix: str = "", path: list = [], datatype: str = 'all', encoding: str = 'json'):
+    def get(self, prefix: str = "", path: list = [],
+            target: str = None, datatype: str = 'all',
+            encoding: str = 'json'):
         """
         Collecting the information about the resources from defined paths.
 
@@ -300,7 +302,7 @@ class gNMIclient(object):
           - ascii
           - json_ietf
         """
-        logger.info(f'Collecting info from requested paths (Get operation)...')
+        logger.info("Collecting info from requested paths (Get operation)...")
 
         datatype = datatype.lower()
         type_dict = {'all', 'config', 'state', 'operational'}
@@ -332,22 +334,24 @@ class gNMIclient(object):
 
         # Gnmi PREFIX
         try:
-            protobuf_prefix = gnmi_path_generator(prefix) if prefix else gnmi_path_generator([])
+            protobuf_prefix = gnmi_path_generator(prefix, target) if prefix else gnmi_path_generator([])
 
         except:
-            logger.error(f'Conversion of gNMI prefix to the Protobuf format failed')
-            raise Exception ('Conversion of gNMI prefix to the Protobuf format failed')
+            logger.error('Conversion of gNMI prefix to the Protobuf format failed')
+            raise Exception('Conversion of gNMI prefix to the Protobuf format failed')
 
         # Gnmi PATH
         try:
+            target = "" if prefix else target
+
             if not path:
                 protobuf_paths = []
-                protobuf_paths.append(gnmi_path_generator(path))
+                protobuf_paths.append(gnmi_path_generator(path, target))
             else:
-                protobuf_paths = [gnmi_path_generator(pe) for pe in path]
+                protobuf_paths = [gnmi_path_generator(pe, target) for pe in path]
 
         except:
-            logger.error(f'Conversion of gNMI paths to the Protobuf format failed')
+            logger.error('Conversion of gNMI paths to the Protobuf format failed')
             raise Exception ('Conversion of gNMI paths to the Protobuf format failed')
 
         if self.__capabilities and 'supported_encodings' in self.__capabilities:
@@ -382,29 +386,29 @@ class gNMIclient(object):
                     for notification in gnmi_message_response.notification:
                         notification_container = {}
 
-                        ## Message Notification, Key timestamp
+                        # Message Notification, Key timestamp
                         notification_container.update({'timestamp': notification.timestamp}) if notification.timestamp else notification_container.update({'timestamp': 0})
 
-                        ## Message Notification, Key prefix
+                        # Message Notification, Key prefix
                         notification_container.update({'prefix': gnmi_path_degenerator(notification.prefix)}) if notification.prefix else notification_container.update({'prefix': None})
 
-                        ## Message Notification, Key alias
+                        # Message Notification, Key alias
                         notification_container.update({'alias': notification.alias}) if notification.alias else notification_container.update({'alias': None})
 
-                        ## Message Notification, Key atomic
+                        # Message Notification, Key atomic
                         notification_container.update({'atomic': notification.atomic })
 
-                        ## Message Notification, Key update
+                        # Message Notification, Key update
                         if notification.update:
                             notification_container.update({'update': []})
 
                             for update_msg in notification.update:
                                 update_container = {}
 
-                                ## Message Update, Key path
+                                # Message Update, Key path
                                 update_container.update({'path': gnmi_path_degenerator(update_msg.path)}) if update_msg.path else update_container.update({'path': None})
 
-                                ## Message Update, Key val
+                                # Message Update, Key val
                                 if update_msg.HasField('val'):
                                     if update_msg.val.HasField('json_ietf_val'):
                                         update_container.update({'val': json.loads(update_msg.val.json_ietf_val)})
@@ -456,7 +460,9 @@ class gNMIclient(object):
 
             return None
 
-    def set(self, delete: list = None, replace: list = None, update: list = None, encoding: str = 'json'):
+    def set(self, delete: list = None, replace: list = None,
+            update: list = None, encoding: str = 'json',
+            target: str = None):
         """
         Changing the configuration on the destination network elements.
         Could provide a single attribute or multiple attributes.
@@ -492,7 +498,7 @@ class gNMIclient(object):
         if delete:
             if isinstance(delete, list):
                 try:
-                    del_protobuf_paths = [gnmi_path_generator(pe) for pe in delete]
+                    del_protobuf_paths = [gnmi_path_generator(pe, target) for pe in delete]
 
                 except:
                     logger.error(f'Conversion of gNMI paths to the Protobuf format failed')
@@ -506,7 +512,7 @@ class gNMIclient(object):
             if isinstance(replace, list):
                 for ue in replace:
                     if isinstance(ue, tuple):
-                        u_path = gnmi_path_generator(ue[0])
+                        u_path = gnmi_path_generator(ue[0], target)
                         u_val = json.dumps(ue[1]).encode('utf-8')
 
                         if encoding == 'json':
@@ -532,7 +538,7 @@ class gNMIclient(object):
             if isinstance(update, list):
                 for ue in update:
                     if isinstance(ue, tuple):
-                        u_path = gnmi_path_generator(ue[0])
+                        u_path = gnmi_path_generator(ue[0], target)
                         u_val = json.dumps(ue[1]).encode('utf-8')
 
                         if encoding == 'json':
@@ -658,7 +664,7 @@ class gNMIclient(object):
 
             raise rpc_ex
 
-    def _build_subscriptionrequest(self, subscribe: dict):
+    def _build_subscriptionrequest(self, subscribe: dict, target: str = None):
         if not isinstance(subscribe, dict):
             raise ValueError('Subscribe subscribe request is specified, but the value is not dict.')
 
@@ -733,17 +739,19 @@ class gNMIclient(object):
             subscribe.update({'prefix': None})
 
         if subscribe['prefix']:
-            request.prefix = gnmi_path_generator(subscribe['prefix'])
+            request.prefix = gnmi_path_generator(subscribe['prefix'], target)
 
         # subscription
         if 'subscription' not in subscribe or not subscribe['subscription']:
             raise ValueError('Subscribe:subscription value is missing.')
 
         for se in subscribe['subscription']:
+            # Amend target
+            target = "" if subscribe['prefix'] else target
             # path for that subscription
             if 'path' not in se:
                 raise ValueError('Subscribe:subscription:path is missing')
-            se_path = gnmi_path_generator(se['path'])
+            se_path = gnmi_path_generator(se['path'], target)
 
             # subscription entry mode; only relevent when the subscription request is stream
             if subscribe['mode'].lower() == 'stream':
@@ -819,7 +827,7 @@ class gNMIclient(object):
 
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
-    def subscribe2(self, subscribe: dict):
+    def subscribe2(self, subscribe: dict, target: str = None):
         """
         New High-level method to serve temetry based on recent additions
         """
@@ -829,34 +837,33 @@ class gNMIclient(object):
 
         if subscribe['mode'].lower() in {'stream', 'once', 'poll'}:
             if subscribe['mode'].lower() == 'stream':
-                return self.subscribe_stream(subscribe=subscribe)
+                return self.subscribe_stream(subscribe=subscribe, target=target)
 
             elif subscribe['mode'].lower() == 'poll':
-                return self.subscribe_poll(subscribe=subscribe)
+                return self.subscribe_poll(subscribe=subscribe, target=target)
 
             elif subscribe['mode'].lower() == 'once':
-                return self.subscribe_once(subscribe=subscribe)
+                return self.subscribe_once(subscribe=subscribe, target=target)
 
         else:
             raise Exception('Unknown subscription request mode.')
 
-    def subscribe_stream(self, subscribe: dict):
+    def subscribe_stream(self, subscribe: dict, target: str = None):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'STREAM'
-        gnmi_message_request = self._build_subscriptionrequest(subscribe)
+        gnmi_message_request = self._build_subscriptionrequest(subscribe, target)
         return StreamSubscriber(self.__channel, gnmi_message_request, self.__metadata)
 
-
-    def subscribe_poll(self, subscribe: dict):
+    def subscribe_poll(self, subscribe: dict, target: str = None):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'POLL'
-        gnmi_message_request = self._build_subscriptionrequest(subscribe)
+        gnmi_message_request = self._build_subscriptionrequest(subscribe, target)
         return PollSubscriber(self.__channel, gnmi_message_request, self.__metadata)
 
-    def subscribe_once(self, subscribe: dict):
+    def subscribe_once(self, subscribe: dict, target: str = None):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'ONCE'
-        gnmi_message_request = self._build_subscriptionrequest(subscribe)
+        gnmi_message_request = self._build_subscriptionrequest(subscribe, target)
         return OnceSubscriber(self.__channel, gnmi_message_request, self.__metadata)
 
     def __generator(self, in_message):
@@ -1095,24 +1102,8 @@ def telemetryParser(in_message=None, debug: bool = False):
             for update_msg in in_message.update.update:
                 update_container = {}
 
-                if update_msg.path and update_msg.path.elem:
-                    resource_path = []
-                    for path_elem in update_msg.path.elem:
-                        tp = ''
-                        if path_elem.name:
-                            tp += path_elem.name
-
-                        if path_elem.key:
-                            # Use 'sorted' to have a consistent ordering of keys
-                            for pk_name, pk_value in sorted(path_elem.key.items()):
-                                tp += f'[{pk_name}={pk_value}]'
-
-                        resource_path.append(tp)
-
-                    update_container.update({'path': '/'.join(resource_path)})
-
-                else:
-                    update_container.update({'path': None})
+                # Message Update, Key path
+                update_container.update({'path': gnmi_path_degenerator(update_msg.path)}) if update_msg.path else update_container.update({'path': None})
 
                 if update_msg.val:
                     if update_msg.val.HasField('json_ietf_val'):
