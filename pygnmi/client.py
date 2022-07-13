@@ -141,13 +141,9 @@ class gNMIclient(object):
             # Work with the certificate contents
             ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
 
-            # Collect Certificate's Common Name
-            ssl_cert_common_names = ssl_cert_deserialized.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
-            ssl_target_name_override = ssl_cert_common_names[0].value
-
             # Collect Certificate's Subject Alternative Names
             self.__cert_sans = []
-            list_of_sans = [x509.IPAddress, x509.DNSName]
+            list_of_sans = [x509.IPAddress, x509.DNSName, x509.RFC822Name]
             ssl_cert_subject_alt_names = ssl_cert_deserialized.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
 
             for entry in list_of_sans:
@@ -156,11 +152,16 @@ class gNMIclient(object):
 
             # Set auto overrides
             if self.__skip_verify:
-                self.__options.append(("grpc.ssl_target_name_override", ssl_target_name_override))
                 for san in self.__cert_sans:
                     self.__options.append(("grpc.ssl_target_name_override", san))
 
                 logger.warning('ssl_target_name_override is applied, should be used for testing only!')
+
+                # Print override if debug enabled
+                if self.__debug:
+                    print("Authentication override:\n------------------------------------------------")
+                    print(self.__options)
+                    print("gNMI request:\n------------------------------------------------")
 
             # Set up SSL channel credentials
             if self.__path_key and self.__path_root:

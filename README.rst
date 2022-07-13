@@ -84,6 +84,10 @@ Contributors
 Dev Log
 =======
 
+Release **0.7.2**:
+
+- Minor bug fixing in the ``skip_verify`` logic. **Impotant**: for this feature to work, you need at least one subject alternative name filed (DNS, IP address, email, - any will work). It also doesn't matter which value it has, but at least one item shall present.
+
 Release **0.7.1**:
 
 - Added new argument ``skip_verify`` to ``gNMIclient``, which removes a need to set the ``override`` argument manually. However, the latter one still stays for the backward compatibility.
@@ -347,7 +351,7 @@ Release **0.1.0**:
 
 (c)2020-2022, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.7.1&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.7.2&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
