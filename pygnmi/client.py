@@ -1,6 +1,7 @@
 #(c)2019-2022, karneliuk.com
 
 # Modules
+from distutils import extension
 import re
 import sys
 import json
@@ -9,6 +10,7 @@ import queue
 import time
 import threading
 import os
+import cryptography
 import grpc
 from pygnmi.spec.gnmi_pb2_grpc import gNMIStub
 from pygnmi.spec.gnmi_pb2 import (CapabilityRequest, Encoding, GetRequest,\
@@ -138,32 +140,53 @@ class gNMIclient(object):
                     logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
                     raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}')
 
-            try:
-                # Work with the certificate contents
-                ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
+            
+            # Work with the certificate contents
+            ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
 
-                # Collect Certificate's Subject Alternative Names
-                self.__cert_sans = []
-                list_of_sans = [x509.IPAddress, x509.DNSName, x509.RFC822Name]
+            # Collect Certificate's Comman Name
+            ssl_cert_common_name = None
+            try:
+                ssl_cert_common_name = ssl_cert_deserialized.subject.get_attributes_for_oid((x509.oid.NameOID.COMMON_NAME))[0].value
+
+            except BaseException as err:
+                logger.warning(f"Cannot get Common Name: {err}")
+
+            # Collect Certificate's Subject Alternative Names
+            
+            ssl_cert_subject_alt_names = None
+            try:
                 ssl_cert_subject_alt_names = ssl_cert_deserialized.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
 
+            except cryptography.x509.extensions.ExtensionNotFound as err:
+                logger.warning(f'Cannot get Subject Alternative Names: {err}')
+
+            self.__cert_sans = []
+            list_of_sans = [x509.IPAddress, x509.DNSName, x509.RFC822Name]
+
+            # Set list of overrides for SANs
+            if ssl_cert_subject_alt_names:
                 for entry in list_of_sans:
-                    sans = ssl_cert_subject_alt_names.value.get_values_for_type(entry)
-                    self.__cert_sans.extend([str(san) for san in sans])
+                    try:
+                        sans = ssl_cert_subject_alt_names.value.get_values_for_type(entry)
+                        self.__cert_sans.extend([str(san) for san in sans])
 
-                # Set auto overrides
-                if self.__skip_verify:
-                    for san in self.__cert_sans:
-                        self.__options.append(("grpc.ssl_target_name_override", san))
+                    except:
+                        logger.warning(f"There is no Extensions for {entry}")
 
-                    logger.warning('ssl_target_name_override is applied, should be used for testing only!')
+            # Set list of overides for CN
+            if ssl_cert_common_name:
+                self.__cert_sans.append(ssl_cert_common_name)
 
-                    # Print override if debug enabled
-                    debug_gnmi_msg(self.__debug, self.__options, "Authentication override")
+            # Set auto overrides
+            if self.__skip_verify:
+                for san in self.__cert_sans:
+                    self.__options.append(("grpc.ssl_target_name_override", san))
 
-            except:
-                logger.error('Cannot parse the obtained certificate')
-                raise Exception('Cannot parse the obtained certificate')
+                logger.warning('ssl_target_name_override is applied, should be used for testing only!')
+
+                # Print override if debug enabled
+                debug_gnmi_msg(self.__debug, self.__options, "Authentication override")
 
             # Set up SSL channel credentials
             if self.__path_key and self.__path_root:
