@@ -84,6 +84,10 @@ Contributors
 Dev Log
 =======
 
+Release **0.7.3**:
+
+- Amended the logic of ``target`` functionality to be more inline with gNMI Reference.
+
 Release **0.7.2**:
 
 - Minor bug fixing in the ``skip_verify`` logic. **Impotant**: for this feature to work, you need at least one subject alternative name filed (DNS, IP address, email, - any will work). It also doesn't matter which value it has, but at least one item shall present.

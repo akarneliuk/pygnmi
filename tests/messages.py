@@ -1,5 +1,5 @@
 test_set_update_tuple = (
-                            "openconfig-interfaces:interfaces/interface[name=Loopback51]", 
+                            "openconfig-interfaces:interfaces/interface[name=Loopback51]",
                             {
                                 "config": {
                                     "name": "Loopback51", 
@@ -11,7 +11,7 @@ test_set_update_tuple = (
                         )
 
 test_set_replace_tuple = (
-                            "openconfig-interfaces:interfaces/interface[name=Loopback51]/config", 
+                            "openconfig-interfaces:interfaces/interface[name=Loopback51]/config",
                             {
                                 "name": "Loopback51", 
                                 "type": "softwareLoopback", 

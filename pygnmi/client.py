@@ -1,4 +1,4 @@
-#(c)2019-2021, karneliuk.com
+#(c)2019-2022, karneliuk.com
 
 # Modules
 import re
@@ -138,30 +138,32 @@ class gNMIclient(object):
                     logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
                     raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}')
 
-            # Work with the certificate contents
-            ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
+            try:
+                # Work with the certificate contents
+                ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
 
-            # Collect Certificate's Subject Alternative Names
-            self.__cert_sans = []
-            list_of_sans = [x509.IPAddress, x509.DNSName, x509.RFC822Name]
-            ssl_cert_subject_alt_names = ssl_cert_deserialized.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+                # Collect Certificate's Subject Alternative Names
+                self.__cert_sans = []
+                list_of_sans = [x509.IPAddress, x509.DNSName, x509.RFC822Name]
+                ssl_cert_subject_alt_names = ssl_cert_deserialized.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
 
-            for entry in list_of_sans:
-                sans = ssl_cert_subject_alt_names.value.get_values_for_type(entry)
-                self.__cert_sans.extend([str(san) for san in sans])
+                for entry in list_of_sans:
+                    sans = ssl_cert_subject_alt_names.value.get_values_for_type(entry)
+                    self.__cert_sans.extend([str(san) for san in sans])
 
-            # Set auto overrides
-            if self.__skip_verify:
-                for san in self.__cert_sans:
-                    self.__options.append(("grpc.ssl_target_name_override", san))
+                # Set auto overrides
+                if self.__skip_verify:
+                    for san in self.__cert_sans:
+                        self.__options.append(("grpc.ssl_target_name_override", san))
 
-                logger.warning('ssl_target_name_override is applied, should be used for testing only!')
+                    logger.warning('ssl_target_name_override is applied, should be used for testing only!')
 
-                # Print override if debug enabled
-                if self.__debug:
-                    print("Authentication override:\n------------------------------------------------")
-                    print(self.__options)
-                    print("gNMI request:\n------------------------------------------------")
+                    # Print override if debug enabled
+                    debug_gnmi_msg(self.__debug, self.__options, "Authentication override")
+
+            except:
+                logger.error('Cannot parse the obtained certificate')
+                raise Exception('Cannot parse the obtained certificate')
 
             # Set up SSL channel credentials
             if self.__path_key and self.__path_root:
@@ -216,18 +218,10 @@ class gNMIclient(object):
 
         try:
             gnmi_message_request = CapabilityRequest()
-
-            if self.__debug:
-                print("gNMI request:\n------------------------------------------------")
-                print(gnmi_message_request)
-                print("------------------------------------------------")
+            debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
             gnmi_message_response = self.__stub.Capabilities(gnmi_message_request, metadata=self.__metadata)
-
-            if self.__debug:
-                print("\n\n\ngNMI response:\n------------------------------------------------")
-                print(gnmi_message_response)
-                print("------------------------------------------------")
+            debug_gnmi_msg(self.__debug, gnmi_message_response, "gNMI response")
 
             if gnmi_message_response:
                 response = {}
@@ -335,7 +329,7 @@ class gNMIclient(object):
 
         # Gnmi PREFIX
         try:
-            protobuf_prefix = gnmi_path_generator(prefix, target) if prefix else gnmi_path_generator([])
+            protobuf_prefix = gnmi_path_generator(prefix, target)
 
         except:
             logger.error('Conversion of gNMI prefix to the Protobuf format failed')
@@ -343,13 +337,11 @@ class gNMIclient(object):
 
         # Gnmi PATH
         try:
-            target = "" if prefix else target
-
             if not path:
                 protobuf_paths = []
-                protobuf_paths.append(gnmi_path_generator(path, target))
+                protobuf_paths.append(gnmi_path_generator(path))
             else:
-                protobuf_paths = [gnmi_path_generator(pe, target) for pe in path]
+                protobuf_paths = [gnmi_path_generator(pe) for pe in path]
 
         except:
             logger.error('Conversion of gNMI paths to the Protobuf format failed')
@@ -364,18 +356,10 @@ class gNMIclient(object):
         try:
             gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths, 
                                               type=pb_datatype, encoding=pb_encoding)
-
-            if self.__debug:
-                print("gNMI request:\n------------------------------------------------")
-                print(gnmi_message_request)
-                print("------------------------------------------------")
+            debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
             gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
-
-            if self.__debug:
-                print("\n\n\ngNMI response:\n------------------------------------------------")
-                print(gnmi_message_response)
-                print("------------------------------------------------")
+            debug_gnmi_msg(self.__debug, gnmi_message_response, "gNMI response")
 
             if gnmi_message_response:
                 response = {}
@@ -463,7 +447,7 @@ class gNMIclient(object):
 
     def set(self, delete: list = None, replace: list = None,
             update: list = None, encoding: str = 'json',
-            target: str = None):
+            prefix: str = "", target: str = None):
         """
         Changing the configuration on the destination network elements.
         Could provide a single attribute or multiple attributes.
@@ -496,10 +480,19 @@ class gNMIclient(object):
             logger.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
             raise Exception (f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
 
+        # Gnmi PREFIX
+        try:
+            protobuf_prefix = gnmi_path_generator(prefix, target)
+
+        except:
+            logger.error('Conversion of gNMI prefix to the Protobuf format failed')
+            raise Exception('Conversion of gNMI prefix to the Protobuf format failed')
+
+        # Delete operation
         if delete:
             if isinstance(delete, list):
                 try:
-                    del_protobuf_paths = [gnmi_path_generator(pe, target) for pe in delete]
+                    del_protobuf_paths = [gnmi_path_generator(pe) for pe in delete]
 
                 except:
                     logger.error(f'Conversion of gNMI paths to the Protobuf format failed')
@@ -509,11 +502,12 @@ class gNMIclient(object):
                 logger.error(f'The provided input for Set message (delete operation) is not list.')
                 raise Exception (f'The provided input for Set message (delete operation) is not list.')
 
+        # Replace operation
         if replace:
             if isinstance(replace, list):
                 for ue in replace:
                     if isinstance(ue, tuple):
-                        u_path = gnmi_path_generator(ue[0], target)
+                        u_path = gnmi_path_generator(ue[0])
                         u_val = json.dumps(ue[1]).encode('utf-8')
 
                         if encoding == 'json':
@@ -535,11 +529,12 @@ class gNMIclient(object):
                 logger.error(f'The provided input for Set message (replace operation) is not list.')
                 raise Exception ('The provided input for Set message (replace operation) is not list.')
 
+        # Update operation
         if update:
             if isinstance(update, list):
                 for ue in update:
                     if isinstance(ue, tuple):
-                        u_path = gnmi_path_generator(ue[0], target)
+                        u_path = gnmi_path_generator(ue[0])
                         u_val = json.dumps(ue[1]).encode('utf-8')
 
                         if encoding == 'json':
@@ -562,7 +557,7 @@ class gNMIclient(object):
                 raise Exception ('The provided input for Set message (replace operation) is not list.')
 
         try:
-            ## Adding collection of data for diff before the change
+            # Adding collection of data for diff before the change
             if self.__show_diff:
                 paths_to_collect_list = []
 
@@ -570,29 +565,24 @@ class gNMIclient(object):
                 if update: paths_to_collect_list.extend([path_tuple[0] for path_tuple in update])
                 if replace: paths_to_collect_list.extend([path_tuple[0] for path_tuple in replace])
 
-                pre_change_dict = self.get(path=paths_to_collect_list)
+                pre_change_dict = self.get(prefix=prefix, path=paths_to_collect_list)
 
-            gnmi_message_request = SetRequest(delete=del_protobuf_paths, update=update_msg, replace=replace_msg)
-
-            if self.__debug:
-                print("gNMI request:\n------------------------------------------------")
-                print(gnmi_message_request)
-                print("------------------------------------------------")
+            gnmi_message_request = SetRequest(prefix=protobuf_prefix,
+                                              delete=del_protobuf_paths,
+                                              update=update_msg,
+                                              replace=replace_msg)
+            debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
             gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
-
-            if self.__debug:
-                print("\n\n\ngNMI response:\n------------------------------------------------")
-                print(gnmi_message_response)
-                print("------------------------------------------------")
+            debug_gnmi_msg(self.__debug, gnmi_message_response, "gNMI response")
 
             if gnmi_message_response:
                 response = {}
 
-                ## Message SetResponse, Key timestamp
+                # Message SetResponse, Key timestamp
                 response.update({'timestamp': gnmi_message_response.timestamp}) if gnmi_message_response.timestamp else response.update({'timestamp': 0})
 
-                ## Message SetResponse, Key prefix
+                # Message SetResponse, Key prefix
                 response.update({'prefix': gnmi_path_degenerator(gnmi_message_response.prefix)}) if gnmi_message_response.prefix else response.update({'prefix': None})
 
                 if gnmi_message_response.response:
@@ -601,7 +591,7 @@ class gNMIclient(object):
                     for response_entry in gnmi_message_response.response:
                         response_container = {}
 
-                        ## Message UpdateResult, Key path
+                        # Message UpdateResult, Key path
                         response_container.update({'path': gnmi_path_degenerator(response_entry.path)}) if response_entry.path else response_container.update({'path': None})
 
                         ## Message UpdateResult, Key op
@@ -737,22 +727,21 @@ class gNMIclient(object):
 
         # prefix
         if 'prefix' not in subscribe:
-            subscribe.update({'prefix': None})
+            subscribe.update({'prefix': ""})
 
-        if subscribe['prefix']:
-            request.prefix = gnmi_path_generator(subscribe['prefix'], target)
+        # It is weird that it is not possible to assign prefix directly as earlier
+        request.prefix.target = gnmi_path_generator(subscribe['prefix'], target).target
+        request.prefix.origin = gnmi_path_generator(subscribe['prefix'], target).origin
 
         # subscription
         if 'subscription' not in subscribe or not subscribe['subscription']:
             raise ValueError('Subscribe:subscription value is missing.')
 
         for se in subscribe['subscription']:
-            # Amend target
-            target = "" if subscribe['prefix'] else target
             # path for that subscription
             if 'path' not in se:
                 raise ValueError('Subscribe:subscription:path is missing')
-            se_path = gnmi_path_generator(se['path'], target)
+            se_path = gnmi_path_generator(se['path'])
 
             # subscription entry mode; only relevent when the subscription request is stream
             if subscribe['mode'].lower() == 'stream':
@@ -820,11 +809,7 @@ class gNMIclient(object):
 
         if subscribe:
             gnmi_message_request = self._build_subscriptionrequest(subscribe)
-
-        if self.__debug:
-            print("gNMI request:\n------------------------------------------------")
-            print(gnmi_message_request)
-            print("------------------------------------------------")
+            debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
@@ -853,18 +838,24 @@ class gNMIclient(object):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'STREAM'
         gnmi_message_request = self._build_subscriptionrequest(subscribe, target)
+        debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
+
         return StreamSubscriber(self.__channel, gnmi_message_request, self.__metadata)
 
     def subscribe_poll(self, subscribe: dict, target: str = None):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'POLL'
         gnmi_message_request = self._build_subscriptionrequest(subscribe, target)
+        debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
+            
         return PollSubscriber(self.__channel, gnmi_message_request, self.__metadata)
 
     def subscribe_once(self, subscribe: dict, target: str = None):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'ONCE'
         gnmi_message_request = self._build_subscriptionrequest(subscribe, target)
+        debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
+
         return OnceSubscriber(self.__channel, gnmi_message_request, self.__metadata)
 
     def __generator(self, in_message):
@@ -1174,3 +1165,10 @@ def telemetryParser(in_message=None, debug: bool = False):
         logger.error(f'Parsing of telemetry information is failed.')
 
         return None
+
+def debug_gnmi_msg(is_printable, what_to_print, message_name) -> None:
+    if is_printable:
+        print(message_name)
+        print("-" * os.get_terminal_size().columns)
+        print(what_to_print)
+        print("-" * os.get_terminal_size().columns, end="\n\n\n")
