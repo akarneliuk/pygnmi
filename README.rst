@@ -84,9 +84,13 @@ Contributors
 Dev Log
 =======
 
+Release **0.7.5**:
+
+- Amended the logic of ``ONCE`` telemetry mode to automatically terminate on receiving ``{"sync_response": True}`` message.
+
 Release **0.7.4**:
 
-- Feature ``skip_verify`` is now stabilised and doesn't require subject alternative names anymore.
+- Feature ``skip_verify`` is now stabilised and doesn't require subject alternative names any more.
 
 Release **0.7.3**:
 
@@ -359,7 +363,7 @@ Release **0.1.0**:
 
 (c)2020-2022, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.7.4&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.7.5&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/

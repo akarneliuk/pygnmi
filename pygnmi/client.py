@@ -1,7 +1,6 @@
 #(c)2019-2022, karneliuk.com
 
 # Modules
-from distutils import extension
 import re
 import sys
 import json
@@ -905,7 +904,7 @@ class _Subscriber:
     `peek` and `get_update(timeout)` allow to read updates in a time-bound
     fashion.
     """
-    def __init__(self, channel, request, metadata):
+    def __init__(self, channel, request, metadata, once: bool = False):
         """
         Create a new object.
 
@@ -936,6 +935,10 @@ class _Subscriber:
 
         self._subscribe_thread = threading.Thread(target=enqueue_updates)
         self._subscribe_thread.start()
+
+        # Add the handling corner case for ONCE telemtry
+        self._once = once
+        self._once_end = False
 
     def _create_client_stream(self, request):
         """Iterator that yields the request, then poll messages when requested.
@@ -987,7 +990,17 @@ class _Subscriber:
         return self
 
     def __next__(self):
-        return self.next()
+        # Add handling of Once - 2
+        if self._once_end:
+            raise StopIteration
+
+        result = self.next()
+
+        # Add handling of Once - 1
+        if self._once and "sync_response" in result:
+            self._once_end = True
+
+        return result
 
     def next(self):
         """Get the next update from the target.
@@ -1062,6 +1075,10 @@ class OnceSubscriber(_Subscriber):
     updates should be streamed in chunks.
 
     """
+    def __init__(self, *args):
+        args = args + (True,)
+        super().__init__(*args)
+
     def _next_update(self, timeout):
         return self._get_one_update(timeout=timeout)
 
@@ -1085,11 +1102,7 @@ def telemetryParser(in_message=None, debug: bool = False):
     """
     The telemetry parser is method used to covert the Protobuf message
     """
-
-    if debug:
-        print("gNMI response:\n------------------------------------------------")
-        print(in_message)
-        print("------------------------------------------------")
+    debug_gnmi_msg(debug, in_message, "gNMI response")
 
     try:
         response = {}
@@ -1188,6 +1201,7 @@ def telemetryParser(in_message=None, debug: bool = False):
         logger.error(f'Parsing of telemetry information is failed.')
 
         return None
+
 
 def debug_gnmi_msg(is_printable, what_to_print, message_name) -> None:
     if is_printable:
