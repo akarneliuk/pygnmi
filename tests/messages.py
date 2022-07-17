@@ -45,8 +45,19 @@ test_telemetry_dict_once = {
                                     'heartbeat_interval': 30000000000
                                 }
                             ], 
-                            'use_aliases': False, 
-                            'mode': 'once', 
+                            'use_aliases': False,
+                            'mode': 'once',
+                            'encoding': 'proto'
+                           }
+
+test_telemetry_dict_poll = {
+                            'subscription': [
+                                {
+                                    'path': '/interfaces/interface[name=Ethernet1]',
+                                    'mode': 'target_defined',
+                                }
+                            ],
+                            'mode': 'poll',
                             'encoding': 'proto'
                            }
 
