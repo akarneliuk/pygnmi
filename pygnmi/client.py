@@ -120,7 +120,7 @@ class gNMIclient(object):
                     root_cert = open(self.__path_root, 'rb').read()
 
                 except FileNotFoundError:
-                    logging.error('The SSL certificate cannot be opened.')
+                    logger.error('The SSL certificate cannot be opened.')
                     raise Exception('The SSL certificate cannot be opened.')
 
             elif self.__path_cert:
@@ -224,7 +224,7 @@ class gNMIclient(object):
             grpc.channel_ready_future(self.__channel).result(timeout=timeout)
 
         except grpc.FutureTimeoutError:
-            logging.error("Failed to setup gRPC channel, trying change cipher")
+            logger.error("Failed to setup gRPC channel, trying change cipher")
 
             try:
                 os.environ["GRPC_SSL_CIPHER_SUITES"] = "HIGH"
@@ -282,7 +282,6 @@ class gNMIclient(object):
             return response
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target_path}\nError: {err.details()}")
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
 
             raise Exception(err)
@@ -459,7 +458,6 @@ class gNMIclient(object):
             return response
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target_path}\nError: {err.details()}")
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
 
             raise Exception (err)
@@ -654,7 +652,6 @@ class gNMIclient(object):
                 return None
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target_path}\nError: {err.details()}")
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
 
             return err
