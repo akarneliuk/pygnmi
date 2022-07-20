@@ -280,7 +280,6 @@ class gNMIclient(object):
             return response
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target_path}\nError: {err.details()}")
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
 
             raise Exception(err)
@@ -457,7 +456,6 @@ class gNMIclient(object):
             return response
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target_path}\nError: {err.details()}")
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
 
             raise Exception (err)
@@ -652,7 +650,6 @@ class gNMIclient(object):
                 return None
 
         except grpc._channel._InactiveRpcError as err:
-            print(f"Host: {self.__target_path}\nError: {err.details()}")
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
 
             return err
