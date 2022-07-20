@@ -41,7 +41,7 @@ class gNMIclient(object):
     def __init__(self, target: tuple, username: str = "", password: str = "",
                  debug: bool = False, insecure: bool = False, path_cert: str = None,
                  path_key: str = None, path_root: str = None, override: str = None,
-                 skip_verify = False, gnmi_timeout: int = 5, grpc_options: list = [],
+                 skip_verify = False, gnmi_timeout: int = 5, grpc_options: list = None,
                  show_diff: str = "", token: str = None, **kwargs):
 
         """
@@ -54,6 +54,8 @@ class gNMIclient(object):
         self.__path_cert = path_cert
         self.__path_key = path_key
         self.__path_root = path_root
+        if grpc_options is None:
+            grpc_options = []
         self.__options = ([('grpc.ssl_target_name_override', override)] + grpc_options) if override else grpc_options
         self.__token = token
         self.__gnmi_timeout = gnmi_timeout
