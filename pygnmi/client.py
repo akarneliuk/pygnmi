@@ -497,7 +497,7 @@ class gNMIclient(object):
 
         if encoding not in encoding_set:
             logger.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
-            raise Exception (f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
+            raise gNMIException(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
 
         # Gnmi PREFIX
         try:
@@ -518,7 +518,7 @@ class gNMIclient(object):
 
             else:
                 logger.error(f'The provided input for Set message (delete operation) is not list.')
-                raise Exception (f'The provided input for Set message (delete operation) is not list.')
+                raise gNMIException(f'The provided input for Set message (delete operation) is not list.')
 
         # Replace operation
         if replace:
@@ -541,11 +541,11 @@ class gNMIclient(object):
 
                     else:
                         logger.error(f'The input element for Update message must be tuple, got {ue}.')
-                        raise Exception (f'The input element for Update message must be tuple, got {ue}.')
+                        raise gNMIException(f'The input element for Update message must be tuple, got {ue}.')
 
             else:
                 logger.error(f'The provided input for Set message (replace operation) is not list.')
-                raise Exception ('The provided input for Set message (replace operation) is not list.')
+                raise gNMIException('The provided input for Set message (replace operation) is not list.')
 
         # Update operation
         if update:
@@ -568,11 +568,11 @@ class gNMIclient(object):
 
                     else:
                         logger.error(f'The input element for Update message must be tuple, got {ue}.')
-                        raise Exception (f'The input element for Update message must be tuple, got {ue}.')
+                        raise gNMIException(f'The input element for Update message must be tuple, got {ue}.')
 
             else:
                 logger.error(f'The provided input for Set message (update operation) is not list.')
-                raise Exception ('The provided input for Set message (replace operation) is not list.')
+                raise gNMIException('The provided input for Set message (replace operation) is not list.')
 
         try:
             # Adding collection of data for diff before the change
@@ -796,7 +796,7 @@ class gNMIclient(object):
         logger.info(f'Collecting Telemetry...')
 
         if (subscribe and poll) or (subscribe and aliases) or (poll and aliases):
-            raise Exception('Subscribe request supports only one request at a time.')
+            raise gNMIException('Subscribe request supports only one request at a time.')
 
         if poll:
             if isinstance(poll, bool):
@@ -849,7 +849,7 @@ class gNMIclient(object):
                 return self.subscribe_once(subscribe=subscribe, target=target)
 
         else:
-            raise Exception('Unknown subscription request mode.')
+            raise gNMIException('Unknown subscription request mode.')
 
     def subscribe_stream(self, subscribe: dict, target: str = None):
         if 'mode' not in subscribe:
