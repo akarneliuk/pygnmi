@@ -11,8 +11,8 @@ import threading
 import os
 import cryptography
 import grpc
-from pygnmi.spec.gnmi_pb2_grpc import gNMIStub
-from pygnmi.spec.gnmi_pb2 import (CapabilityRequest, Encoding, GetRequest,\
+from pygnmi.spec.v080.gnmi_pb2_grpc import gNMIStub
+from pygnmi.spec.v080.gnmi_pb2 import (CapabilityRequest, Encoding, GetRequest,\
     SetRequest, Update, TypedValue, SubscribeRequest, Poll, SubscriptionList,\
     SubscriptionMode, AliasList, UpdateResult)
 
@@ -375,7 +375,7 @@ class gNMIclient(object):
                 pb_encoding = 4
 
         try:
-            gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths, 
+            gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths,
                                               type=pb_datatype, encoding=pb_encoding)
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
@@ -459,8 +459,8 @@ class gNMIclient(object):
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
             raise gNMIException(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}", err)
 
-        except:
-            logger.error(f'Collection of Get information failed is failed.')
+        # except:
+        #     logger.error(f'Collection of Get information failed is failed.')
 
             return None
 

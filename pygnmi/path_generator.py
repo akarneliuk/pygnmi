@@ -3,7 +3,7 @@
 """
 # Modules
 import re
-from pygnmi.spec.gnmi_pb2 import Path
+from pygnmi.spec.v080.gnmi_pb2 import Path
 
 
 # User-defined functions
