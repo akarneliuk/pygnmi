@@ -119,29 +119,28 @@ class gNMIclient(object):
                     key = open(self.__path_key, 'rb').read()
                     root_cert = open(self.__path_root, 'rb').read()
 
-                except FileNotFoundError:
+                except FileNotFoundError as e:
                     logger.error('The SSL certificate cannot be opened.')
-                    raise Exception('The SSL certificate cannot be opened.')
+                    raise gNMIException('The SSL certificate cannot be opened.', e)
 
             elif self.__path_cert:
                 try:
                     with open(self.__path_cert, 'rb') as f:
                         ssl_cert = f.read()
 
-                except FileNotFoundError:
+                except FileNotFoundError as e:
                     logger.error('The SSL certificate cannot be opened.')
-                    raise Exception('The SSL certificate cannot be opened.')
+                    raise gNMIException('The SSL certificate cannot be opened.', e)
 
             # Download a certficate from device if it is not provided
             else:
                 try:
                     ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
 
-                except:
+                except Exception as e:
                     logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
-                    raise Exception(f'The SSL certificate cannot be retrieved from {self.__target}')
+                    raise gNMIException(f'The SSL certificate cannot be retrieved from {self.__target}', e)
 
-            
             # Work with the certificate contents
             ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
 
@@ -283,8 +282,7 @@ class gNMIclient(object):
 
         except grpc._channel._InactiveRpcError as err:
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
-
-            raise Exception(err)
+            raise gNMIException(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}", err)
 
         except:
             logger.error('Collection of Capabilities is failed.')
@@ -354,9 +352,9 @@ class gNMIclient(object):
         try:
             protobuf_prefix = gnmi_path_generator(prefix, target)
 
-        except:
+        except Exception as e:
             logger.error('Conversion of gNMI prefix to the Protobuf format failed')
-            raise Exception('Conversion of gNMI prefix to the Protobuf format failed')
+            raise gNMIException('Conversion of gNMI prefix to the Protobuf format failed', e)
 
         # Gnmi PATH
         try:
@@ -366,9 +364,9 @@ class gNMIclient(object):
             else:
                 protobuf_paths = [gnmi_path_generator(pe) for pe in path]
 
-        except:
+        except Exception as e:
             logger.error('Conversion of gNMI paths to the Protobuf format failed')
-            raise Exception ('Conversion of gNMI paths to the Protobuf format failed')
+            raise gNMIException('Conversion of gNMI paths to the Protobuf format failed', e)
 
         if self.__capabilities and 'supported_encodings' in self.__capabilities:
             if 'json' in self.__capabilities['supported_encodings']:
@@ -459,8 +457,7 @@ class gNMIclient(object):
 
         except grpc._channel._InactiveRpcError as err:
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
-
-            raise Exception (err)
+            raise gNMIException(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}", err)
 
         except:
             logger.error(f'Collection of Get information failed is failed.')
@@ -500,29 +497,28 @@ class gNMIclient(object):
 
         if encoding not in encoding_set:
             logger.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
-            raise Exception (f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
+            raise gNMIException(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
 
         # Gnmi PREFIX
         try:
             protobuf_prefix = gnmi_path_generator(prefix, target)
 
-        except:
+        except Exception as e:
             logger.error('Conversion of gNMI prefix to the Protobuf format failed')
-            raise Exception('Conversion of gNMI prefix to the Protobuf format failed')
+            raise gNMIException('Conversion of gNMI prefix to the Protobuf format failed', e)
 
         # Delete operation
         if delete:
             if isinstance(delete, list):
                 try:
                     del_protobuf_paths = [gnmi_path_generator(pe) for pe in delete]
-
-                except:
+                except Exception as e:
                     logger.error(f'Conversion of gNMI paths to the Protobuf format failed')
-                    raise Exception (f'Conversion of gNMI paths to the Protobuf format failed')
+                    raise gNMIException(f'Conversion of gNMI paths to the Protobuf format failed', e)
 
             else:
                 logger.error(f'The provided input for Set message (delete operation) is not list.')
-                raise Exception (f'The provided input for Set message (delete operation) is not list.')
+                raise gNMIException(f'The provided input for Set message (delete operation) is not list.')
 
         # Replace operation
         if replace:
@@ -545,11 +541,11 @@ class gNMIclient(object):
 
                     else:
                         logger.error(f'The input element for Update message must be tuple, got {ue}.')
-                        raise Exception (f'The input element for Update message must be tuple, got {ue}.')
+                        raise gNMIException(f'The input element for Update message must be tuple, got {ue}.')
 
             else:
                 logger.error(f'The provided input for Set message (replace operation) is not list.')
-                raise Exception ('The provided input for Set message (replace operation) is not list.')
+                raise gNMIException('The provided input for Set message (replace operation) is not list.')
 
         # Update operation
         if update:
@@ -572,11 +568,11 @@ class gNMIclient(object):
 
                     else:
                         logger.error(f'The input element for Update message must be tuple, got {ue}.')
-                        raise Exception (f'The input element for Update message must be tuple, got {ue}.')
+                        raise gNMIException(f'The input element for Update message must be tuple, got {ue}.')
 
             else:
                 logger.error(f'The provided input for Set message (update operation) is not list.')
-                raise Exception ('The provided input for Set message (replace operation) is not list.')
+                raise gNMIException('The provided input for Set message (replace operation) is not list.')
 
         try:
             # Adding collection of data for diff before the change
@@ -800,7 +796,7 @@ class gNMIclient(object):
         logger.info(f'Collecting Telemetry...')
 
         if (subscribe and poll) or (subscribe and aliases) or (poll and aliases):
-            raise Exception('Subscribe request supports only one request at a time.')
+            raise gNMIException('Subscribe request supports only one request at a time.')
 
         if poll:
             if isinstance(poll, bool):
@@ -853,7 +849,7 @@ class gNMIclient(object):
                 return self.subscribe_once(subscribe=subscribe, target=target)
 
         else:
-            raise Exception('Unknown subscription request mode.')
+            raise gNMIException('Unknown subscription request mode.')
 
     def subscribe_stream(self, subscribe: dict, target: str = None):
         if 'mode' not in subscribe:
@@ -1094,6 +1090,19 @@ class PollSubscriber(_Subscriber):
     def _next_update(self, timeout):
         self._msgs.put('POLL')
         return self._get_updates_till_sync(timeout=timeout)
+
+
+class gNMIException(Exception):
+    """Raised when a generic error in pygnmi occurred
+
+    Represents a generic pygnmi library error, described with a text what
+    the library tried to do. Optionally, an original exception can be added,
+    so the user of this library can further distinguish what happened in the
+    backend.
+    """
+    def __init__(self, message, orig_exc=None):
+        super().__init__(message)
+        self.orig_exc = orig_exc
 
 
 # User-defined functions
