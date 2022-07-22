@@ -1,0 +1,8 @@
+grpcio
+twine
+pytest
+coverage
+dictdiffer
+pylint
+flake8
+protobuf --no-binary=protobuf
