@@ -659,19 +659,18 @@ class gNMIclient(object):
         Performs a set and retries (once) after a temporary failure with StatusCode.FAILED_PRECONDITION
         """
         try:
-            return self.set( delete=delete, replace=replace, update=update, encoding=encoding )
+            return self.set(delete=delete, replace=replace, update=update, encoding=encoding)
+        except gNMIException as e:
+            grpc_error = e.orig_exc
+            if isinstance(grpc_error, grpc._channel._InactiveRpcError):
+                # May happen e.g. during system startup or due to lock contention, retry once
+                if grpc_error.code() == grpc.StatusCode.FAILED_PRECONDITION:
+                    logger.warning('FAILED_PRECONDITION exception during set, retrying in {retry_delay}s...')
+                    time.sleep(retry_delay)
 
-        except Exception as rpc_ex:
-            grpc_error = rpc_ex.__context__ # pygnmi wrapped this on line 528 above
-            # May happen e.g. during system startup or due to lock contention, retry once
+                    return self.set(delete=delete, replace=replace, update=update, encoding=encoding)
 
-            if grpc_error.code() == grpc.StatusCode.FAILED_PRECONDITION:
-                logger.warning( f'FAILED_PRECONDITION exception during set, retrying in {retry_delay}s...' )
-                time.sleep( retry_delay )
-
-                return self.set( delete=delete, replace=replace, update=update, encoding=encoding )
-
-            raise rpc_ex
+            raise
 
     def _build_subscriptionrequest(self, subscribe: dict, target: str = None):
         if not isinstance(subscribe, dict):
