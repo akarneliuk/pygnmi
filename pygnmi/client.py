@@ -459,10 +459,9 @@ class gNMIclient(object):
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
             raise gNMIException(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}", err)
 
-        # except:
-        #     logger.error(f'Collection of Get information failed is failed.')
-
-            return None
+        except Exception as e:
+            logger.error('Collection of Get information failed: %s.', e)
+            raise gNMIException(f'Collection of Get information failed: {e}', e)
 
     def set(self, delete: list = None, replace: list = None,
             update: list = None, encoding: str = 'json',
@@ -649,8 +648,10 @@ class gNMIclient(object):
 
         except grpc._channel._InactiveRpcError as err:
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
-
-            return err
+            raise gNMIException(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}", err)
+        except Exception as e:
+            logger.error("Set failed: %s", e)
+            raise gNMIException(f"Set failed: {e}", e)
 
 
     def set_with_retry(self, delete: list = None, replace: list = None, update: list = None, encoding: str = 'json', retry_delay: int = 3):
