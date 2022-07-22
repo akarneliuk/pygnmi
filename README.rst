@@ -84,6 +84,11 @@ Contributors
 Dev Log
 =======
 
+Release **0.8.0**:
+
+- **Important**: potentially breaking change. The dependency is moved from ``grpcio-tools`` to ``protobuf``, which as a standalone package has a much newer serion.
+- Spec is rebuilt and updated to support gNMI of version ``0.8.0``.
+
 Release **0.7.5**:
 
 - Amended the logic of ``ONCE`` telemetry mode to automatically terminate on receiving ``{"sync_response": True}`` message.

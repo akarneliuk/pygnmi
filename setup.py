@@ -6,7 +6,7 @@ with open('README.rst', encoding="utf-8") as fh:
 setup(
   name='pygnmi',
   packages=['pygnmi', 'pygnmi.spec', 'pygnmi.artefacts'],
-  version='0.7.5',
+  version='0.8.0',
   license='bsd-3-clause',
   description='Pure Python gNMI client to manage network functions and collect telemetry.',
   long_description=long_description,
@@ -14,11 +14,11 @@ setup(
   author='Anton Karneliuk',
   author_email='anton@karneliuk.com',
   url='https://github.com/akarneliuk/pygnmi',
-  download_url='https://github.com/akarneliuk/pygnmi/archive/v0.7.5.tar.gz',
+  download_url='https://github.com/akarneliuk/pygnmi/archive/v0.8.0.tar.gz',
   keywords=['gnmi', 'automation', 'grpc', 'network'],
   install_requires=[
           'grpcio',
-          'grpcio-tools',
+          'protobuf --no-binary=protobuf',
           'cryptography',
           'dictdiffer'
   ],

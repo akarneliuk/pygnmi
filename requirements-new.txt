@@ -5,5 +5,4 @@ coverage
 dictdiffer
 pylint
 flake8
-pylint
 protobuf --no-binary=protobuf
