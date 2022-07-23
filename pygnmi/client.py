@@ -141,52 +141,53 @@ class gNMIclient(object):
                     logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
                     raise gNMIException(f'The SSL certificate cannot be retrieved from {self.__target}', e)
 
-            # Work with the certificate contents
-            ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
-
-            # Collect Certificate's Comman Name
-            ssl_cert_common_name = None
-            try:
-                ssl_cert_common_name = ssl_cert_deserialized.subject.get_attributes_for_oid((x509.oid.NameOID.COMMON_NAME))[0].value
-
-            except BaseException as err:
-                logger.warning(f"Cannot get Common Name: {err}")
-
-            # Collect Certificate's Subject Alternative Names
-            
-            ssl_cert_subject_alt_names = None
-            try:
-                ssl_cert_subject_alt_names = ssl_cert_deserialized.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
-
-            except cryptography.x509.extensions.ExtensionNotFound as err:
-                logger.warning(f'Cannot get Subject Alternative Names: {err}')
-
-            self.__cert_sans = []
-            list_of_sans = [x509.IPAddress, x509.DNSName, x509.RFC822Name]
-
-            # Set list of overrides for SANs
-            if ssl_cert_subject_alt_names:
-                for entry in list_of_sans:
-                    try:
-                        sans = ssl_cert_subject_alt_names.value.get_values_for_type(entry)
-                        self.__cert_sans.extend([str(san) for san in sans])
-
-                    except:
-                        logger.warning(f"There is no Extensions for {entry}")
-
-            # Set list of overides for CN
-            if ssl_cert_common_name:
-                self.__cert_sans.append(ssl_cert_common_name)
-
-            # Set auto overrides
             if self.__skip_verify:
-                for san in self.__cert_sans:
-                    self.__options.append(("grpc.ssl_target_name_override", san))
+                # Work with the certificate contents
+                ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
 
-                logger.warning('ssl_target_name_override is applied, should be used for testing only!')
+                # Collect Certificate's Comman Name
+                ssl_cert_common_name = None
+                try:
+                    ssl_cert_common_name = ssl_cert_deserialized.subject.get_attributes_for_oid((x509.oid.NameOID.COMMON_NAME))[0].value
 
-                # Print override if debug enabled
-                debug_gnmi_msg(self.__debug, self.__options, "Authentication override")
+                except BaseException as err:
+                    logger.warning(f"Cannot get Common Name: {err}")
+
+                # Collect Certificate's Subject Alternative Names
+                ssl_cert_subject_alt_names = None
+                try:
+                    ssl_cert_subject_alt_names = ssl_cert_deserialized.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+
+                except cryptography.x509.extensions.ExtensionNotFound as err:
+                    logger.warning(f'Cannot get Subject Alternative Names: {err}')
+
+                self.__cert_sans = []
+                list_of_sans = [x509.IPAddress, x509.DNSName, x509.RFC822Name]
+
+                # Set list of overrides for SANs
+                if ssl_cert_subject_alt_names:
+                    for entry in list_of_sans:
+                        try:
+                            sans = ssl_cert_subject_alt_names.value.get_values_for_type(entry)
+                            self.__cert_sans.extend([str(san) for san in sans])
+
+                        except:
+                            logger.warning(f"There is no Extensions for {entry}")
+
+                # Set rewrite to empty string for completely blank certificate (corner case)
+                if not ssl_cert_common_name and not self.__cert_sans:
+                     self.__options.append(("grpc.ssl_target_name_override", ""))
+
+                else:
+                    # Set list of overides for CN
+                    if ssl_cert_common_name:
+                        self.__cert_sans.append(ssl_cert_common_name)
+
+                    # Set auto overrides
+                    for san in self.__cert_sans:
+                        self.__options.append(("grpc.ssl_target_name_override", san))
+
+                    logger.warning('ssl_target_name_override is applied, should be used for testing only!')
 
             # Set up SSL channel credentials
             if self.__path_key and self.__path_root:
@@ -203,6 +204,10 @@ class gNMIclient(object):
 
             else:
                 credentials = cert
+
+            # Print override if debug enabled
+            debug_gnmi_msg(self.__debug, self.__target_path, "GRPC target")
+            debug_gnmi_msg(self.__debug, self.__options, "GRPC channel options")
 
             self.__channel = grpc.secure_channel(self.__target_path,
                                                  credentials=credentials, options=self.__options)

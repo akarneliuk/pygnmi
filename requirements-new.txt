@@ -5,4 +5,4 @@ coverage
 dictdiffer
 pylint
 flake8
-protobuf
+protobuf>4.20

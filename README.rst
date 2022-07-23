@@ -84,6 +84,10 @@ Contributors
 Dev Log
 =======
 
+Release **0.8.2**:
+
+- Added corner case handling where ``--skip-verify`` was failing on certificates, `which don't have CN or SANs <https://github.com/akarneliuk/pygnmi/issues/71>`_.
+
 Release **0.8.1**:
 
 - Removed the need for ``--no-binary=protobuf`` for operation.
