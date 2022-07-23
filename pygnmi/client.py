@@ -1,4 +1,5 @@
-#(c)2019-2022, karneliuk.com
+"""pyGNMI: pure Python open-source GNMI client
+(c)2019-2022, karneliuk.com"""
 
 # Modules
 import re
@@ -24,7 +25,8 @@ from cryptography.hazmat.backends import default_backend
 
 
 # Own modules
-from pygnmi.path_generator import gnmi_path_generator, gnmi_path_degenerator
+from pygnmi.create_gnmi_path import gnmi_path_generator, gnmi_path_degenerator
+from pygnmi.create_gnmi_extension import get_gnmi_extension
 from pygnmi.tools import diff_openconfig
 
 
@@ -107,6 +109,10 @@ class gNMIclient(object):
         """
         # Insecure GRPC channel
         if self.__insecure:
+            # Print if debug enabled
+            debug_gnmi_msg(self.__debug, self.__target_path, "GRPC Target")
+            debug_gnmi_msg(self.__debug, self.__options, "GRPC Channel options")
+
             self.__channel = grpc.insecure_channel(self.__target_path,
                                                    self.__metadata + self.__options)
 
@@ -141,52 +147,53 @@ class gNMIclient(object):
                     logger.error(f'The SSL certificate cannot be retrieved from {self.__target}')
                     raise gNMIException(f'The SSL certificate cannot be retrieved from {self.__target}', e)
 
-            # Work with the certificate contents
-            ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
-
-            # Collect Certificate's Comman Name
-            ssl_cert_common_name = None
-            try:
-                ssl_cert_common_name = ssl_cert_deserialized.subject.get_attributes_for_oid((x509.oid.NameOID.COMMON_NAME))[0].value
-
-            except BaseException as err:
-                logger.warning(f"Cannot get Common Name: {err}")
-
-            # Collect Certificate's Subject Alternative Names
-            
-            ssl_cert_subject_alt_names = None
-            try:
-                ssl_cert_subject_alt_names = ssl_cert_deserialized.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
-
-            except cryptography.x509.extensions.ExtensionNotFound as err:
-                logger.warning(f'Cannot get Subject Alternative Names: {err}')
-
-            self.__cert_sans = []
-            list_of_sans = [x509.IPAddress, x509.DNSName, x509.RFC822Name]
-
-            # Set list of overrides for SANs
-            if ssl_cert_subject_alt_names:
-                for entry in list_of_sans:
-                    try:
-                        sans = ssl_cert_subject_alt_names.value.get_values_for_type(entry)
-                        self.__cert_sans.extend([str(san) for san in sans])
-
-                    except:
-                        logger.warning(f"There is no Extensions for {entry}")
-
-            # Set list of overides for CN
-            if ssl_cert_common_name:
-                self.__cert_sans.append(ssl_cert_common_name)
-
-            # Set auto overrides
             if self.__skip_verify:
+                # Work with the certificate contents
+                ssl_cert_deserialized = x509.load_pem_x509_certificate(ssl_cert, default_backend())
+
+                # Collect Certificate's Comman Name
+                ssl_cert_common_name = None
+                try:
+                    ssl_cert_common_name = ssl_cert_deserialized.subject.get_attributes_for_oid((x509.oid.NameOID.COMMON_NAME))[0].value
+
+                except BaseException as err:
+                    logger.warning(f"Cannot get Common Name: {err}")
+
+                # Collect Certificate's Subject Alternative Names
+                
+                ssl_cert_subject_alt_names = None
+                try:
+                    ssl_cert_subject_alt_names = ssl_cert_deserialized.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+
+                except cryptography.x509.extensions.ExtensionNotFound as err:
+                    logger.warning(f'Cannot get Subject Alternative Names: {err}')
+
+                self.__cert_sans = []
+                list_of_sans = [x509.IPAddress, x509.DNSName, x509.RFC822Name]
+
+                # Set list of overrides for SANs
+                if ssl_cert_subject_alt_names:
+                    for entry in list_of_sans:
+                        try:
+                            sans = ssl_cert_subject_alt_names.value.get_values_for_type(entry)
+                            self.__cert_sans.extend([str(san) for san in sans])
+
+                        except:
+                            logger.warning(f"There is no Extensions for {entry}")
+
+                # Set list of overides for CN
+                if ssl_cert_common_name:
+                    self.__cert_sans.append(ssl_cert_common_name)
+
+                # Set auto overrides
                 for san in self.__cert_sans:
                     self.__options.append(("grpc.ssl_target_name_override", san))
 
-                logger.warning('ssl_target_name_override is applied, should be used for testing only!')
+                # Set empty override if neither CN ans SARs exist
+                if not ssl_cert_common_name and not self.__cert_sans:
+                    self.__options.append(("grpc.ssl_target_name_override", ""))
 
-                # Print override if debug enabled
-                debug_gnmi_msg(self.__debug, self.__options, "Authentication override")
+                logger.warning('ssl_target_name_override is applied, should be used for testing only!')
 
             # Set up SSL channel credentials
             if self.__path_key and self.__path_root:
@@ -203,6 +210,10 @@ class gNMIclient(object):
 
             else:
                 credentials = cert
+
+            # Print if debug enabled
+            debug_gnmi_msg(self.__debug, self.__target_path, "GRPC Target")
+            debug_gnmi_msg(self.__debug, self.__options, "GRPC Channel options")
 
             self.__channel = grpc.secure_channel(self.__target_path,
                                                  credentials=credentials, options=self.__options)
@@ -672,11 +683,12 @@ class gNMIclient(object):
 
             raise
 
-    def _build_subscriptionrequest(self, subscribe: dict, target: str = None):
+    def _build_subscriptionrequest(self, subscribe: dict, target: str = None, extension: list = None):
         if not isinstance(subscribe, dict):
             raise ValueError('Subscribe subscribe request is specified, but the value is not dict.')
 
         request = SubscriptionList()
+        gnmi_extension = [get_gnmi_extension(ext=extension)]
 
         # use_alias
         if 'use_aliases' not in subscribe:
@@ -787,7 +799,7 @@ class gNMIclient(object):
             request.subscription.add(path=se_path, mode=se_mode, sample_interval=se_sample_interval,
                                      suppress_redundant=se_suppress_redundant, heartbeat_interval=se_heartbeat_interval)
 
-        return SubscribeRequest(subscribe=request)
+        return SubscribeRequest(subscribe=request, extension=gnmi_extension)
 
     def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None, timeout: float = 0.0):
         """
@@ -830,7 +842,7 @@ class gNMIclient(object):
 
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
 
-    def subscribe2(self, subscribe: dict, target: str = None):
+    def subscribe2(self, subscribe: dict, target: str = None, extension: list = None):
         """
         New High-level method to serve temetry based on recent additions
         """
@@ -840,37 +852,37 @@ class gNMIclient(object):
 
         if subscribe['mode'].lower() in {'stream', 'once', 'poll'}:
             if subscribe['mode'].lower() == 'stream':
-                return self.subscribe_stream(subscribe=subscribe, target=target)
+                return self.subscribe_stream(subscribe=subscribe, target=target, extension=extension)
 
             elif subscribe['mode'].lower() == 'poll':
-                return self.subscribe_poll(subscribe=subscribe, target=target)
+                return self.subscribe_poll(subscribe=subscribe, target=target, extension=extension)
 
             elif subscribe['mode'].lower() == 'once':
-                return self.subscribe_once(subscribe=subscribe, target=target)
+                return self.subscribe_once(subscribe=subscribe, target=target, extension=extension)
 
         else:
             raise gNMIException('Unknown subscription request mode.')
 
-    def subscribe_stream(self, subscribe: dict, target: str = None):
+    def subscribe_stream(self, subscribe: dict, target: str = None, extension: list = None):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'STREAM'
-        gnmi_message_request = self._build_subscriptionrequest(subscribe, target)
+        gnmi_message_request = self._build_subscriptionrequest(subscribe, target, extension)
         debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
         return StreamSubscriber(self.__channel, gnmi_message_request, self.__metadata)
 
-    def subscribe_poll(self, subscribe: dict, target: str = None):
+    def subscribe_poll(self, subscribe: dict, target: str = None, extension: list = None):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'POLL'
-        gnmi_message_request = self._build_subscriptionrequest(subscribe, target)
+        gnmi_message_request = self._build_subscriptionrequest(subscribe, target, extension)
         debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
             
         return PollSubscriber(self.__channel, gnmi_message_request, self.__metadata)
 
-    def subscribe_once(self, subscribe: dict, target: str = None):
+    def subscribe_once(self, subscribe: dict, target: str = None, extension: list = None):
         if 'mode' not in subscribe:
             subscribe['mode'] = 'ONCE'
-        gnmi_message_request = self._build_subscriptionrequest(subscribe, target)
+        gnmi_message_request = self._build_subscriptionrequest(subscribe, target, extension)
         debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
         return OnceSubscriber(self.__channel, gnmi_message_request, self.__metadata)

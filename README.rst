@@ -84,6 +84,11 @@ Contributors
 Dev Log
 =======
 
+Release **0.8.2**:
+
+- Implemented `History Extension <https://github.com/openconfig/reference/blob/master/rpc/gnmi/gnmi-history.md#1-purpose>`_.
+- Implemented handling of corner case, where ``--skip-verify`` was failing trying to parse certificate, `which doesn't have CN and SARs <https://github.com/akarneliuk/pygnmi/issues/71>`_.
+
 Release **0.8.1**:
 
 - Removed the need for ``--no-binary=protobuf`` for operation.
@@ -372,7 +377,7 @@ Release **0.1.0**:
 
 (c)2020-2022, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.1&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.2&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
