@@ -459,10 +459,9 @@ class gNMIclient(object):
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
             raise gNMIException(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}", err)
 
-        # except:
-        #     logger.error(f'Collection of Get information failed is failed.')
-
-            return None
+        except Exception as e:
+            logger.error('Collection of Get information failed: %s.', e)
+            raise gNMIException(f'Collection of Get information failed: {e}', e)
 
     def set(self, delete: list = None, replace: list = None,
             update: list = None, encoding: str = 'json',
@@ -649,8 +648,10 @@ class gNMIclient(object):
 
         except grpc._channel._InactiveRpcError as err:
             logger.critical(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}")
-
-            return err
+            raise gNMIException(f"GRPC ERROR Host: {self.__target_path}, Error: {err.details()}", err)
+        except Exception as e:
+            logger.error("Set failed: %s", e)
+            raise gNMIException(f"Set failed: {e}", e)
 
 
     def set_with_retry(self, delete: list = None, replace: list = None, update: list = None, encoding: str = 'json', retry_delay: int = 3):
@@ -658,19 +659,18 @@ class gNMIclient(object):
         Performs a set and retries (once) after a temporary failure with StatusCode.FAILED_PRECONDITION
         """
         try:
-            return self.set( delete=delete, replace=replace, update=update, encoding=encoding )
+            return self.set(delete=delete, replace=replace, update=update, encoding=encoding)
+        except gNMIException as e:
+            grpc_error = e.orig_exc
+            if isinstance(grpc_error, grpc._channel._InactiveRpcError):
+                # May happen e.g. during system startup or due to lock contention, retry once
+                if grpc_error.code() == grpc.StatusCode.FAILED_PRECONDITION:
+                    logger.warning('FAILED_PRECONDITION exception during set, retrying in {retry_delay}s...')
+                    time.sleep(retry_delay)
 
-        except Exception as rpc_ex:
-            grpc_error = rpc_ex.__context__ # pygnmi wrapped this on line 528 above
-            # May happen e.g. during system startup or due to lock contention, retry once
+                    return self.set(delete=delete, replace=replace, update=update, encoding=encoding)
 
-            if grpc_error.code() == grpc.StatusCode.FAILED_PRECONDITION:
-                logger.warning( f'FAILED_PRECONDITION exception during set, retrying in {retry_delay}s...' )
-                time.sleep( retry_delay )
-
-                return self.set( delete=delete, replace=replace, update=update, encoding=encoding )
-
-            raise rpc_ex
+            raise
 
     def _build_subscriptionrequest(self, subscribe: dict, target: str = None):
         if not isinstance(subscribe, dict):
