@@ -3,7 +3,7 @@ Collection of unit tests to test generation of XPath
 """
 import pytest
 
-from pygnmi.path_generator import gnmi_path_generator
+from pygnmi.create_gnmi_path import gnmi_path_generator
 from pygnmi.spec.v080.gnmi_pb2 import Path, PathElem
 
 
