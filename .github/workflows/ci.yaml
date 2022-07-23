@@ -50,4 +50,4 @@ jobs:
       - name: Perform unit testing
         run: |
           coverage run --branch --source pygnmi -m pytest
-          coverage report --fail-under 70
+          coverage report --fail-under 60

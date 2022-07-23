@@ -86,7 +86,7 @@ Dev Log
 
 Release **0.8.1**:
 
-- **Important**: shall be installed as ``pip install pygnmi --no-binary=protobuf``.
+- Removed the need for ``--no-binary=protobuf`` for operation.
 
 Release **0.8.0**:
 
