@@ -688,7 +688,7 @@ class gNMIclient(object):
             raise ValueError('Subscribe subscribe request is specified, but the value is not dict.')
 
         request = SubscriptionList()
-        gnmi_extension = [get_gnmi_extension(ext=extension)]
+        gnmi_extension = get_gnmi_extension(ext=extension)
 
         # use_alias
         if 'use_aliases' not in subscribe:
@@ -799,7 +799,11 @@ class gNMIclient(object):
             request.subscription.add(path=se_path, mode=se_mode, sample_interval=se_sample_interval,
                                      suppress_redundant=se_suppress_redundant, heartbeat_interval=se_heartbeat_interval)
 
-        return SubscribeRequest(subscribe=request, extension=gnmi_extension)
+        if gnmi_extension:
+            return SubscribeRequest(subscribe=request, extension=[gnmi_extension])
+
+        else:
+            return SubscribeRequest(subscribe=request)
 
     def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None, timeout: float = 0.0):
         """

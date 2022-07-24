@@ -34,6 +34,10 @@ EXT4 = {
         }
        }
 
+EXT5 = {}
+
+EXT6 = None
+
 
 # Tests
 def test_extension_history_snapshot_time_ns(ext=EXT1):
@@ -64,3 +68,17 @@ def test_extension_history_range_str(ext=EXT4):
     gnmi_ext = get_gnmi_extension(ext)
     assert isinstance(gnmi_ext.history.range.start, int)
     assert isinstance(gnmi_ext.history.range.end, int)
+
+
+def test_extension_empty_dict(ext=EXT5):
+    """Unit test to verify /extension is not created
+    for empty dict"""
+    gnmi_ext = get_gnmi_extension(ext)
+    assert not gnmi_ext
+
+
+def test_extension_empty_none(ext=EXT6):
+    """Unit test to verify /extension is not created
+    for None"""
+    gnmi_ext = get_gnmi_extension(ext)
+    assert not gnmi_ext

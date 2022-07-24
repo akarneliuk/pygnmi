@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#(c)2019-2021, karneliuk.com
+#(c)2019-2022, karneliuk.com
 
 
 # Modules
@@ -86,8 +86,44 @@ def main():
                 'encoding': 'json'
             }
 
+            # Set up extensions
+            if args.ext_history_snapshot_time:
+                try:
+                    time_to_int = int(args.ext_history_snapshot_time)
+
+                except:
+                    time_to_int = args.ext_history_snapshot_time
+
+                EXT = {
+                    "history": {
+                        "snapshot_time": time_to_int
+                    }
+                }
+
+            elif args.ext_history_range_start and args.ext_history_range_end:
+                try:
+                    time_to_int_1 = int(args.ext_history_range_start)
+                    time_to_int_2 = int(args.ext_history_range_end)
+
+                except:
+                    time_to_int_1 = args.ext_history_range_start
+                    time_to_int_2 = args.ext_history_range_start
+
+                EXT = {
+                    "history": {
+                        "range": {
+                            "start": time_to_int_1,
+                            "end": time_to_int_2
+                        }
+                    }
+                }
+
+            else:
+                EXT = None
+
             result = GC.subscribe2(subscribe=subscribe,
-                                   target=args.gnmi_path_target)
+                                   target=args.gnmi_path_target,
+                                   extension=EXT)
 
             if mode == "stream":
                 try:

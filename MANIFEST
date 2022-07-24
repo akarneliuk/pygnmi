@@ -4,7 +4,11 @@ setup.py
 pygnmi/__init__.py
 pygnmi/arg_parser.py
 pygnmi/client.py
-pygnmi/path_generator.py
+pygnmi/create_gnmi_extension.py
+pygnmi/create_gnmi_path.py
 pygnmi/tools.py
 pygnmi/artefacts/messages.py
+pygnmi/spec/v080/gnmi_ext_pb2.py
+pygnmi/spec/v080/gnmi_pb2.py
+pygnmi/spec/v080/gnmi_pb2_grpc.py
 scripts/pygnmicli

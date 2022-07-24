@@ -8,11 +8,14 @@ from pygnmi.spec.v080.gnmi_ext_pb2 import Extension
 # Functions
 def get_gnmi_extension(ext: dict = None) -> list:
     """This helper function allows conversion of dictinary to Extension class"""
-    result = Extension()
+    result = None
 
     # Don't build empty extension
     if not ext:
         return result
+
+    else:
+        result = Extension()
 
     # Create history extension
     if "history" in ext:

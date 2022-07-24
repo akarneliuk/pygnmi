@@ -57,11 +57,12 @@ Tested Network Operating Systems (NOS)
 - Nokia SR OS
 - Cisco IOS XR
 - Juniper JUNOS
+- Nokia SRLinux
 
 Network Operating Systems (NOS) in test
 ---------------------------------------
-- Nokia SRLinux
 - Cisco Nexus
+- Broadcom SONiC
 
 =======
 License
@@ -79,10 +80,17 @@ Contributors
 - `Jeroen van Bemme <https://github.com/jbemmel>`_
 - `Frédéric Perrin <https://github.com/fperrin>`_
 - `Malanovo <https://github.com/malanovo>`_
+- `Sebastian Lohff <https://github.com/sebageek>`_
 
 =======
 Dev Log
 =======
+
+Release **0.8.3**:
+
+- Changed behaviour of ``subscribe2()`` to RPC to avoid adding the empty ``Extension`` field for no extensions presenting. Fix for `Issue 83 <https://github.com/akarneliuk/pygnmi/issues/83>`_.
+- Uppdated documentation with examples in GitHub.
+- Added support of History extensions to ``pygnmicli``.
 
 Release **0.8.2**:
 
@@ -377,7 +385,7 @@ Release **0.1.0**:
 
 (c)2020-2022, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.2&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.3&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
@@ -385,5 +393,5 @@ Release **0.1.0**:
 .. _license: https://github.com/akarneliuk/pygnmi/blob/master/LICENSE.txt
 .. |project| image:: https://img.shields.io/badge/akarneliuk%2Fpygnmi-blueviolet.svg?logo=github&color=success
 .. _project: https://github.com/akarneliuk/pygnmi/
-.. |coverage| image:: https://img.shields.io/static/v1?label=coverage&message=71%&color=yellow
+.. |coverage| image:: https://img.shields.io/static/v1?label=coverage&message=66%&color=yellow
 .. _coverage: https://github.com/nedbat/coveragepy
