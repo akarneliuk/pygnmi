@@ -36,19 +36,19 @@ def parse_args(msg):
         dest="password"
     )
     parser.add_argument(
-        "-c", "--path_cert",
+        "-c", "--path-cert",
         type=str,
         required=False,
         help="Path to certificate chain file",
     )
     parser.add_argument(
-        "-k", "--path_key",
+        "-k", "--path-key",
         type=str,
         required=False,
         help="Path to private key file"
     )
     parser.add_argument(
-        "-r", "--path_root",
+        "-r", "--path-root",
         type=str,
         required=False,
         help="Path to root CA file"
@@ -83,14 +83,14 @@ def parse_args(msg):
         help="gNMI Request type",
     )
     parser.add_argument(
-        "-x", "--gnmi_path",
+        "-x", "--gnmi-path",
         type=str,
         required=False,
         default="", nargs="+",
         help="gNMI paths of interest in XPath format, space separated"
     )
     parser.add_argument(
-        "--gnmi_path_target",
+        "--gnmi-path-target",
         type=str,
         required=False,
         default="",
@@ -125,6 +125,27 @@ def parse_args(msg):
         ],
         default="",
         help="Compare the states of the devices before and after change to show difference",
+    )
+    parser.add_argument(
+        "--ext-history-range-start",
+        type=str,
+        required=False,
+        default="",
+        help="Specify the start timestamp for the GNMI history range",
+    )
+    parser.add_argument(
+        "--ext-history-range-end",
+        type=str,
+        required=False,
+        default="",
+        help="Specify the end timestamp for the GNMI history range",
+    )
+    parser.add_argument(
+        "--ext-history-snapshot-time",
+        type=str,
+        required=False,
+        default="",
+        help="Specify the snapshit time for the GNMI history",
     )
 
     args = parser.parse_args()
