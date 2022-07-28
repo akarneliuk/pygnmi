@@ -588,7 +588,7 @@ class gNMIclient(object):
 
             else:
                 logger.error(f'The provided input for Set message (update operation) is not list.')
-                raise gNMIException('The provided input for Set message (replace operation) is not list.')
+                raise gNMIException('The provided input for Set message (update operation) is not list.')
 
         try:
             # Adding collection of data for diff before the change
