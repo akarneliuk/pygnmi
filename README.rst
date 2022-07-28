@@ -58,10 +58,10 @@ Tested Network Operating Systems (NOS)
 - Cisco IOS XR
 - Juniper JUNOS
 - Nokia SRLinux
+- Cisco NX-OS
 
 Network Operating Systems (NOS) in test
 ---------------------------------------
-- Cisco Nexus
 - Broadcom SONiC
 
 =======
@@ -85,6 +85,11 @@ Contributors
 =======
 Dev Log
 =======
+
+Release **0.8.4**:
+
+- Change logic of setting default values for some parameters to improve user experience.
+- Added ``token`` authentication to ``pygnmicli``.
 
 Release **0.8.3**:
 
@@ -385,7 +390,7 @@ Release **0.1.0**:
 
 (c)2020-2022, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.3&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.4&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
