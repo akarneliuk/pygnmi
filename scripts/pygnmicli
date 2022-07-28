@@ -36,7 +36,7 @@ def main():
 
     # gNMI operation
     with gNMIclient(
-        target=args.target, username=args.username, password=args.password,
+        target=args.target, username=args.username, password=args.password, token=args.token,
         path_cert=args.path_cert, path_key=args.path_key, path_root=args.path_root,
         override=args.override, insecure=args.insecure, debug=args.debug,
         show_diff=args.compare, skip_verify=args.skip_verify

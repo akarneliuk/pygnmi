@@ -24,7 +24,7 @@ def parse_args(msg):
     parser.add_argument(
         "-u", "--user",
         type=str,
-        required=True,
+        required=False,
         help="Username to use when connecting",
         dest="username"
     )
@@ -34,6 +34,13 @@ def parse_args(msg):
         required=False,
         help="Password to use when connecting",
         dest="password"
+    )
+    parser.add_argument(
+        "--token",
+        type=str,
+        required=False,
+        default="",
+        help="Specify the token for token-based authentication",
     )
     parser.add_argument(
         "-c", "--path-cert",
@@ -169,7 +176,7 @@ def parse_args(msg):
         if len(args.gnmi_path) > 1:
             parser.error(f"Only one path supported when doing a {args.operation} operation")
 
-    if not args.password:
+    if not args.password and not args.token:
         args.password = getpass("Device password: ")
 
     return args

@@ -300,7 +300,7 @@ class gNMIclient(object):
 
             return None
 
-    def get(self, prefix: str = "", path: list = [],
+    def get(self, prefix: str = "", path: list = None,
             target: str = None, datatype: str = 'all',
             encoding: str = 'json'):
         """
@@ -335,6 +335,8 @@ class gNMIclient(object):
         type_dict = {'all', 'config', 'state', 'operational'}
         encoding_set = {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}
 
+        # Set Protobuf value for information type
+        pb_datatype = 0
         if datatype in type_dict:
             if datatype == 'all':
                 pb_datatype = 0
@@ -344,9 +346,11 @@ class gNMIclient(object):
                 pb_datatype = 2
             elif datatype == 'operational':
                 pb_datatype = 3
-            else:
-                logger.error('The GetRequst data type is not within the defined range')
+        else:
+            logger.error('The GetRequst data type is not within the defined range. Using default type \'all\'.')
 
+        # Set Protobuf value for encoding
+        pb_encoding = 4
         if encoding in encoding_set:
             if encoding.lower() == 'json':
                 pb_encoding = 0
@@ -358,6 +362,8 @@ class gNMIclient(object):
                 pb_encoding = 3
             else:
                 pb_encoding = 4
+        else:
+            logger.error('The GetRequst encoding is not within the defined range. Using default type \'json_ietf\'.')
 
         # Gnmi PREFIX
         try:
