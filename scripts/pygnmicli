@@ -6,6 +6,7 @@
 import json
 import logging
 import os
+import sys
 
 # Own modules
 from pygnmi.arg_parser import parse_args
@@ -44,6 +45,9 @@ def main():
 
         result = None
 
+        # Collecting supported capabilities (needed to figure out encoding for telemetry)
+        GC.capabilities()
+
         if args.operation == 'capabilities':
             print(f'Doing {args.operation} request to {args.target}...')
             result = GC.capabilities()
@@ -73,9 +77,7 @@ def main():
             subscription_list = [
                 {
                     'path': xpath,
-                    'mode': 'sample',
-                    'sample_interval': 10000000000,
-                    'heartbeat_interval': 30000000000
+                    'mode': 'target_defined'
                 }
                 for xpath in args.gnmi_path
             ]
@@ -121,6 +123,7 @@ def main():
             else:
                 EXT = None
 
+            # Telemetry
             result = GC.subscribe2(subscribe=subscribe,
                                    target=args.gnmi_path_target,
                                    extension=EXT)
@@ -128,13 +131,13 @@ def main():
             if mode == "stream":
                 try:
                     for ent in result:
-                        print(ent)
+                        _print_result(ent)
                 except KeyboardInterrupt:
-                    result.close()
+                    sys.exit("Telemtry collection is temrinated.")
 
             elif mode == "once":
                 for ent in result:
-                    print(ent)
+                    _print_result(ent)
                     if "sync_response" in ent:
                         break
 
@@ -143,13 +146,17 @@ def main():
                     try:
                         input("Press enter to poll, ctrl+c to quit")
                         ent = result.get_update(timeout=5)
-                        print(ent)
+                        _print_result(ent)
                     except KeyboardInterrupt:
-                        result.close()
-                        break
+                        sys.exit("Telemtry collection is temrinated.")
 
-        if result and not args.debug:
-            print(json.dumps(result, indent=4))
+        if result and not args.debug and not args.operation.startswith('subscribe'):
+            _print_result(result)
+
+
+def _print_result(value: dict) -> None:
+    """This function prints the result in JSON format"""
+    print(json.dumps(value, indent=4))
 
 
 if __name__ == "__main__":

@@ -86,6 +86,10 @@ Contributors
 Dev Log
 =======
 
+Release **0.8.5**:
+
+- Fixed some issues with telemetry represenation with ``pygnmicli``.
+
 Release **0.8.4**:
 
 - Change logic of setting default values for some parameters to improve user experience.
