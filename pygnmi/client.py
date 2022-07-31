@@ -44,7 +44,7 @@ class gNMIclient(object):
                  debug: bool = False, insecure: bool = False, path_cert: str = None,
                  path_key: str = None, path_root: str = None, override: str = None,
                  skip_verify = False, gnmi_timeout: int = 5, grpc_options: list = None,
-                 show_diff: str = "", token: str = None, **kwargs):
+                 show_diff: str = None, token: str = None, **kwargs):
 
         """
         Initializing the object

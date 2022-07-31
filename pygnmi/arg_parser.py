@@ -39,7 +39,6 @@ def parse_args(msg):
         "--token",
         type=str,
         required=False,
-        default="",
         help="Specify the token for token-based authentication",
     )
     parser.add_argument(
@@ -100,7 +99,6 @@ def parse_args(msg):
         "--gnmi-path-target",
         type=str,
         required=False,
-        default="",
         help="Set target for GNMI path if it is different to the endpoint itself."
     )
     parser.add_argument(
@@ -137,21 +135,18 @@ def parse_args(msg):
         "--ext-history-range-start",
         type=str,
         required=False,
-        default="",
         help="Specify the start timestamp for the GNMI history range",
     )
     parser.add_argument(
         "--ext-history-range-end",
         type=str,
         required=False,
-        default="",
         help="Specify the end timestamp for the GNMI history range",
     )
     parser.add_argument(
         "--ext-history-snapshot-time",
         type=str,
         required=False,
-        default="",
         help="Specify the snapshit time for the GNMI history",
     )
 
