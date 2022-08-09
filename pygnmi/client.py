@@ -14,7 +14,7 @@ import cryptography
 import grpc
 from pygnmi.spec.v080.gnmi_pb2_grpc import gNMIStub
 from pygnmi.spec.v080.gnmi_pb2 import (CapabilityRequest, Encoding, GetRequest,\
-    SetRequest, Update, TypedValue, SubscribeRequest, Poll, SubscriptionList,\
+    SetRequest, Subscription, Update, TypedValue, SubscribeRequest, Poll, SubscriptionList,\
     SubscriptionMode, AliasList, UpdateResult)
 
 
@@ -234,13 +234,17 @@ class gNMIclient(object):
             grpc.channel_ready_future(self.__channel).result(timeout=timeout)
 
         except grpc.FutureTimeoutError:
-            logger.error("Failed to setup gRPC channel, trying change cipher")
+            if not self.__insecure:
+                logger.error("Failed to setup gRPC channel, trying change cipher")
 
-            try:
-                os.environ["GRPC_SSL_CIPHER_SUITES"] = "HIGH"
-                grpc.channel_ready_future(self.__channel).result(timeout=timeout)
+                try:
+                    os.environ["GRPC_SSL_CIPHER_SUITES"] = "HIGH"
+                    grpc.channel_ready_future(self.__channel).result(timeout=timeout)
 
-            except grpc.FutureTimeoutError:
+                except grpc.FutureTimeoutError:
+                    raise
+
+            else:
                 raise
 
     def capabilities(self):
@@ -693,16 +697,13 @@ class gNMIclient(object):
         if not isinstance(subscribe, dict):
             raise ValueError('Subscribe subscribe request is specified, but the value is not dict.')
 
-        request = SubscriptionList()
         gnmi_extension = get_gnmi_extension(ext=extension)
 
         # use_alias
         if 'use_aliases' not in subscribe:
             subscribe.update({'use_aliases': False})
 
-        if isinstance(subscribe['use_aliases'], bool):
-            request.use_aliases = subscribe['use_aliases']
-        else:
+        if not isinstance(subscribe['use_aliases'], bool):
             raise ValueError('Subsricbe use_aliases should have boolean type.')
 
         # mode
@@ -711,11 +712,11 @@ class gNMIclient(object):
 
         if subscribe['mode'].lower() in {'stream', 'once', 'poll'}:
             if subscribe['mode'].lower() == 'stream':
-                request.mode = 0
+                subscribe_mode = 0
             elif subscribe['mode'].lower() == 'once':
-                request.mode = 1
+                subscribe_mode = 1
             elif subscribe['mode'].lower() == 'poll':
-                request.mode = 2
+                subscribe_mode = 2
         else:
             raise ValueError('Subscribe mode is out of allowed ranges.')
 
@@ -723,35 +724,33 @@ class gNMIclient(object):
         if 'allow_aggregation' not in subscribe:
             subscribe.update({'allow_aggregation': False})
 
-        if isinstance(subscribe['allow_aggregation'], bool):
-            request.allow_aggregation = subscribe['allow_aggregation']
-        else:
+        if not isinstance(subscribe['allow_aggregation'], bool):
             raise ValueError('Subsricbe allow_aggregation should have boolean type.')
 
         # updates_only
         if 'updates_only' not in subscribe:
             subscribe.update({'updates_only': False})
 
-        if isinstance(subscribe['updates_only'], bool):
-            request.updates_only = subscribe['updates_only']
-        else:
+        if not isinstance(subscribe['updates_only'], bool):
             raise ValueError('Subsricbe updates_only should have boolean type.')
 
         # encoding
         if 'encoding' not in subscribe:
             subscribe.update({'encoding': 'proto'})
 
-        if subscribe['encoding'].upper() in Encoding.keys():
-            request.encoding = Encoding.Value(subscribe['encoding'].upper())
-        else:
+        if subscribe['encoding'].upper() not in Encoding.keys():
             raise ValueError(f'Subscribe encoding {subscribe["encoding"]} is out of allowed ranges.')
 
         # qos
-        if 'qos' not in subscribe:
-            subscribe.update({'qos': 0})
+        if 'qos' not in subscribe or not subscribe["qos"]:
+            subscribe.update({'qos': {'marking': 0}})
 
-        #            if subscribe['qos'] >= 0 and subscribe['qos'] <= 64:
-        #                request.qos = QOSMarking(marking=subscribe['qos'])
+        else:
+            if not (isinstance(subscribe["qos"], dict) and\
+                    "marking" in subscribe["qos"] and\
+                    isinstance(subscribe["qos"]["marking"], int) and\
+                    subscribe["qos"]["marking"] in list(range(0, 65))):
+                raise ValueError(f'Subscribe qos/marking {subscribe["qos"]["marking"]} is out of allowed ranges.')
 
         # use_models
         if 'use_models' not in subscribe:
@@ -764,9 +763,15 @@ class gNMIclient(object):
         if 'prefix' not in subscribe:
             subscribe.update({'prefix': ""})
 
-        # It is weird that it is not possible to assign prefix directly as earlier
-        request.prefix.target = gnmi_path_generator(subscribe['prefix'], target).target
-        request.prefix.origin = gnmi_path_generator(subscribe['prefix'], target).origin
+        # Create message for eveyrhting besides subscriptions
+        request = SubscriptionList(prefix=gnmi_path_generator(subscribe['prefix'], target),
+                            use_aliases=subscribe['use_aliases'],
+                            qos=subscribe['qos'],
+                            mode=subscribe_mode,
+                            allow_aggregation=subscribe['allow_aggregation'],
+                            use_models=subscribe['use_models'],
+                            encoding=Encoding.Value(subscribe['encoding'].upper()),
+                            updates_only=subscribe['updates_only'])
 
         # subscription
         if 'subscription' not in subscribe or not subscribe['subscription']:
@@ -802,8 +807,11 @@ class gNMIclient(object):
             else:
                 se_heartbeat_interval = 0
 
-            request.subscription.add(path=se_path, mode=se_mode, sample_interval=se_sample_interval,
-                                     suppress_redundant=se_suppress_redundant, heartbeat_interval=se_heartbeat_interval)
+            request.subscription.add(path=se_path,
+                                     mode=se_mode,
+                                     sample_interval=se_sample_interval,
+                                     suppress_redundant=se_suppress_redundant,
+                                     heartbeat_interval=se_heartbeat_interval)
 
         if gnmi_extension:
             return SubscribeRequest(subscribe=request, extension=[gnmi_extension])
@@ -886,7 +894,7 @@ class gNMIclient(object):
             subscribe['mode'] = 'POLL'
         gnmi_message_request = self._build_subscriptionrequest(subscribe, target, extension)
         debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
-            
+
         return PollSubscriber(self.__channel, gnmi_message_request, self.__metadata)
 
     def subscribe_once(self, subscribe: dict, target: str = None, extension: list = None):

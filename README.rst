@@ -86,9 +86,16 @@ Contributors
 Dev Log
 =======
 
+Release **0.8.6**:
+
+- Fixed minor issue with establishing ``insecure`` channel.
+- Fixed bug with inabillity to specify ``prefix`` in Subscribe messages for ``subscribe2()`` method.
+- **Important**: It is recommended to use method ``subscribe2()`` instead of ``subscribe()`` for building telemetry collectors with ``pygnmi`` as this method is further developed and throroughle tested. The method ``subscribe()`` will be deprecated in future releases.
+- Functionality ``qos`` is now properly supported in ``subscribe2()`` method.
+
 Release **0.8.5**:
 
-- Fixed some issues with telemetry represenation with ``pygnmicli``.
+- Fixed some issues with telemetry representation with ``pygnmicli``.
 
 Release **0.8.4**:
 
@@ -394,7 +401,7 @@ Release **0.1.0**:
 
 (c)2020-2022, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.4&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.6&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/

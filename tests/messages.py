@@ -44,7 +44,10 @@ test_telemetry_dict_once = {
                                     'sample_interval': 10000000000,
                                     'heartbeat_interval': 30000000000
                                 }
-                            ], 
+                            ],
+                            'qos': {
+                                'marking': 32
+                            },
                             'use_aliases': False,
                             'mode': 'once',
                             'encoding': 'proto'
