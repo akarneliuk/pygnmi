@@ -88,7 +88,7 @@ Dev Log
 
 Release **0.8.7**:
 
-- Fixed bug, when returned ``json_val`` or ``json_ietf_val`` is not processed correctly if the value is empty string.
+- Fixed bug, when returned ``json_val`` or ``json_ietf_val`` is not processed correctly if the value is empty string.  Fix for `Issue 58 <https://github.com/akarneliuk/pygnmi/issues/58>`_.
 
 Release **0.8.6**:
 

@@ -10,6 +10,7 @@ import queue
 import time
 import threading
 import os
+from typing import Any
 import cryptography
 import grpc
 from pygnmi.spec.v080.gnmi_pb2_grpc import gNMIStub
@@ -438,12 +439,10 @@ class gNMIclient(object):
                                 # Message Update, Key val
                                 if update_msg.HasField('val'):
                                     if update_msg.val.HasField('json_ietf_val'):
-                                        processed_val = json.loads(update_msg.val.json_ietf_val) if update_msg.val.json_ietf_val else None
-                                        update_container.update({'val': processed_val})
+                                        update_container.update({'val': process_potentially_json_value(update_msg.val.json_ietf_val)})
 
                                     elif update_msg.val.HasField('json_val'):
-                                        processed_val = json.loads(update_msg.val.json_val) if update_msg.val.json_val else None
-                                        update_container.update({'val': processed_val})
+                                        update_container.update({'val': process_potentially_json_value(update_msg.val.json_val)})
 
                                     elif update_msg.val.HasField('string_val'):
                                         update_container.update({'val': update_msg.val.string_val})
@@ -1244,8 +1243,24 @@ def telemetryParser(in_message=None, debug: bool = False):
 
 
 def debug_gnmi_msg(is_printable, what_to_print, message_name) -> None:
+    """This helper function prints debug output"""
     if is_printable:
         print(message_name)
         print("-" * os.get_terminal_size().columns)
         print(what_to_print)
         print("-" * os.get_terminal_size().columns, end="\n\n\n")
+
+
+def process_potentially_json_value(input_val) -> Any:
+    """This helper method converts value from bytestream"""
+    unprocessed_value = input_val.decode(encoding="utf-8")
+
+    if unprocessed_value:
+        try:
+            processed_val = json.loads(unprocessed_value)
+        except json.decoder.JSONDecodeError:
+            processed_val = unprocessed_value
+    else:
+        processed_val = None
+
+    return processed_val
