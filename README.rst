@@ -86,6 +86,10 @@ Contributors
 Dev Log
 =======
 
+Release **0.8.7**:
+
+- Fixed bug, when returned ``json_val`` or ``json_ietf_val`` is not processed correctly if the value is empty string.
+
 Release **0.8.6**:
 
 - Fixed minor issue with establishing ``insecure`` channel.

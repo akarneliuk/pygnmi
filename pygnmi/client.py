@@ -438,13 +438,15 @@ class gNMIclient(object):
                                 # Message Update, Key val
                                 if update_msg.HasField('val'):
                                     if update_msg.val.HasField('json_ietf_val'):
-                                        update_container.update({'val': json.loads(update_msg.val.json_ietf_val)})
+                                        processed_val = json.loads(update_msg.val.json_ietf_val) if update_msg.val.json_ietf_val else None
+                                        update_container.update({'val': processed_val})
 
                                     elif update_msg.val.HasField('json_val'):
-                                        update_container.update({'val': json.loads(update_msg.val.json_val)})
+                                        processed_val = json.loads(update_msg.val.json_val) if update_msg.val.json_val else None
+                                        update_container.update({'val': processed_val})
 
                                     elif update_msg.val.HasField('string_val'):
-                                        update_container.update({'val':update_msg.val.string_val})
+                                        update_container.update({'val': update_msg.val.string_val})
 
                                     elif update_msg.val.HasField('int_val'):
                                         update_container.update({'val': update_msg.val.int_val})
