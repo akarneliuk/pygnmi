@@ -86,6 +86,10 @@ Contributors
 Dev Log
 =======
 
+Release **0.8.7**:
+
+- Fixed bug, when returned ``json_val`` or ``json_ietf_val`` is not processed correctly if the value is empty string.  Fix for `Issue 58 <https://github.com/akarneliuk/pygnmi/issues/58>`_.
+
 Release **0.8.6**:
 
 - Fixed minor issue with establishing ``insecure`` channel.
@@ -401,7 +405,7 @@ Release **0.1.0**:
 
 (c)2020-2022, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.6&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.7&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
