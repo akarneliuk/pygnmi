@@ -191,7 +191,7 @@ class gNMIclient(object):
 
                 # Set empty override if neither CN ans SARs exist
                 if not ssl_cert_common_name and not self.__cert_sans:
-                    self.__options.append(("grpc.ssl_target_name_override", ""))
+                    self.__options.append(("grpc.ssl_target_name_override", "".encode(encoding="utf-8")))
 
                 logger.warning('ssl_target_name_override is applied, should be used for testing only!')
 
