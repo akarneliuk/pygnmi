@@ -355,7 +355,14 @@ class gNMIclient(object):
             logger.error('The GetRequst data type is not within the defined range. Using default type \'all\'.')
 
         # Set Protobuf value for encoding
-        pb_encoding = 4
+        if self.__capabilities and 'supported_encodings' in self.__capabilities:
+            if 'json' in self.__capabilities['supported_encodings']:
+                pb_encoding = 0
+            elif 'json_ietf' in self.__capabilities['supported_encodings']:
+                pb_encoding = 4
+        else:
+            pb_encoding = 4
+
         if encoding in encoding_set:
             if encoding.lower() == 'json':
                 pb_encoding = 0
@@ -389,12 +396,6 @@ class gNMIclient(object):
         except Exception as e:
             logger.error('Conversion of gNMI paths to the Protobuf format failed')
             raise gNMIException('Conversion of gNMI paths to the Protobuf format failed', e)
-
-        if self.__capabilities and 'supported_encodings' in self.__capabilities:
-            if 'json' in self.__capabilities['supported_encodings']:
-                pb_encoding = 0
-            elif 'json_ietf' in self.__capabilities['supported_encodings']:
-                pb_encoding = 4
 
         try:
             gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths,
@@ -766,13 +767,13 @@ class gNMIclient(object):
 
         # Create message for eveyrhting besides subscriptions
         request = SubscriptionList(prefix=gnmi_path_generator(subscribe['prefix'], target),
-                            use_aliases=subscribe['use_aliases'],
-                            qos=subscribe['qos'],
-                            mode=subscribe_mode,
-                            allow_aggregation=subscribe['allow_aggregation'],
-                            use_models=subscribe['use_models'],
-                            encoding=Encoding.Value(subscribe['encoding'].upper()),
-                            updates_only=subscribe['updates_only'])
+                                   use_aliases=subscribe['use_aliases'],
+                                   qos=subscribe['qos'],
+                                   mode=subscribe_mode,
+                                   allow_aggregation=subscribe['allow_aggregation'],
+                                   use_models=subscribe['use_models'],
+                                   encoding=Encoding.Value(subscribe['encoding'].upper()),
+                                   updates_only=subscribe['updates_only'])
 
         # subscription
         if 'subscription' not in subscribe or not subscribe['subscription']:

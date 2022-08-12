@@ -54,7 +54,9 @@ def main():
 
         elif args.operation == 'get':
             print(f'Doing {args.operation} request to {args.target}...')
-            result = GC.get(path=args.gnmi_path, datatype=args.datastore, encoding='json',
+            result = GC.get(path=args.gnmi_path,
+                            datatype=args.datastore,
+                            encoding=args.encoding,
                             target=args.gnmi_path_target)
 
         elif args.operation.startswith('set'):
@@ -70,7 +72,7 @@ def main():
                     data = f.read()
                 jdata = json.loads(data)
                 kwargs[mode] = [(args.gnmi_path[0], jdata)]
-            result = GC.set(encoding="json_ietf", target=args.gnmi_path_target, **kwargs)
+            result = GC.set(encoding=args.encoding, target=args.gnmi_path_target, **kwargs)
 
         elif args.operation.startswith('subscribe'):
             mode = args.operation.split("-")[1]
@@ -85,7 +87,7 @@ def main():
                 'subscription': subscription_list,
                 'use_aliases': False,
                 'mode': mode,
-                'encoding': 'json'
+                'encoding': args.encoding
             }
 
             # Set up extensions

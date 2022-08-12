@@ -86,6 +86,11 @@ Contributors
 Dev Log
 =======
 
+Release **0.8.8**:
+
+- Added new argument ``-e / --encoding`` to ``pygnmicli`` to specify the encoding, which overrides the default one. Fix for `Issue 58 <https://github.com/akarneliuk/pygnmi/issues/58>`_.
+- Fixed minor bug with encoding handling inside ``get()`` and ``subscribe2()`` methods.
+
 Release **0.8.7**:
 
 - Fixed bug, when returned ``json_val`` or ``json_ietf_val`` is not processed correctly if the value is empty string.  Fix for `Issue 58 <https://github.com/akarneliuk/pygnmi/issues/58>`_.

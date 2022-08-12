@@ -89,6 +89,14 @@ def parse_args(msg):
         help="gNMI Request type",
     )
     parser.add_argument(
+        "-e", "--encoding",
+        type=str,
+        required=False,
+        choices=["json", "bytes", "proto", "ascii", "json_ietf"],
+        default="json",
+        help="Specif the encoding in the gNMI RPC (subject to be supported by the network device",
+    )
+    parser.add_argument(
         "-x", "--gnmi-path",
         type=str,
         required=False,
