@@ -338,7 +338,6 @@ class gNMIclient(object):
 
         datatype = datatype.lower()
         type_dict = {'all', 'config', 'state', 'operational'}
-        encoding_set = {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}
 
         # Set Protobuf value for information type
         pb_datatype = 0
@@ -355,27 +354,9 @@ class gNMIclient(object):
             logger.error('The GetRequst data type is not within the defined range. Using default type \'all\'.')
 
         # Set Protobuf value for encoding
-        if self.__capabilities and 'supported_encodings' in self.__capabilities:
-            if 'json' in self.__capabilities['supported_encodings']:
-                pb_encoding = 0
-            elif 'json_ietf' in self.__capabilities['supported_encodings']:
-                pb_encoding = 4
-        else:
-            pb_encoding = 4
-
-        if encoding in encoding_set:
-            if encoding.lower() == 'json':
-                pb_encoding = 0
-            elif encoding.lower() == 'bytes':
-                pb_encoding = 1
-            elif encoding.lower() == 'proto':
-                pb_encoding = 2
-            elif encoding.lower() == 'ascii':
-                pb_encoding = 3
-            else:
-                pb_encoding = 4
-        else:
-            logger.error('The GetRequst encoding is not within the defined range. Using default type \'json_ietf\'.')
+        pb_encoding = choose_encoding(collected_capabilities=self.__capabilities,
+                                      default_encoding="json",
+                                      requested_encoding=encoding)
 
         # Gnmi PREFIX
         try:
@@ -740,8 +721,9 @@ class gNMIclient(object):
         if 'encoding' not in subscribe:
             subscribe.update({'encoding': 'proto'})
 
-        if subscribe['encoding'].upper() not in Encoding.keys():
-            raise ValueError(f'Subscribe encoding {subscribe["encoding"]} is out of allowed ranges.')
+        pb_encoding = choose_encoding(collected_capabilities=self.__capabilities,
+                                      default_encoding="proto",
+                                      requested_encoding=subscribe['encoding'])
 
         # qos
         if 'qos' not in subscribe or not subscribe["qos"]:
@@ -772,7 +754,7 @@ class gNMIclient(object):
                                    mode=subscribe_mode,
                                    allow_aggregation=subscribe['allow_aggregation'],
                                    use_models=subscribe['use_models'],
-                                   encoding=Encoding.Value(subscribe['encoding'].upper()),
+                                   encoding=pb_encoding,
                                    updates_only=subscribe['updates_only'])
 
         # subscription
@@ -1243,7 +1225,9 @@ def telemetryParser(in_message=None, debug: bool = False):
         return None
 
 
-def debug_gnmi_msg(is_printable, what_to_print, message_name) -> None:
+def debug_gnmi_msg(is_printable: bool, 
+                   what_to_print: str,
+                   message_name: str) -> None:
     """This helper function prints debug output"""
     if is_printable:
         print(message_name)
@@ -1253,7 +1237,7 @@ def debug_gnmi_msg(is_printable, what_to_print, message_name) -> None:
 
 
 def process_potentially_json_value(input_val) -> Any:
-    """This helper method converts value from bytestream"""
+    """This helper function converts value from bytestream"""
     unprocessed_value = input_val.decode(encoding="utf-8")
 
     if unprocessed_value:
@@ -1265,3 +1249,25 @@ def process_potentially_json_value(input_val) -> Any:
         processed_val = None
 
     return processed_val
+
+
+def choose_encoding(collected_capabilities: list,
+                    default_encoding: str,
+                    requested_encoding: str = None) -> int:
+    """This helper function chooses the needed encoding"""
+    # Default encoding equals to JSON_IETF in Protobuf format
+    result = 4
+
+    if requested_encoding:
+        if requested_encoding.upper() in Encoding.keys():
+            result = Encoding.Value(name=requested_encoding.upper())
+
+        else:
+            raise ValueError(f'Subscribe encoding {requested_encoding} is out of allowed ranges.')
+
+    else:
+        if collected_capabilities and 'supported_encodings' in collected_capabilities and\
+                default_encoding in collected_capabilities['supported_encodings']:
+            result = Encoding.Value(name=default_encoding.upper())
+
+    return result
