@@ -338,7 +338,6 @@ class gNMIclient(object):
 
         datatype = datatype.lower()
         type_dict = {'all', 'config', 'state', 'operational'}
-        encoding_set = {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}
 
         # Set Protobuf value for information type
         pb_datatype = 0
@@ -355,20 +354,9 @@ class gNMIclient(object):
             logger.error('The GetRequst data type is not within the defined range. Using default type \'all\'.')
 
         # Set Protobuf value for encoding
-        pb_encoding = 4
-        if encoding in encoding_set:
-            if encoding.lower() == 'json':
-                pb_encoding = 0
-            elif encoding.lower() == 'bytes':
-                pb_encoding = 1
-            elif encoding.lower() == 'proto':
-                pb_encoding = 2
-            elif encoding.lower() == 'ascii':
-                pb_encoding = 3
-            else:
-                pb_encoding = 4
-        else:
-            logger.error('The GetRequst encoding is not within the defined range. Using default type \'json_ietf\'.')
+        pb_encoding = choose_encoding(collected_capabilities=self.__capabilities,
+                                      default_encoding="json",
+                                      requested_encoding=encoding)
 
         # Gnmi PREFIX
         try:
@@ -389,12 +377,6 @@ class gNMIclient(object):
         except Exception as e:
             logger.error('Conversion of gNMI paths to the Protobuf format failed')
             raise gNMIException('Conversion of gNMI paths to the Protobuf format failed', e)
-
-        if self.__capabilities and 'supported_encodings' in self.__capabilities:
-            if 'json' in self.__capabilities['supported_encodings']:
-                pb_encoding = 0
-            elif 'json_ietf' in self.__capabilities['supported_encodings']:
-                pb_encoding = 4
 
         try:
             gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths,
@@ -513,12 +495,11 @@ class gNMIclient(object):
         del_protobuf_paths = []
         replace_msg = []
         update_msg = []
-        encoding_set = {'json', 'bytes', 'proto', 'ascii', 'json_ietf'}
         diff_list = []
 
-        if encoding not in encoding_set:
-            logger.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
-            raise gNMIException(f'The encoding {encoding} is not supported. The allowed are: {", ".join(encoding_set)}.')
+        if encoding.upper() not in Encoding.keys():
+            logger.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(Encoding.keys())}.')
+            raise gNMIException(f'The encoding {encoding} is not supported. The allowed are: {", ".join(Encoding.keys())}.')
 
         # Gnmi PREFIX
         try:
@@ -543,57 +524,11 @@ class gNMIclient(object):
 
         # Replace operation
         if replace:
-            if isinstance(replace, list):
-                for ue in replace:
-                    if isinstance(ue, tuple):
-                        u_path = gnmi_path_generator(ue[0])
-                        u_val = json.dumps(ue[1]).encode('utf-8')
-
-                        if encoding == 'json':
-                            replace_msg.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
-                        elif encoding == 'bytes':
-                            replace_msg.append(Update(path=u_path, val=TypedValue(bytes_val=u_val)))
-                        elif encoding == 'proto':
-                            replace_msg.append(Update(path=u_path, val=TypedValue(proto_bytes=u_val)))
-                        elif encoding == 'ascii':
-                            replace_msg.append(Update(path=u_path, val=TypedValue(ascii_val=u_val[1:-1])))
-                        elif encoding == 'json_ietf':
-                            replace_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
-
-                    else:
-                        logger.error(f'The input element for Update message must be tuple, got {ue}.')
-                        raise gNMIException(f'The input element for Update message must be tuple, got {ue}.')
-
-            else:
-                logger.error(f'The provided input for Set message (replace operation) is not list.')
-                raise gNMIException('The provided input for Set message (replace operation) is not list.')
+            replace_msg = construct_update_message(user_list=replace, encoding=encoding)
 
         # Update operation
         if update:
-            if isinstance(update, list):
-                for ue in update:
-                    if isinstance(ue, tuple):
-                        u_path = gnmi_path_generator(ue[0])
-                        u_val = json.dumps(ue[1]).encode('utf-8')
-
-                        if encoding == 'json':
-                            update_msg.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
-                        elif encoding == 'bytes':
-                            update_msg.append(Update(path=u_path, val=TypedValue(bytes_val=u_val)))
-                        elif encoding == 'proto':
-                            update_msg.append(Update(path=u_path, val=TypedValue(proto_bytes=u_val)))
-                        elif encoding == 'ascii':
-                            update_msg.append(Update(path=u_path, val=TypedValue(ascii_val=u_val[1:-1])))
-                        elif encoding == 'json_ietf':
-                            update_msg.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
-
-                    else:
-                        logger.error(f'The input element for Update message must be tuple, got {ue}.')
-                        raise gNMIException(f'The input element for Update message must be tuple, got {ue}.')
-
-            else:
-                logger.error(f'The provided input for Set message (update operation) is not list.')
-                raise gNMIException('The provided input for Set message (update operation) is not list.')
+            update_msg = construct_update_message(user_list=update, encoding=encoding)
 
         try:
             # Adding collection of data for diff before the change
@@ -739,8 +674,9 @@ class gNMIclient(object):
         if 'encoding' not in subscribe:
             subscribe.update({'encoding': 'proto'})
 
-        if subscribe['encoding'].upper() not in Encoding.keys():
-            raise ValueError(f'Subscribe encoding {subscribe["encoding"]} is out of allowed ranges.')
+        pb_encoding = choose_encoding(collected_capabilities=self.__capabilities,
+                                      default_encoding="proto",
+                                      requested_encoding=subscribe['encoding'])
 
         # qos
         if 'qos' not in subscribe or not subscribe["qos"]:
@@ -766,13 +702,13 @@ class gNMIclient(object):
 
         # Create message for eveyrhting besides subscriptions
         request = SubscriptionList(prefix=gnmi_path_generator(subscribe['prefix'], target),
-                            use_aliases=subscribe['use_aliases'],
-                            qos=subscribe['qos'],
-                            mode=subscribe_mode,
-                            allow_aggregation=subscribe['allow_aggregation'],
-                            use_models=subscribe['use_models'],
-                            encoding=Encoding.Value(subscribe['encoding'].upper()),
-                            updates_only=subscribe['updates_only'])
+                                   use_aliases=subscribe['use_aliases'],
+                                   qos=subscribe['qos'],
+                                   mode=subscribe_mode,
+                                   allow_aggregation=subscribe['allow_aggregation'],
+                                   use_models=subscribe['use_models'],
+                                   encoding=pb_encoding,
+                                   updates_only=subscribe['updates_only'])
 
         # subscription
         if 'subscription' not in subscribe or not subscribe['subscription']:
@@ -1242,7 +1178,9 @@ def telemetryParser(in_message=None, debug: bool = False):
         return None
 
 
-def debug_gnmi_msg(is_printable, what_to_print, message_name) -> None:
+def debug_gnmi_msg(is_printable: bool, 
+                   what_to_print: str,
+                   message_name: str) -> None:
     """This helper function prints debug output"""
     if is_printable:
         print(message_name)
@@ -1252,7 +1190,7 @@ def debug_gnmi_msg(is_printable, what_to_print, message_name) -> None:
 
 
 def process_potentially_json_value(input_val) -> Any:
-    """This helper method converts value from bytestream"""
+    """This helper function converts value from bytestream"""
     unprocessed_value = input_val.decode(encoding="utf-8")
 
     if unprocessed_value:
@@ -1264,3 +1202,58 @@ def process_potentially_json_value(input_val) -> Any:
         processed_val = None
 
     return processed_val
+
+
+def choose_encoding(collected_capabilities: list,
+                    default_encoding: str,
+                    requested_encoding: str = None) -> int:
+    """This helper function chooses the needed encoding"""
+    # Default encoding equals to JSON_IETF in Protobuf format
+    result = 4
+
+    if requested_encoding:
+        if requested_encoding.upper() in Encoding.keys():
+            result = Encoding.Value(name=requested_encoding.upper())
+
+        else:
+            raise ValueError(f'Subscribe encoding {requested_encoding} is out of allowed ranges.')
+
+    else:
+        if collected_capabilities and 'supported_encodings' in collected_capabilities and\
+                default_encoding in collected_capabilities['supported_encodings']:
+            result = Encoding.Value(name=default_encoding.upper())
+
+    return result
+
+
+def construct_update_message(user_list: list,
+                             encoding: str) -> list:
+    """This is a helper method to construct the Update() GNMI message"""
+    result = []
+
+    if isinstance(user_list, list):
+        for ue in user_list:
+            if isinstance(ue, tuple):
+                u_path = gnmi_path_generator(ue[0])
+                u_val = json.dumps(ue[1]).encode('utf-8')
+
+                if encoding == 'json':
+                    result.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
+                elif encoding == 'bytes':
+                    result.append(Update(path=u_path, val=TypedValue(bytes_val=u_val)))
+                elif encoding == 'proto':
+                    result.append(Update(path=u_path, val=TypedValue(proto_bytes=u_val)))
+                elif encoding == 'ascii':
+                    result.append(Update(path=u_path, val=TypedValue(ascii_val=u_val[1:-1])))
+                elif encoding == 'json_ietf':
+                    result.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
+
+            else:
+                logger.error(f'The input element for Update message must be tuple, got {ue}.')
+                raise gNMIException(f'The input element for Update message must be tuple, got {ue}.')
+
+    else:
+        logger.error(f'The provided input for Set message (replace operation) is not list.')
+        raise gNMIException('The provided input for Set message (replace operation) is not list.')
+
+    return result
