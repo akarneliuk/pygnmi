@@ -86,6 +86,12 @@ Contributors
 Dev Log
 =======
 
+Release **0.8.9**:
+
+- Default value for ``encoding`` everywhere is set to ``None``.
+- Method ``capabilities()`` now is called as part of ``connect()`` to collect supported encoding as part of session establishing.
+- If ``encoding`` is not specified by user, then it is auto-set based on the list collected via ``capabilites()`` with ``json`` having the first priority follwed by ``json_ietf``.
+
 Release **0.8.8**:
 
 - Added new argument ``-e / --encoding`` to ``pygnmicli`` to specify the encoding, which overrides the default one. Fix for `Issue 58 <https://github.com/akarneliuk/pygnmi/issues/58>`_.
@@ -411,7 +417,7 @@ Release **0.1.0**:
 
 (c)2020-2022, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.7&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.9&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
