@@ -157,6 +157,12 @@ def parse_args(msg):
         required=False,
         help="Specify the snapshit time for the GNMI history",
     )
+    parser.add_argument(
+        "--gnmi-timeout",
+        type=int,
+        required=False,
+        help="Specify the timeout for GNMI session",
+    )
 
     args = parser.parse_args()
 

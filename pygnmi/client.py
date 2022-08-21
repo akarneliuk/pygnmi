@@ -192,7 +192,7 @@ class gNMIclient(object):
 
                 # Set empty override if neither CN ans SARs exist
                 if not ssl_cert_common_name and not self.__cert_sans:
-                    self.__options.append(("grpc.ssl_target_name_override", "".encode(encoding="utf-8")))
+                    self.__options.append(("grpc.ssl_target_name_override", ""))
 
                 logger.warning('ssl_target_name_override is applied, should be used for testing only!')
 
@@ -224,6 +224,8 @@ class gNMIclient(object):
         if timeout is None or timeout > 0:
             self.wait_for_connect(timeout)
         self.__stub = gNMIStub(self.__channel)
+
+        self.__capabilities = self.capabilities()
 
         return self
 
@@ -293,7 +295,6 @@ class gNMIclient(object):
 
             logger.info(f'Collection of Capabilities is successfull')
 
-            self.__capabilities = response
             return response
 
         except grpc._channel._InactiveRpcError as err:
@@ -307,7 +308,7 @@ class gNMIclient(object):
 
     def get(self, prefix: str = "", path: list = None,
             target: str = None, datatype: str = 'all',
-            encoding: str = 'json'):
+            encoding: str = None):
         """
         Collecting the information about the resources from defined paths.
 
@@ -468,7 +469,7 @@ class gNMIclient(object):
             raise gNMIException(f'Collection of Get information failed: {e}', e)
 
     def set(self, delete: list = None, replace: list = None,
-            update: list = None, encoding: str = 'json',
+            update: list = None, encoding: str = None,
             prefix: str = "", target: str = None):
         """
         Changing the configuration on the destination network elements.
@@ -497,9 +498,21 @@ class gNMIclient(object):
         update_msg = []
         diff_list = []
 
-        if encoding.upper() not in Encoding.keys():
-            logger.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(Encoding.keys())}.')
-            raise gNMIException(f'The encoding {encoding} is not supported. The allowed are: {", ".join(Encoding.keys())}.')
+        # Set the encoding
+        if encoding:
+            if encoding.upper() not in Encoding.keys():
+                logger.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(Encoding.keys())}.')
+                raise gNMIException(f'The encoding {encoding} is not supported. The allowed are: {", ".join(Encoding.keys())}.')
+
+        else:
+            if "supported_encodings" in self.__capabilities and "json" in self.__capabilities['supported_encodings']:
+                encoding = "json"
+
+            elif "supported_encodings" in self.__capabilities and "json_ietf" in self.__capabilities['supported_encodings']:
+                encoding = "json_ietf"
+
+            else:
+                raise gNMIException('It is impossible to automtically detect encoding')
 
         # Gnmi PREFIX
         try:
@@ -611,7 +624,7 @@ class gNMIclient(object):
             raise gNMIException(f"Set failed: {e}", e)
 
 
-    def set_with_retry(self, delete: list = None, replace: list = None, update: list = None, encoding: str = 'json', retry_delay: int = 3):
+    def set_with_retry(self, delete: list = None, replace: list = None, update: list = None, encoding: str = None, retry_delay: int = 3):
         """
         Performs a set and retries (once) after a temporary failure with StatusCode.FAILED_PRECONDITION
         """
