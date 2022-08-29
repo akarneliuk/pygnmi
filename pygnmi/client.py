@@ -482,7 +482,7 @@ class gNMIclient(object):
           - list of tuples where the first entry path provided as a string, and the second entry
             is a dictionary with the configuration to be configured
 
-        replace:
+        update:
           - list of tuples where the first entry path provided as a string, and the second entry
             is a dictionary with the configuration to be configured
 
