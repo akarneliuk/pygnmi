@@ -108,6 +108,14 @@ test_paths = [
                 PathElem(name="interface",
                          key={"name": "Loopback111"})])),
 
+    # multiple keys, one with no value. From ietf-alarms.yang https://datatracker.ietf.org/doc/rfc8632/
+    ("alarms/alarm-list/alarm[alarm-type-id=test-alarm][alarm-type-qualifier=]/is-cleared",
+     Path(elem=[PathElem(name="alarms"),
+                PathElem(name="alarm-list"),
+                PathElem(name="alarm",
+                         key={"alarm-type-id": "test-alarm", "alarm-type-qualifier": ""}),
+                PathElem(name="is-cleared")])),
+
 ]
 
 

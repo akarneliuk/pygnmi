@@ -35,8 +35,8 @@ def gnmi_path_generator(path_in_question: str,
 
     # Subtracting all the keys from the elements and storing them separately
     if path_in_question:
-        if re.match(r'.*?\[.+?=.+?\].*?', path_in_question):
-            split_list = re.findall(r'.*?\[.+?=.+?\].*?', path_in_question)
+        if re.match(r'.*?\[.+?=.*?\].*?', path_in_question):
+            split_list = re.findall(r'.*?\[.+?=.*?\].*?', path_in_question)
 
             for sle in split_list:
                 temp_non_modified += sle
