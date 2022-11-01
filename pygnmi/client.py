@@ -45,7 +45,8 @@ class gNMIclient(object):
                  debug: bool = False, insecure: bool = False, path_cert: str = None,
                  path_key: str = None, path_root: str = None, override: str = None,
                  skip_verify = False, gnmi_timeout: int = 5, grpc_options: list = None,
-                 show_diff: str = None, token: str = None, **kwargs):
+                 show_diff: str = None, token: str = None, no_qos_marking: bool = False,
+                 **kwargs):
 
         """
         Initializing the object
@@ -64,6 +65,7 @@ class gNMIclient(object):
         self.__gnmi_timeout = gnmi_timeout
         self.__show_diff = show_diff if show_diff in {"get", "print"} else ""
         self.__skip_verify = skip_verify
+        self.__no_qos_marking = no_qos_marking
 
         self.__target_path = f'{target[0]}:{target[1]}'
         if re.match('unix:.*', target[0]):
@@ -692,9 +694,10 @@ class gNMIclient(object):
                                       requested_encoding=subscribe['encoding'])
 
         # qos
-        if 'qos' not in subscribe or not subscribe["qos"]:
+        if self.__no_qos_marking:
+            subscribe.update({'qos': None})
+        elif 'qos' not in subscribe or not subscribe["qos"]:
             subscribe.update({'qos': {'marking': 0}})
-
         else:
             if not (isinstance(subscribe["qos"], dict) and\
                     "marking" in subscribe["qos"] and\

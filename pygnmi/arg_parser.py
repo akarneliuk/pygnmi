@@ -163,6 +163,11 @@ def parse_args(msg):
         required=False,
         help="Specify the timeout for GNMI session",
     )
+    parser.add_argument(
+        "--no-qos-marking",
+        action="store_true",
+        help="Do not send qos marking with subscription request",
+    )
 
     args = parser.parse_args()
 
