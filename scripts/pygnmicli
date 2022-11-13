@@ -40,7 +40,8 @@ def main():
         target=args.target, username=args.username, password=args.password, token=args.token,
         path_cert=args.path_cert, path_key=args.path_key, path_root=args.path_root,
         override=args.override, insecure=args.insecure, debug=args.debug,
-        show_diff=args.compare, skip_verify=args.skip_verify, gnmi_timeout=args.gnmi_timeout
+        show_diff=args.compare, skip_verify=args.skip_verify, gnmi_timeout=args.gnmi_timeout,
+        no_qos_marking=args.no-qos-marking
     ) as GC:
 
         result = None
