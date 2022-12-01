@@ -1158,6 +1158,9 @@ def telemetryParser(in_message=None, debug: bool = False):
                     elif update_msg.val.HasField('proto_bytes'):
                         update_container.update({'val': update_msg.val.proto_bytes})
 
+                    elif update_msg.val.HasField('bytes_val'):
+                        update_container.update({'val': update_msg.val.bytes_val})
+
                 response['update']['update'].append(update_container)
 
             if in_message.update.delete:
