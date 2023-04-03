@@ -52,7 +52,7 @@ class gNMIclient(object):
         Initializing the object
         """
         self.__metadata = [('username', username), ('password', password)]
-        self.__capabilities = None
+        self.__encoding = "json" # default, may get overridden based on capabilities
         self.__debug = debug
         self.__insecure = insecure
         self.__path_cert = path_cert
@@ -99,7 +99,7 @@ class gNMIclient(object):
 
     def __enter__(self):
         """
-        Building the connectivity towards network element over gNMI 
+        Building the connectivity towards network element over gNMI
         (used in the with ... as ... context manager)
         """
         return self.connect()
@@ -163,7 +163,7 @@ class gNMIclient(object):
                     logger.warning(f"Cannot get Common Name: {err}")
 
                 # Collect Certificate's Subject Alternative Names
-                
+
                 ssl_cert_subject_alt_names = None
                 try:
                     ssl_cert_subject_alt_names = ssl_cert_deserialized.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
@@ -227,8 +227,17 @@ class gNMIclient(object):
             self.wait_for_connect(timeout)
         self.__stub = gNMIStub(self.__channel)
 
-        self.__capabilities = self.capabilities()
-
+        caps = self.capabilities()
+        if "supported_encodings" in caps:
+            self.__supported_encodings = caps["supported_encodings"]
+            # Automatically pick encoding, in order of prefence
+            for p in ["json","json_ietf","bytes","proto","ascii"]:
+                if p in self.__supported_encodings:
+                    self.__encoding = p
+                    logging.info( f"Selected encoding '{p}' based on capabilities" )
+                    break
+        else:
+            logging.warning( f"Unable to detect supported encodings, defaulting to '{self.__encoding}'" )
         return self
 
     def wait_for_connect(self, timeout: int):
@@ -308,6 +317,14 @@ class gNMIclient(object):
 
             return None
 
+    def convert_encoding(self, requested_encoding: str ):
+        if requested_encoding and self.__supported_encodings and \
+           requested_encoding.lower() not in self.__supported_encodings:
+           raise ValueError( f"Requested encoding '{requested_encoding}' not in supported encodings '{self.__supported_encodings}'" )
+
+        encoding = requested_encoding or self.__encoding
+        return Encoding.Value( encoding.upper() ) # may raise ValueError
+
     def get(self, prefix: str = "", path: list = None,
             target: str = None, datatype: str = 'all',
             encoding: str = None):
@@ -339,27 +356,15 @@ class gNMIclient(object):
         """
         logger.info("Collecting info from requested paths (Get operation)...")
 
-        datatype = datatype.lower()
-        type_dict = {'all', 'config', 'state', 'operational'}
-
         # Set Protobuf value for information type
-        pb_datatype = 0
-        if datatype in type_dict:
-            if datatype == 'all':
-                pb_datatype = 0
-            elif datatype == 'config':
-                pb_datatype = 1
-            elif datatype == 'state':
-                pb_datatype = 2
-            elif datatype == 'operational':
-                pb_datatype = 3
-        else:
-            logger.error('The GetRequst data type is not within the defined range. Using default type \'all\'.')
+        try:
+            pb_datatype = GetRequest.DataType.Value(datatype.upper())
+        except ValueError:
+            logger.error(f'The GetRequest data type "{datatype}" is not within the defined range. Using default type \'all\'.')
+            pb_datatype = 0
 
         # Set Protobuf value for encoding
-        pb_encoding = choose_encoding(collected_capabilities=self.__capabilities,
-                                      default_encoding="json",
-                                      requested_encoding=encoding)
+        pb_encoding = self.convert_encoding(encoding)
 
         # Gnmi PREFIX
         try:
@@ -500,21 +505,8 @@ class gNMIclient(object):
         update_msg = []
         diff_list = []
 
-        # Set the encoding
-        if encoding:
-            if encoding.upper() not in Encoding.keys():
-                logger.error(f'The encoding {encoding} is not supported. The allowed are: {", ".join(Encoding.keys())}.')
-                raise gNMIException(f'The encoding {encoding} is not supported. The allowed are: {", ".join(Encoding.keys())}.')
-
-        else:
-            if "supported_encodings" in self.__capabilities and "json" in self.__capabilities['supported_encodings']:
-                encoding = "json"
-
-            elif "supported_encodings" in self.__capabilities and "json_ietf" in self.__capabilities['supported_encodings']:
-                encoding = "json_ietf"
-
-            else:
-                raise gNMIException('It is impossible to automtically detect encoding')
+        # Set the encoding to auto-discovered value, unless overridden
+        encoding = encoding or self.__encoding
 
         # Gnmi PREFIX
         try:
@@ -676,7 +668,7 @@ class gNMIclient(object):
             subscribe.update({'allow_aggregation': False})
 
         if not isinstance(subscribe['allow_aggregation'], bool):
-            raise ValueError('Subsricbe allow_aggregation should have boolean type.')
+            raise ValueError('Subscribe allow_aggregation should have boolean type.')
 
         # updates_only
         if 'updates_only' not in subscribe:
@@ -689,9 +681,7 @@ class gNMIclient(object):
         if 'encoding' not in subscribe:
             subscribe.update({'encoding': 'proto'})
 
-        pb_encoding = choose_encoding(collected_capabilities=self.__capabilities,
-                                      default_encoding="proto",
-                                      requested_encoding=subscribe['encoding'])
+        pb_encoding = self.convert_encoding( subscribe['encoding'] )
 
         # qos
         if self.__no_qos_marking:
@@ -1197,7 +1187,7 @@ def telemetryParser(in_message=None, debug: bool = False):
         return None
 
 
-def debug_gnmi_msg(is_printable: bool, 
+def debug_gnmi_msg(is_printable: bool,
                    what_to_print: str,
                    message_name: str) -> None:
     """This helper function prints debug output"""
@@ -1222,31 +1212,7 @@ def process_potentially_json_value(input_val) -> Any:
 
     return processed_val
 
-
-def choose_encoding(collected_capabilities: list,
-                    default_encoding: str,
-                    requested_encoding: str = None) -> int:
-    """This helper function chooses the needed encoding"""
-    # Default encoding equals to JSON_IETF in Protobuf format
-    result = 4
-
-    if requested_encoding:
-        if requested_encoding.upper() in Encoding.keys():
-            result = Encoding.Value(name=requested_encoding.upper())
-
-        else:
-            raise ValueError(f'Subscribe encoding {requested_encoding} is out of allowed ranges.')
-
-    else:
-        if collected_capabilities and 'supported_encodings' in collected_capabilities and\
-                default_encoding in collected_capabilities['supported_encodings']:
-            result = Encoding.Value(name=default_encoding.upper())
-
-    return result
-
-
-def construct_update_message(user_list: list,
-                             encoding: str) -> list:
+def construct_update_message(user_list: list, encoding: str) -> list:
     """This is a helper method to construct the Update() GNMI message"""
     result = []
 
@@ -1266,6 +1232,8 @@ def construct_update_message(user_list: list,
                     result.append(Update(path=u_path, val=TypedValue(ascii_val=u_val[1:-1])))
                 elif encoding == 'json_ietf':
                     result.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
+                else:
+                    raise ValueError( f"Unsupported encoding: '{encoding}'" )
 
             else:
                 logger.error(f'The input element for Update message must be tuple, got {ue}.')
