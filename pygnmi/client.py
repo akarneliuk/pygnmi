@@ -352,8 +352,13 @@ class gNMIclient(object):
 
             return None
 
-    def convert_encoding(self, requested_encoding: str):
-        if requested_encoding and self.__supported_encodings and requested_encoding.lower() not in self.__supported_encodings:
+    def convert_encoding(self, requested_encoding: str, is_encoding_explicitly_set: bool = False):
+        if (
+            not is_encoding_explicitly_set
+            and requested_encoding
+            and self.__supported_encodings
+            and requested_encoding.lower() not in self.__supported_encodings
+        ):
             raise ValueError(
                 f"Requested encoding '{requested_encoding}' not in supported encodings '{self.__supported_encodings}'"
             )
@@ -734,10 +739,12 @@ class gNMIclient(object):
             raise ValueError("Subsricbe updates_only should have boolean type.")
 
         # encoding
+        is_encoding_explicitly_set = True
         if "encoding" not in subscribe:
             subscribe.update({"encoding": self.__encoding})
+            is_encoding_explicitly_set = False
 
-        pb_encoding = self.convert_encoding(subscribe["encoding"])
+        pb_encoding = self.convert_encoding(subscribe["encoding"], is_encoding_explicitly_set)
 
         # qos
         if self.__no_qos_marking:
