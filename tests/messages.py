@@ -37,6 +37,7 @@ test_telemetry_dict_once = {
     "qos": {"marking": 32},
     "use_aliases": False,
     "mode": "once",
+    "encoding": "json",
 }
 
 test_telemetry_dict_poll = {
