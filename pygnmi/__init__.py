@@ -1,5 +1,5 @@
 """
 pyGNMI module to manage network devices with gNMI
-(c)2020-2022, Karneliuk
+(c)2020-2023, Karneliuk
 """
-__version__ = "0.8.9"
+__version__ = "0.8.10"

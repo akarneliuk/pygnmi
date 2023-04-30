@@ -1,5 +1,7 @@
-"""pyGNMI: pure Python open-source GNMI client
-(c)2019-2022, karneliuk.com"""
+"""
+pyGNMI module to manage network devices with gNMI
+(c)2020-2023, Karneliuk
+"""
 
 # Modules
 import re
