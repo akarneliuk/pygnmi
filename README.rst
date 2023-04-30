@@ -86,6 +86,10 @@ Contributors
 Dev Log
 =======
 
+Release **0.8.10**:
+- Automatic detection of supported encoding and using it where applicable (e.g., in `subscribe2` method).
+- Possibility to remove `qos` from `Subscribe` for platforms, which doesn't support it (e.g., `Juniper`).
+
 Release **0.8.9**:
 
 - Default value for ``encoding`` everywhere is set to ``None``.
