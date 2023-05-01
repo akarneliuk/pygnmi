@@ -86,6 +86,9 @@ Contributors
 Dev Log
 =======
 
+Release **0.8.12**:
+- Fixed operation of `no_qos_marking` flag for `pygnmicli`.
+
 Release **0.8.11**:
 - Previous release introduced break for telemetry in `Juniper` due to inconsistency of communicated encoudings in `Capabilities()` and what is really supported in `Subscribe()`.
 
@@ -424,7 +427,7 @@ Release **0.1.0**:
 
 (c)2020-2022, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.10&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.12&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
