@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#(c)2019-2022, karneliuk.com
+# (c)2019-2022, karneliuk.com
 
 
 # Modules
@@ -14,54 +14,58 @@ from pygnmi.client import gNMIclient
 from pygnmi.artefacts.messages import msg
 
 # Variables
-path_log = 'log/execution.log'
+path_log = "log/execution.log"
 
 
 # Body
 def main():
-
     # Setting logger
-    if not os.path.exists(path_log.split('/')[0]):
-        os.mkdir(path_log.split('/')[0])
+    if not os.path.exists(path_log.split("/")[0]):
+        os.mkdir(path_log.split("/")[0])
 
     logging.basicConfig(
         filename=path_log,
         level=logging.INFO,
-        format='%(asctime)s.%(msecs)03d+01:00,%(levelname)s,%(message)s',
-        datefmt='%Y-%m-%dT%H:%M:%S'
+        format="%(asctime)s.%(msecs)03d+01:00,%(levelname)s,%(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
     )
-    logging.info('Starting application...')
+    logging.info("Starting application...")
 
     # Collecting inputs
     args = parse_args(msg)
 
     # gNMI operation
     with gNMIclient(
-        target=args.target, username=args.username, password=args.password, token=args.token,
-        path_cert=args.path_cert, path_key=args.path_key, path_root=args.path_root,
-        override=args.override, insecure=args.insecure, debug=args.debug,
-        show_diff=args.compare, skip_verify=args.skip_verify, gnmi_timeout=args.gnmi_timeout,
-        no_qos_marking=args.no-qos-marking
+        target=args.target,
+        username=args.username,
+        password=args.password,
+        token=args.token,
+        path_cert=args.path_cert,
+        path_key=args.path_key,
+        path_root=args.path_root,
+        override=args.override,
+        insecure=args.insecure,
+        debug=args.debug,
+        show_diff=args.compare,
+        skip_verify=args.skip_verify,
+        gnmi_timeout=args.gnmi_timeout,
+        no_qos_marking=args.no_qos_marking,
     ) as GC:
-
         result = None
 
         # Collecting supported capabilities (needed to figure out encoding for telemetry)
         GC.capabilities()
 
-        if args.operation == 'capabilities':
-            print(f'Doing {args.operation} request to {args.target}...')
+        if args.operation == "capabilities":
+            print(f"Doing {args.operation} request to {args.target}...")
             result = GC.capabilities()
 
-        elif args.operation == 'get':
-            print(f'Doing {args.operation} request to {args.target}...')
-            result = GC.get(path=args.gnmi_path,
-                            datatype=args.datastore,
-                            encoding=args.encoding,
-                            target=args.gnmi_path_target)
+        elif args.operation == "get":
+            print(f"Doing {args.operation} request to {args.target}...")
+            result = GC.get(path=args.gnmi_path, datatype=args.datastore, encoding=args.encoding, target=args.gnmi_path_target)
 
-        elif args.operation.startswith('set'):
-            print(f'Doing {args.operation} request to {args.target}...')
+        elif args.operation.startswith("set"):
+            print(f"Doing {args.operation} request to {args.target}...")
             mode = args.operation.split("-")[1]
             kwargs = {}
             if mode == "delete":
@@ -75,21 +79,10 @@ def main():
                 kwargs[mode] = [(args.gnmi_path[0], jdata)]
             result = GC.set(encoding=args.encoding, target=args.gnmi_path_target, **kwargs)
 
-        elif args.operation.startswith('subscribe'):
+        elif args.operation.startswith("subscribe"):
             mode = args.operation.split("-")[1]
-            subscription_list = [
-                {
-                    'path': xpath,
-                    'mode': 'target_defined'
-                }
-                for xpath in args.gnmi_path
-            ]
-            subscribe = {
-                'subscription': subscription_list,
-                'use_aliases': False,
-                'mode': mode,
-                'encoding': args.encoding
-            }
+            subscription_list = [{"path": xpath, "mode": "target_defined"} for xpath in args.gnmi_path]
+            subscribe = {"subscription": subscription_list, "use_aliases": False, "mode": mode, "encoding": args.encoding}
 
             # Set up extensions
             if args.ext_history_snapshot_time:
@@ -99,11 +92,7 @@ def main():
                 except:
                     time_to_int = args.ext_history_snapshot_time
 
-                EXT = {
-                    "history": {
-                        "snapshot_time": time_to_int
-                    }
-                }
+                EXT = {"history": {"snapshot_time": time_to_int}}
 
             elif args.ext_history_range_start and args.ext_history_range_end:
                 try:
@@ -114,22 +103,13 @@ def main():
                     time_to_int_1 = args.ext_history_range_start
                     time_to_int_2 = args.ext_history_range_start
 
-                EXT = {
-                    "history": {
-                        "range": {
-                            "start": time_to_int_1,
-                            "end": time_to_int_2
-                        }
-                    }
-                }
+                EXT = {"history": {"range": {"start": time_to_int_1, "end": time_to_int_2}}}
 
             else:
                 EXT = None
 
             # Telemetry
-            result = GC.subscribe2(subscribe=subscribe,
-                                   target=args.gnmi_path_target,
-                                   extension=EXT)
+            result = GC.subscribe2(subscribe=subscribe, target=args.gnmi_path_target, extension=EXT)
 
             if mode == "stream":
                 try:
@@ -153,7 +133,7 @@ def main():
                     except KeyboardInterrupt:
                         sys.exit("Telemtry collection is temrinated.")
 
-        if result and not args.debug and not args.operation.startswith('subscribe'):
+        if result and not args.debug and not args.operation.startswith("subscribe"):
             _print_result(result)
 
 

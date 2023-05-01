@@ -16,24 +16,27 @@ def parse_args(msg):
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-t", "--target",
+        "-t",
+        "--target",
         type=str,
         required=True,
         help="Target device connection details in 'host:port' format",
     )
     parser.add_argument(
-        "-u", "--user",
+        "-u",
+        "--user",
         type=str,
         required=False,
         help="Username to use when connecting",
-        dest="username"
+        dest="username",
     )
     parser.add_argument(
-        "-p", "--pass",
+        "-p",
+        "--pass",
         type=str,
         required=False,
         help="Password to use when connecting",
-        dest="password"
+        dest="password",
     )
     parser.add_argument(
         "--token",
@@ -42,31 +45,36 @@ def parse_args(msg):
         help="Specify the token for token-based authentication",
     )
     parser.add_argument(
-        "-c", "--path-cert",
+        "-c",
+        "--path-cert",
         type=str,
         required=False,
         help="Path to certificate chain file",
     )
     parser.add_argument(
-        "-k", "--path-key",
+        "-k",
+        "--path-key",
         type=str,
         required=False,
-        help="Path to private key file"
+        help="Path to private key file",
     )
     parser.add_argument(
-        "-r", "--path-root",
+        "-r",
+        "--path-root",
         type=str,
         required=False,
-        help="Path to root CA file"
+        help="Path to root CA file",
     )
     parser.add_argument(
-        "-O", "--override",
+        "-O",
+        "--override",
         type=str,
         required=False,
         help="Override the expected server hostname to match certificate name",
     )
     parser.add_argument(
-        "-i", "--insecure",
+        "-i",
+        "--insecure",
         action="store_true",
         default=False,
         help="Set to disable TLS encryption on the gRPC channel",
@@ -78,18 +86,27 @@ def parse_args(msg):
         help="Set to disable SSL certificate valication on the encrypted gRPC channel",
     )
     parser.add_argument(
-        "-o", "--operation",
+        "-o",
+        "--operation",
         type=str,
         required=False,
         choices=[
-            "capabilities", "get", "set-update", "set-replace", "set-delete",
-            "subscribe-stream", "subscribe-poll", "subscribe-once", "subscribe2"
+            "capabilities",
+            "get",
+            "set-update",
+            "set-replace",
+            "set-delete",
+            "subscribe-stream",
+            "subscribe-poll",
+            "subscribe-once",
+            "subscribe2",
         ],
         default="capabilities",
         help="gNMI Request type",
     )
     parser.add_argument(
-        "-e", "--encoding",
+        "-e",
+        "--encoding",
         type=str,
         required=False,
         choices=["json", "bytes", "proto", "ascii", "json_ietf"],
@@ -97,45 +114,51 @@ def parse_args(msg):
         help="Specif the encoding in the gNMI RPC (subject to be supported by the network device",
     )
     parser.add_argument(
-        "-x", "--gnmi-path",
+        "-x",
+        "--gnmi-path",
         type=str,
         required=False,
-        default="", nargs="+",
-        help="gNMI paths of interest in XPath format, space separated"
+        default="",
+        nargs="+",
+        help="gNMI paths of interest in XPath format, space separated",
     )
     parser.add_argument(
         "--gnmi-path-target",
         type=str,
         required=False,
-        help="Set target for GNMI path if it is different to the endpoint itself."
+        help="Set target for GNMI path if it is different to the endpoint itself.",
     )
     parser.add_argument(
-        "-d", "--datastore",
+        "-d",
+        "--datastore",
         type=str,
         required=False,
         choices=["all", "config", "operational", "state"],
-        default="all", const="all", nargs="?",
+        default="all",
+        const="all",
+        nargs="?",
         help="Which datastore to operate on",
     )
     parser.add_argument(
-        "-f", "--file",
+        "-f",
+        "--file",
         type=str,
         required=False,
         help="Path to file containing JSON data to use in a set request",
     )
     parser.add_argument(
-        "-D", "--debug",
+        "-D",
+        "--debug",
         action="store_true",
         default=False,
         help="Set to enable printing of Protobuf messages to STDOUT",
     )
     parser.add_argument(
-        "-C", "--compare",
+        "-C",
+        "--compare",
         type=str,
         required=False,
-        choices=[
-            "get", "print", ""
-        ],
+        choices=["get", "print", ""],
         default="",
         help="Compare the states of the devices before and after change to show difference",
     )
@@ -166,6 +189,8 @@ def parse_args(msg):
     parser.add_argument(
         "--no-qos-marking",
         action="store_true",
+        required=False,
+        default=False,
         help="Do not send qos marking with subscription request",
     )
 
@@ -173,16 +198,16 @@ def parse_args(msg):
 
     targets = args.target
     try:
-        if re.match(r'\[.*\]', targets):
-            parsed_args = re.sub(r'^\[([0-9a-fA-F:]+?)\]:(\d+?)$', r'\g<1> \g<2>', targets)
-            args.target = parsed_args.split(' ')
+        if re.match(r"\[.*\]", targets):
+            parsed_args = re.sub(r"^\[([0-9a-fA-F:]+?)\]:(\d+?)$", r"\g<1> \g<2>", targets)
+            args.target = parsed_args.split(" ")
             args.target = (str(args.target[0]), int(args.target[1]))
         else:
-            args.target = (str(targets.split(':')[0]), int(targets.split(':')[1]))
+            args.target = (str(targets.split(":")[0]), int(targets.split(":")[1]))
     except IndexError:
-        parser.error(msg['bad_host'])
+        parser.error(msg["bad_host"])
     except ValueError:
-        parser.error(msg['wrong_data'])
+        parser.error(msg["wrong_data"])
 
     if args.operation in ("set-update", "set-replace"):
         if args.file is None:
