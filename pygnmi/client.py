@@ -603,7 +603,10 @@ class gNMIclient(object):
                 if replace:
                     paths_to_collect_list.extend([path_tuple[0] for path_tuple in replace])
 
-                pre_change_dict = self.get(prefix=prefix, path=paths_to_collect_list)
+                pre_change_dict = self.get(prefix=prefix,
+                                           path=paths_to_collect_list,
+                                           encoding=encoding,
+                                           datatype='config')
 
             gnmi_message_request = SetRequest(
                 prefix=protobuf_prefix, delete=del_protobuf_paths, update=update_msg, replace=replace_msg
@@ -654,7 +657,7 @@ class gNMIclient(object):
 
                 ## Adding collection of data for diff before the change
                 if self.__show_diff:
-                    post_change_dict = self.get(path=paths_to_collect_list)
+                    post_change_dict = self.get(path=paths_to_collect_list, encoding=encoding, datatype='config')
 
                     is_printable = True if self.__show_diff == "print" else False
 
