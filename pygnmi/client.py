@@ -1270,10 +1270,16 @@ def telemetryParser(in_message=None, debug: bool = False):
 def debug_gnmi_msg(is_printable: bool, what_to_print: str, message_name: str) -> None:
     """This helper function prints debug output"""
     if is_printable:
+        try:
+            columns = os.get_terminal_size().columns
+        except OSError:
+            # NOTE: this happens if we run an application on non-tty
+            # The symptom would be OSError(25, 'Inappropriate ioctl for device')
+            columns = 40
         print(message_name)
-        print("-" * os.get_terminal_size().columns)
+        print("-" * columns)
         print(what_to_print)
-        print("-" * os.get_terminal_size().columns, end="\n\n\n")
+        print("-" * columns, end="\n\n\n")
 
 
 def process_potentially_json_value(input_val) -> Any:
