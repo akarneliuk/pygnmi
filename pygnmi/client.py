@@ -266,10 +266,10 @@ class gNMIclient(object):
             for p in ["json", "json_ietf", "bytes", "proto", "ascii"]:
                 if p in self.__supported_encodings:
                     self.__encoding = p
-                    logging.info(f"Selected encoding '{p}' based on capabilities")
+                    logger.info(f"Selected encoding '{p}' based on capabilities")
                     break
         else:
-            logging.warning(f"Unable to detect supported encodings, defaulting to '{self.__encoding}'")
+            logger.warning(f"Unable to detect supported encodings, defaulting to '{self.__encoding}'")
 
         return self
 
