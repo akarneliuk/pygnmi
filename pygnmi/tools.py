@@ -65,6 +65,7 @@ def diff_openconfig(pre_dict: dict, post_dict: dict, is_printable: bool = True) 
     for entry_tuple in diff_list:
         xpath_str = ""
         pre_path_list = []
+        result_list = []
 
         if entry_tuple[1] and isinstance(entry_tuple[1], list):
             # Looking for prefix attribuate
@@ -132,7 +133,6 @@ def diff_openconfig(pre_dict: dict, post_dict: dict, is_printable: bool = True) 
                                                                                 temp_elem=post_dict) + nl[0], nl[1]] for nl in result_list]
 
                 else:
-                    result_list = []
                     result_list.append(["-", xpath_str, entry_tuple[2][0]])
                     result_list.append(["+", xpath_str, entry_tuple[2][1]])
 
