@@ -34,7 +34,9 @@ from pygnmi.spec.v080.gnmi_pb2 import (
 
 
 # Those three modules are required to retrieve cert from the router and extract cn name
+import socket
 import ssl
+from urllib.parse import urlparse
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
@@ -106,6 +108,8 @@ class gNMIclient(object):
         if "keepalive_time_ms" in kwargs:
             self.configureKeepalive(**kwargs)
 
+        self.__grpc_proxy = os.getenv('grpc_proxy')
+
     def configureKeepalive(
         self,
         keepalive_time_ms: int,
@@ -174,7 +178,25 @@ class gNMIclient(object):
             # Download a certficate from device if it is not provided
             else:
                 try:
-                    ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
+                    if self.__grpc_proxy:
+                        logger.debug(f"Using proxy {self.__grpc_proxy}")
+                        grpc_proxy = urlparse(self.__grpc_proxy)
+                        s = socket.socket()
+                        s.connect((grpc_proxy.hostname, grpc_proxy.port))
+                        # create tunnel to target
+                        s.send(f"CONNECT {self.__target[0]}:{self.__target[1]} HTTP/1.0\r\n\r\n".encode())
+                        buf = s.recv(8192)
+                        if buf[9:12] != b'200':
+                            raise gNMIException(f"Didn't get a 200 from the proxy, instead: {buf})")
+                        # upgrade socket to ssl - ignore certifcate errors since we only want
+                        # to get the certificate and don't transfer sensitive data
+                        ctx = ssl.create_default_context()
+                        ctx.check_hostname = False
+                        ctx.verify_mode = ssl.CERT_NONE
+                        cert = ctx.wrap_socket(s, server_hostname = self.__target[0]).getpeercert(True)
+                        ssl_cert = ssl.DER_cert_to_PEM_cert(cert).encode("utf-8")
+                    else:
+                        ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
 
                 except Exception as e:
                     logger.error(f"The SSL certificate cannot be retrieved from {self.__target}")
