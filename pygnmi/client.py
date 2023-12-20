@@ -991,11 +991,18 @@ class _Subscriber:
         # start the subscription in a separate thread
         _client_stream = self._create_client_stream(request)
 
+        # Initialize error attribute to None. Used to catch errors in _subscribe_thread.
+        self.error = None
+
         def enqueue_updates():
-            stub = gNMIStub(channel)
-            subscription = stub.Subscribe(_client_stream, metadata=metadata)
-            for update in subscription:
-                self._updates.put(update)
+            try:
+                stub = gNMIStub(channel)
+                subscription = stub.Subscribe(_client_stream, metadata=metadata)
+                for update in subscription:
+                    self._updates.put(update)
+            except Exception as error:
+                self.error = error
+                raise error
 
         self._subscribe_thread = threading.Thread(target=enqueue_updates)
         self._subscribe_thread.start()
