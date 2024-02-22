@@ -388,7 +388,7 @@ class gNMIclient(object):
         encoding = requested_encoding or self.__encoding
         return Encoding.Value(encoding.upper())  # may raise ValueError
 
-    def get(self, prefix: str = "", path: list = None, target: str = None, datatype: str = "all", encoding: str = None):
+    def get(self, prefix: str = "", path: list = None, target: str = None, datatype: str = "all", encoding: str = None, extension: dict = None):
         """
         Collecting the information about the resources from defined paths.
 
@@ -426,6 +426,7 @@ class gNMIclient(object):
 
         # Set Protobuf value for encoding
         pb_encoding = self.convert_encoding(encoding)
+        gnmi_extension = get_gnmi_extension(ext=extension)
 
         # Gnmi PREFIX
         try:
@@ -448,7 +449,10 @@ class gNMIclient(object):
             raise gNMIException("Conversion of gNMI paths to the Protobuf format failed", e)
 
         try:
-            gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths, type=pb_datatype, encoding=pb_encoding)
+            if gnmi_extension:
+                gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths, type=pb_datatype, encoding=pb_encoding, extension = [gnmi_extension])
+            else:
+                gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths, type=pb_datatype, encoding=pb_encoding)
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
             gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
@@ -553,6 +557,7 @@ class gNMIclient(object):
         encoding: str = None,
         prefix: str = "",
         target: str = None,
+        extension: dict = None,
     ):
         """
         Changing the configuration on the destination network elements.
@@ -583,6 +588,7 @@ class gNMIclient(object):
 
         # Set the encoding to auto-discovered value, unless overridden
         encoding = encoding or self.__encoding
+        gnmi_extension = get_gnmi_extension(ext=extension)
 
         # Gnmi PREFIX
         try:
@@ -630,9 +636,12 @@ class gNMIclient(object):
                                            encoding=encoding,
                                            datatype='config')
 
-            gnmi_message_request = SetRequest(
-                prefix=protobuf_prefix, delete=del_protobuf_paths, update=update_msg, replace=replace_msg
-            )
+            if gnmi_extension:
+                gnmi_message_request = SetRequest(prefix=protobuf_prefix, delete=del_protobuf_paths, update=update_msg, replace=replace_msg, extension=[gnmi_extension])
+            else:
+                gnmi_message_request = SetRequest(
+                    prefix=protobuf_prefix, delete=del_protobuf_paths, update=update_msg, replace=replace_msg
+                )
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
             gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)

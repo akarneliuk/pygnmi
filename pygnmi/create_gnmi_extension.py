@@ -36,6 +36,14 @@ def get_gnmi_extension(ext: dict = None) -> list:
                 result.history.range.start = _get_time_ns_epoch(ext["history"]["range"]["start"])
                 result.history.range.end = _get_time_ns_epoch(ext["history"]["range"]["end"])
 
+    if "master_arbitration" in ext:
+
+        result.master_arbitration.election_id.high = ext["master_arbitration"]["election_id"]["high"]
+        result.master_arbitration.election_id.low = ext["master_arbitration"]["election_id"]["low"]
+
+        if "role" in ext["master_arbitration"]:
+            result.master_arbitration.role.id = ext["master_arbitration"]["role"]["id"]
+
     return result
 
 
