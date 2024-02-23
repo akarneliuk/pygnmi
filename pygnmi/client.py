@@ -388,7 +388,7 @@ class gNMIclient(object):
         encoding = requested_encoding or self.__encoding
         return Encoding.Value(encoding.upper())  # may raise ValueError
 
-    def get(self, prefix: str = "", path: list = None, target: str = None, datatype: str = "all", encoding: str = None, extension: dict = None):
+    def get(self, prefix: str = "", path: list = None, target: str = None, datatype: str = "all", encoding: str = None):
         """
         Collecting the information about the resources from defined paths.
 
