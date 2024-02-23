@@ -426,7 +426,6 @@ class gNMIclient(object):
 
         # Set Protobuf value for encoding
         pb_encoding = self.convert_encoding(encoding)
-        gnmi_extension = get_gnmi_extension(ext=extension)
 
         # Gnmi PREFIX
         try:
@@ -449,10 +448,7 @@ class gNMIclient(object):
             raise gNMIException("Conversion of gNMI paths to the Protobuf format failed", e)
 
         try:
-            if gnmi_extension:
-                gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths, type=pb_datatype, encoding=pb_encoding, extension = [gnmi_extension])
-            else:
-                gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths, type=pb_datatype, encoding=pb_encoding)
+            gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths, type=pb_datatype, encoding=pb_encoding)
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
             gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
