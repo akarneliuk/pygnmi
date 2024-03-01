@@ -553,6 +553,7 @@ class gNMIclient(object):
         encoding: str = None,
         prefix: str = "",
         target: str = None,
+        extension: dict = None,
     ):
         """
         Changing the configuration on the destination network elements.
@@ -583,6 +584,7 @@ class gNMIclient(object):
 
         # Set the encoding to auto-discovered value, unless overridden
         encoding = encoding or self.__encoding
+        gnmi_extension = get_gnmi_extension(ext=extension)
 
         # Gnmi PREFIX
         try:
@@ -630,9 +632,12 @@ class gNMIclient(object):
                                            encoding=encoding,
                                            datatype='config')
 
-            gnmi_message_request = SetRequest(
-                prefix=protobuf_prefix, delete=del_protobuf_paths, update=update_msg, replace=replace_msg
-            )
+            if gnmi_extension:
+                gnmi_message_request = SetRequest(prefix=protobuf_prefix, delete=del_protobuf_paths, update=update_msg, replace=replace_msg, extension=[gnmi_extension])
+            else:
+                gnmi_message_request = SetRequest(
+                    prefix=protobuf_prefix, delete=del_protobuf_paths, update=update_msg, replace=replace_msg
+                )
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
             gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
