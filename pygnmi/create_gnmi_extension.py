@@ -1,5 +1,6 @@
 """This module contains the converter of dict() to Extension() GRPC class
-(c)2019-2022, karneliuk.com"""
+(c)2019-2024, karneliuk.com"""
+
 # Modules
 import datetime
 from pygnmi.spec.v080.gnmi_ext_pb2 import Extension
@@ -59,7 +60,7 @@ def _get_time_ns_epoch(time_in_question) -> int:
             result = int(time_stamp.timestamp() * pow(10, 9))
 
         except Exception as err:
-            err.args += (f"Time conversion error: cannot convert {time_in_question}, use 'yyyy-mm-ddTHH:MM:SSZ' format. Details: {err}")
+            err.args += f"Time conversion error: cannot convert {time_in_question}, use 'yyyy-mm-ddTHH:MM:SSZ' format. Details: {err}"
             raise
 
     return result

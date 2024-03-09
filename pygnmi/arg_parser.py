@@ -2,7 +2,6 @@
 Module to process arguments used in pygnmi cli
 """
 
-
 # Modules
 import argparse
 import re
@@ -121,6 +120,13 @@ def parse_args(msg):
         default="",
         nargs="+",
         help="gNMI paths of interest in XPath format, space separated",
+    )
+    parser.add_argument(
+        "--gnmi-prefix",
+        type=str,
+        required=False,
+        default="",
+        help="gNMI prefix, which is shared across multiple paths of interest in XPath forma.",
     )
     parser.add_argument(
         "--gnmi-path-target",

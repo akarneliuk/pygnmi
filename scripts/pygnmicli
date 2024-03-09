@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# (c)2019-2022, karneliuk.com
+# (c)2019-2024, karneliuk.com
 
 
 # Modules
@@ -8,10 +8,12 @@ import logging
 import os
 import sys
 
+
 # Own modules
 from pygnmi.arg_parser import parse_args
 from pygnmi.client import gNMIclient
 from pygnmi.artefacts.messages import msg
+
 
 # Variables
 path_log = "log/execution.log"
@@ -62,7 +64,13 @@ def main():
 
         elif args.operation == "get":
             print(f"Doing {args.operation} request to {args.target}...")
-            result = GC.get(path=args.gnmi_path, datatype=args.datastore, encoding=args.encoding, target=args.gnmi_path_target)
+            result = GC.get(
+                prefix=args.gnmi_prefix,
+                path=args.gnmi_path,
+                datatype=args.datastore,
+                encoding=args.encoding,
+                target=args.gnmi_path_target,
+            )
 
         elif args.operation.startswith("set"):
             print(f"Doing {args.operation} request to {args.target}...")
@@ -82,7 +90,12 @@ def main():
         elif args.operation.startswith("subscribe"):
             mode = args.operation.split("-")[1]
             subscription_list = [{"path": xpath, "mode": "target_defined"} for xpath in args.gnmi_path]
-            subscribe = {"subscription": subscription_list, "use_aliases": False, "mode": mode, "encoding": args.encoding}
+            subscribe = {
+                "subscription": subscription_list,
+                "use_aliases": False,
+                "mode": mode,
+                "encoding": args.encoding,
+            }
 
             # Set up extensions
             if args.ext_history_snapshot_time:
