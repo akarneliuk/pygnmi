@@ -6,7 +6,7 @@ with open("README.rst", encoding="utf-8") as fh:
 setup(
     name="pygnmi",
     packages=["pygnmi", "pygnmi.spec.v080", "pygnmi.artefacts"],
-    version="0.8.13",
+    version="0.8.14",
     license="bsd-3-clause",
     description="Pure Python gNMI client to manage network functions and collect telemetry.",
     long_description=long_description,

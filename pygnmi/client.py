@@ -1,6 +1,6 @@
 """
 pyGNMI module to manage network devices with gNMI
-(c)2020-2023, Karneliuk
+(c)2020-2024, Karneliuk
 """
 
 # Modules
@@ -108,7 +108,7 @@ class gNMIclient(object):
         if "keepalive_time_ms" in kwargs:
             self.configureKeepalive(**kwargs)
 
-        self.__grpc_proxy = os.getenv('grpc_proxy')
+        self.__grpc_proxy = os.getenv("grpc_proxy")
 
     def configureKeepalive(
         self,
@@ -128,7 +128,10 @@ class gNMIclient(object):
         self.__options += [
             ("grpc.keepalive_time_ms", keepalive_time_ms),
             ("grpc.keepalive_timeout_ms", keepalive_timeout_ms),
-            ("grpc.keepalive_permit_without_calls", 1 if keepalive_permit_without_calls else 0),
+            (
+                "grpc.keepalive_permit_without_calls",
+                1 if keepalive_permit_without_calls else 0,
+            ),
             ("grpc.http2.max_pings_without_data", max_pings_without_data),
         ]
 
@@ -186,21 +189,24 @@ class gNMIclient(object):
                         # create tunnel to target
                         s.send(f"CONNECT {self.__target[0]}:{self.__target[1]} HTTP/1.0\r\n\r\n".encode())
                         buf = s.recv(8192)
-                        if buf[9:12] != b'200':
+                        if buf[9:12] != b"200":
                             raise gNMIException(f"Didn't get a 200 from the proxy, instead: {buf})")
                         # upgrade socket to ssl - ignore certifcate errors since we only want
                         # to get the certificate and don't transfer sensitive data
                         ctx = ssl.create_default_context()
                         ctx.check_hostname = False
                         ctx.verify_mode = ssl.CERT_NONE
-                        cert = ctx.wrap_socket(s, server_hostname = self.__target[0]).getpeercert(True)
+                        cert = ctx.wrap_socket(s, server_hostname=self.__target[0]).getpeercert(True)
                         ssl_cert = ssl.DER_cert_to_PEM_cert(cert).encode("utf-8")
                     else:
                         ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
 
                 except Exception as e:
                     logger.error(f"The SSL certificate cannot be retrieved from {self.__target}")
-                    raise gNMIException(f"The SSL certificate cannot be retrieved from {self.__target}", e)
+                    raise gNMIException(
+                        f"The SSL certificate cannot be retrieved from {self.__target}",
+                        e,
+                    )
 
             if self.__skip_verify:
                 # Work with the certificate contents
@@ -209,9 +215,9 @@ class gNMIclient(object):
                 # Collect Certificate's Comman Name
                 ssl_cert_common_name = None
                 try:
-                    ssl_cert_common_name = ssl_cert_deserialized.subject.get_attributes_for_oid((x509.oid.NameOID.COMMON_NAME))[
-                        0
-                    ].value
+                    ssl_cert_common_name = ssl_cert_deserialized.subject.get_attributes_for_oid(
+                        (x509.oid.NameOID.COMMON_NAME)
+                    )[0].value
 
                 except BaseException as err:
                     logger.warning(f"Cannot get Common Name: {err}")
@@ -256,7 +262,11 @@ class gNMIclient(object):
 
             # Set up SSL channel credentials
             if self.__path_key and self.__path_root:
-                cert = grpc.ssl_channel_credentials(root_certificates=root_cert, private_key=key, certificate_chain=ssl_cert)
+                cert = grpc.ssl_channel_credentials(
+                    root_certificates=root_cert,
+                    private_key=key,
+                    certificate_chain=ssl_cert,
+                )
 
             else:
                 cert = grpc.ssl_channel_credentials(ssl_cert)
@@ -338,7 +348,11 @@ class gNMIclient(object):
 
                     for ree in gnmi_message_response.supported_models:
                         response["supported_models"].append(
-                            {"name": ree.name, "organization": ree.organization, "version": ree.version}
+                            {
+                                "name": ree.name,
+                                "organization": ree.organization,
+                                "version": ree.version,
+                            }
                         )
 
                 if gnmi_message_response.supported_encodings:
@@ -388,7 +402,14 @@ class gNMIclient(object):
         encoding = requested_encoding or self.__encoding
         return Encoding.Value(encoding.upper())  # may raise ValueError
 
-    def get(self, prefix: str = "", path: list = None, target: str = None, datatype: str = "all", encoding: str = None):
+    def get(
+        self,
+        prefix: str = "",
+        path: list = None,
+        target: str = None,
+        datatype: str = "all",
+        encoding: str = None,
+    ):
         """
         Collecting the information about the resources from defined paths.
 
@@ -421,7 +442,9 @@ class gNMIclient(object):
         try:
             pb_datatype = GetRequest.DataType.Value(datatype.upper())
         except ValueError:
-            logger.error(f"The GetRequest data type \"{datatype}\" is not within the defined range. Using default type 'all'.")
+            logger.error(
+                f"The GetRequest data type \"{datatype}\" is not within the defined range. Using default type 'all'."
+            )
             pb_datatype = 0
 
         # Set Protobuf value for encoding
@@ -448,7 +471,12 @@ class gNMIclient(object):
             raise gNMIException("Conversion of gNMI paths to the Protobuf format failed", e)
 
         try:
-            gnmi_message_request = GetRequest(prefix=protobuf_prefix, path=protobuf_paths, type=pb_datatype, encoding=pb_encoding)
+            gnmi_message_request = GetRequest(
+                prefix=protobuf_prefix,
+                path=protobuf_paths,
+                type=pb_datatype,
+                encoding=pb_encoding,
+            )
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
             gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
@@ -465,19 +493,25 @@ class gNMIclient(object):
                         notification_container = {}
 
                         # Message Notification, Key timestamp
-                        notification_container.update(
-                            {"timestamp": notification.timestamp}
-                        ) if notification.timestamp else notification_container.update({"timestamp": 0})
+                        (
+                            notification_container.update({"timestamp": notification.timestamp})
+                            if notification.timestamp
+                            else notification_container.update({"timestamp": 0})
+                        )
 
                         # Message Notification, Key prefix
-                        notification_container.update(
-                            {"prefix": gnmi_path_degenerator(notification.prefix)}
-                        ) if notification.prefix else notification_container.update({"prefix": None})
+                        (
+                            notification_container.update({"prefix": gnmi_path_degenerator(notification.prefix)})
+                            if notification.prefix
+                            else notification_container.update({"prefix": None})
+                        )
 
                         # Message Notification, Key alias
-                        notification_container.update(
-                            {"alias": notification.alias}
-                        ) if notification.alias else notification_container.update({"alias": None})
+                        (
+                            notification_container.update({"alias": notification.alias})
+                            if notification.alias
+                            else notification_container.update({"alias": None})
+                        )
 
                         # Message Notification, Key atomic
                         notification_container.update({"atomic": notification.atomic})
@@ -490,9 +524,11 @@ class gNMIclient(object):
                                 update_container = {}
 
                                 # Message Update, Key path
-                                update_container.update(
-                                    {"path": gnmi_path_degenerator(update_msg.path)}
-                                ) if update_msg.path else update_container.update({"path": None})
+                                (
+                                    update_container.update({"path": gnmi_path_degenerator(update_msg.path)})
+                                    if update_msg.path
+                                    else update_container.update({"path": None})
+                                )
 
                                 # Message Update, Key val
                                 if update_msg.HasField("val"):
@@ -502,7 +538,9 @@ class gNMIclient(object):
                                         )
 
                                     elif update_msg.val.HasField("json_val"):
-                                        update_container.update({"val": process_potentially_json_value(update_msg.val.json_val)})
+                                        update_container.update(
+                                            {"val": process_potentially_json_value(update_msg.val.json_val)}
+                                        )
 
                                     elif update_msg.val.HasField("string_val"):
                                         update_container.update({"val": update_msg.val.string_val})
@@ -627,16 +665,27 @@ class gNMIclient(object):
                 if replace:
                     paths_to_collect_list.extend([path_tuple[0] for path_tuple in replace])
 
-                pre_change_dict = self.get(prefix=prefix,
-                                           path=paths_to_collect_list,
-                                           encoding=encoding,
-                                           datatype='config')
+                pre_change_dict = self.get(
+                    prefix=prefix,
+                    path=paths_to_collect_list,
+                    encoding=encoding,
+                    datatype="config",
+                )
 
             if gnmi_extension:
-                gnmi_message_request = SetRequest(prefix=protobuf_prefix, delete=del_protobuf_paths, update=update_msg, replace=replace_msg, extension=[gnmi_extension])
+                gnmi_message_request = SetRequest(
+                    prefix=protobuf_prefix,
+                    delete=del_protobuf_paths,
+                    update=update_msg,
+                    replace=replace_msg,
+                    extension=[gnmi_extension],
+                )
             else:
                 gnmi_message_request = SetRequest(
-                    prefix=protobuf_prefix, delete=del_protobuf_paths, update=update_msg, replace=replace_msg
+                    prefix=protobuf_prefix,
+                    delete=del_protobuf_paths,
+                    update=update_msg,
+                    replace=replace_msg,
                 )
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
@@ -647,14 +696,18 @@ class gNMIclient(object):
                 response = {}
 
                 # Message SetResponse, Key timestamp
-                response.update(
-                    {"timestamp": gnmi_message_response.timestamp}
-                ) if gnmi_message_response.timestamp else response.update({"timestamp": 0})
+                (
+                    response.update({"timestamp": gnmi_message_response.timestamp})
+                    if gnmi_message_response.timestamp
+                    else response.update({"timestamp": 0})
+                )
 
                 # Message SetResponse, Key prefix
-                response.update(
-                    {"prefix": gnmi_path_degenerator(gnmi_message_response.prefix)}
-                ) if gnmi_message_response.prefix else response.update({"prefix": None})
+                (
+                    response.update({"prefix": gnmi_path_degenerator(gnmi_message_response.prefix)})
+                    if gnmi_message_response.prefix
+                    else response.update({"prefix": None})
+                )
 
                 if gnmi_message_response.response:
                     response.update({"response": []})
@@ -663,9 +716,11 @@ class gNMIclient(object):
                         response_container = {}
 
                         # Message UpdateResult, Key path
-                        response_container.update(
-                            {"path": gnmi_path_degenerator(response_entry.path)}
-                        ) if response_entry.path else response_container.update({"path": None})
+                        (
+                            response_container.update({"path": gnmi_path_degenerator(response_entry.path)})
+                            if response_entry.path
+                            else response_container.update({"path": None})
+                        )
 
                         ## Message UpdateResult, Key op
                         if response_entry.op:
@@ -684,11 +739,15 @@ class gNMIclient(object):
 
                 ## Adding collection of data for diff before the change
                 if self.__show_diff:
-                    post_change_dict = self.get(path=paths_to_collect_list, encoding=encoding, datatype='config')
+                    post_change_dict = self.get(path=paths_to_collect_list, encoding=encoding, datatype="config")
 
                     is_printable = True if self.__show_diff == "print" else False
 
-                    diff_list = diff_openconfig(pre_dict=pre_change_dict, post_dict=post_change_dict, is_printable=is_printable)
+                    diff_list = diff_openconfig(
+                        pre_dict=pre_change_dict,
+                        post_dict=post_change_dict,
+                        is_printable=is_printable,
+                    )
 
                 if diff_list and self.__show_diff == "get":
                     return response, diff_list
@@ -708,7 +767,12 @@ class gNMIclient(object):
             raise gNMIException(f"Set failed: {e}", e)
 
     def set_with_retry(
-        self, delete: list = None, replace: list = None, update: list = None, encoding: str = None, retry_delay: int = 3
+        self,
+        delete: list = None,
+        replace: list = None,
+        update: list = None,
+        encoding: str = None,
+        retry_delay: int = 3,
     ):
         """
         Performs a set and retries (once) after a temporary failure with StatusCode.FAILED_PRECONDITION
@@ -861,7 +925,13 @@ class gNMIclient(object):
         else:
             return SubscribeRequest(subscribe=request)
 
-    def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None, timeout: float = 0.0):
+    def subscribe(
+        self,
+        subscribe: dict = None,
+        poll: bool = False,
+        aliases: list = None,
+        timeout: float = 0.0,
+    ):
         """
         Implementation of the subscribe gNMI RPC to pool
         """
@@ -1203,9 +1273,11 @@ def telemetryParser(in_message=None, debug: bool = False):
         if in_message.HasField("update"):
             response.update({"update": {"update": []}})
 
-            response["update"].update(
-                {"timestamp": in_message.update.timestamp}
-            ) if in_message.update.timestamp else in_message.update({"timestamp": 0})
+            (
+                response["update"].update({"timestamp": in_message.update.timestamp})
+                if in_message.update.timestamp
+                else in_message.update({"timestamp": 0})
+            )
 
             if in_message.update.HasField("prefix"):
                 resource_prefix = []
@@ -1227,9 +1299,11 @@ def telemetryParser(in_message=None, debug: bool = False):
                 update_container = {}
 
                 # Message Update, Key path
-                update_container.update(
-                    {"path": gnmi_path_degenerator(update_msg.path)}
-                ) if update_msg.path else update_container.update({"path": None})
+                (
+                    update_container.update({"path": gnmi_path_degenerator(update_msg.path)})
+                    if update_msg.path
+                    else update_container.update({"path": None})
+                )
 
                 if update_msg.val:
                     if update_msg.val.HasField("json_ietf_val"):
@@ -1266,16 +1340,16 @@ def telemetryParser(in_message=None, debug: bool = False):
                         update_container.update({"val": update_msg.val.proto_bytes})
 
                     elif update_msg.val.HasField("bytes_val"):
-                        val_binary = ''.join(format(byte, '08b') for byte in update_msg.val.bytes_val)
+                        val_binary = "".join(format(byte, "08b") for byte in update_msg.val.bytes_val)
                         val_decimal = struct.unpack("f", struct.pack("I", int(val_binary, 2)))[0]
-                        update_container.update({'val': val_decimal})
-                    
-                    elif update_msg.val.HasField('leaflist_val'):
+                        update_container.update({"val": val_decimal})
+
+                    elif update_msg.val.HasField("leaflist_val"):
                         val_leaflist = update_msg.val
                         element_str = ""
                         for element in val_leaflist.leaflist_val.element:
                             element_str += element
-                        update_container.update({'val': element_str})
+                        update_container.update({"val": element_str})
 
                 response["update"]["update"].append(update_container)
 
