@@ -1298,7 +1298,16 @@ def telemetryParser(in_message=None, debug: bool = False):
                         update_container.update({"val": update_msg.val.proto_bytes})
 
                     elif update_msg.val.HasField("bytes_val"):
-                        update_container.update({"val": update_msg.val.bytes_val})
+                        val_binary = ''.join(format(byte, '08b') for byte in update_msg.val.bytes_val)
+                        val_decimal = struct.unpack("f", struct.pack("I", int(val_binary, 2)))[0]
+                        update_container.update({'val': val_decimal})
+                    
+                    elif update_msg.val.HasField('leaflist_val'):
+                        val_leaflist = update_msg.val
+                        element_str = ""
+                        for element in val_leaflist.leaflist_val.element:
+                            element_str += element
+                        update_container.update({'val': element_str})
 
                 response["update"]["update"].append(update_container)
 
