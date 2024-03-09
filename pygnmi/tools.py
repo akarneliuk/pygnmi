@@ -15,7 +15,9 @@ def _dict_to_xpath(input_dict: dict, parent_type_class: type, pre_parent_type_cl
         for k1, v1 in input_dict.items():
             if isinstance(v1, dict):
                 next_level_list = _dict_to_xpath(
-                    input_dict=v1, parent_type_class=type(v1), pre_parent_type_class=type(input_dict)
+                    input_dict=v1,
+                    parent_type_class=type(v1),
+                    pre_parent_type_class=type(input_dict),
                 )
 
                 for nested_list in next_level_list:
@@ -25,7 +27,9 @@ def _dict_to_xpath(input_dict: dict, parent_type_class: type, pre_parent_type_cl
                 for v2 in v1:
                     if isinstance(v2, dict):
                         next_level_list = _dict_to_xpath(
-                            input_dict=v2, parent_type_class=type(v2), pre_parent_type_class=type(v1)
+                            input_dict=v2,
+                            parent_type_class=type(v2),
+                            pre_parent_type_class=type(v1),
                         )
 
                         for nested_list in next_level_list:
@@ -120,7 +124,8 @@ def diff_openconfig(pre_dict: dict, post_dict: dict, is_printable: bool = True) 
 
                             if entry_tuple[0] == "remove":
                                 result_list = _dict_to_xpath(
-                                    input_dict=elem_list[-1], parent_type_class=type(elem_list[-1])
+                                    input_dict=elem_list[-1],
+                                    parent_type_class=type(elem_list[-1]),
                                 )
                                 result_list = [
                                     [
@@ -133,7 +138,8 @@ def diff_openconfig(pre_dict: dict, post_dict: dict, is_printable: bool = True) 
 
                             elif entry_tuple[0] == "add":
                                 result_list = _dict_to_xpath(
-                                    input_dict=elem_list[-1], parent_type_class=type(elem_list[-1])
+                                    input_dict=elem_list[-1],
+                                    parent_type_class=type(elem_list[-1]),
                                 )
                                 result_list = [
                                     [

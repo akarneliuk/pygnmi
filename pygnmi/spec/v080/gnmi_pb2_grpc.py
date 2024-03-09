@@ -25,25 +25,25 @@ class gNMIStub(object):
             channel: A grpc.Channel.
         """
         self.Capabilities = channel.unary_unary(
-                '/gnmi.gNMI/Capabilities',
-                request_serializer=gnmi__pb2.CapabilityRequest.SerializeToString,
-                response_deserializer=gnmi__pb2.CapabilityResponse.FromString,
-                )
+            "/gnmi.gNMI/Capabilities",
+            request_serializer=gnmi__pb2.CapabilityRequest.SerializeToString,
+            response_deserializer=gnmi__pb2.CapabilityResponse.FromString,
+        )
         self.Get = channel.unary_unary(
-                '/gnmi.gNMI/Get',
-                request_serializer=gnmi__pb2.GetRequest.SerializeToString,
-                response_deserializer=gnmi__pb2.GetResponse.FromString,
-                )
+            "/gnmi.gNMI/Get",
+            request_serializer=gnmi__pb2.GetRequest.SerializeToString,
+            response_deserializer=gnmi__pb2.GetResponse.FromString,
+        )
         self.Set = channel.unary_unary(
-                '/gnmi.gNMI/Set',
-                request_serializer=gnmi__pb2.SetRequest.SerializeToString,
-                response_deserializer=gnmi__pb2.SetResponse.FromString,
-                )
+            "/gnmi.gNMI/Set",
+            request_serializer=gnmi__pb2.SetRequest.SerializeToString,
+            response_deserializer=gnmi__pb2.SetResponse.FromString,
+        )
         self.Subscribe = channel.stream_stream(
-                '/gnmi.gNMI/Subscribe',
-                request_serializer=gnmi__pb2.SubscribeRequest.SerializeToString,
-                response_deserializer=gnmi__pb2.SubscribeResponse.FromString,
-                )
+            "/gnmi.gNMI/Subscribe",
+            request_serializer=gnmi__pb2.SubscribeRequest.SerializeToString,
+            response_deserializer=gnmi__pb2.SubscribeResponse.FromString,
+        )
 
 
 class gNMIServicer(object):
@@ -68,8 +68,8 @@ class gNMIServicer(object):
         Reference: gNMI Specification Section 3.2
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def Get(self, request, context):
         """Retrieve a snapshot of data from the target. A Get RPC requests that the
@@ -79,8 +79,8 @@ class gNMIServicer(object):
         Reference: gNMI Specification Section 3.3
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def Set(self, request, context):
         """Set allows the client to modify the state of data on the target. The
@@ -89,8 +89,8 @@ class gNMIServicer(object):
         Reference: gNMI Specification Section 3.4
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def Subscribe(self, request_iterator, context):
         """Subscribe allows a client to request the target to send it values
@@ -100,39 +100,38 @@ class gNMIServicer(object):
         Reference: gNMI Specification Section 3.5
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
 
 def add_gNMIServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Capabilities': grpc.unary_unary_rpc_method_handler(
-                    servicer.Capabilities,
-                    request_deserializer=gnmi__pb2.CapabilityRequest.FromString,
-                    response_serializer=gnmi__pb2.CapabilityResponse.SerializeToString,
-            ),
-            'Get': grpc.unary_unary_rpc_method_handler(
-                    servicer.Get,
-                    request_deserializer=gnmi__pb2.GetRequest.FromString,
-                    response_serializer=gnmi__pb2.GetResponse.SerializeToString,
-            ),
-            'Set': grpc.unary_unary_rpc_method_handler(
-                    servicer.Set,
-                    request_deserializer=gnmi__pb2.SetRequest.FromString,
-                    response_serializer=gnmi__pb2.SetResponse.SerializeToString,
-            ),
-            'Subscribe': grpc.stream_stream_rpc_method_handler(
-                    servicer.Subscribe,
-                    request_deserializer=gnmi__pb2.SubscribeRequest.FromString,
-                    response_serializer=gnmi__pb2.SubscribeResponse.SerializeToString,
-            ),
+        "Capabilities": grpc.unary_unary_rpc_method_handler(
+            servicer.Capabilities,
+            request_deserializer=gnmi__pb2.CapabilityRequest.FromString,
+            response_serializer=gnmi__pb2.CapabilityResponse.SerializeToString,
+        ),
+        "Get": grpc.unary_unary_rpc_method_handler(
+            servicer.Get,
+            request_deserializer=gnmi__pb2.GetRequest.FromString,
+            response_serializer=gnmi__pb2.GetResponse.SerializeToString,
+        ),
+        "Set": grpc.unary_unary_rpc_method_handler(
+            servicer.Set,
+            request_deserializer=gnmi__pb2.SetRequest.FromString,
+            response_serializer=gnmi__pb2.SetResponse.SerializeToString,
+        ),
+        "Subscribe": grpc.stream_stream_rpc_method_handler(
+            servicer.Subscribe,
+            request_deserializer=gnmi__pb2.SubscribeRequest.FromString,
+            response_serializer=gnmi__pb2.SubscribeResponse.SerializeToString,
+        ),
     }
-    generic_handler = grpc.method_handlers_generic_handler(
-            'gnmi.gNMI', rpc_method_handlers)
+    generic_handler = grpc.method_handlers_generic_handler("gnmi.gNMI", rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
- # This class is part of an EXPERIMENTAL API.
+# This class is part of an EXPERIMENTAL API.
 class gNMI(object):
     """Define a protobuf FileOption that defines the gNMI service version.
     extend google.protobuf.FileOptions {
@@ -147,69 +146,117 @@ class gNMI(object):
     """
 
     @staticmethod
-    def Capabilities(request,
+    def Capabilities(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/gnmi.gNMI/Capabilities',
+            "/gnmi.gNMI/Capabilities",
             gnmi__pb2.CapabilityRequest.SerializeToString,
             gnmi__pb2.CapabilityResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
 
     @staticmethod
-    def Get(request,
+    def Get(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/gnmi.gNMI/Get',
+            "/gnmi.gNMI/Get",
             gnmi__pb2.GetRequest.SerializeToString,
             gnmi__pb2.GetResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
 
     @staticmethod
-    def Set(request,
+    def Set(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/gnmi.gNMI/Set',
+            "/gnmi.gNMI/Set",
             gnmi__pb2.SetRequest.SerializeToString,
             gnmi__pb2.SetResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
 
     @staticmethod
-    def Subscribe(request_iterator,
+    def Subscribe(
+        request_iterator,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.stream_stream(
+            request_iterator,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.stream_stream(request_iterator, target, '/gnmi.gNMI/Subscribe',
+            "/gnmi.gNMI/Subscribe",
             gnmi__pb2.SubscribeRequest.SerializeToString,
             gnmi__pb2.SubscribeResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )

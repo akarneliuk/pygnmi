@@ -128,7 +128,10 @@ class gNMIclient(object):
         self.__options += [
             ("grpc.keepalive_time_ms", keepalive_time_ms),
             ("grpc.keepalive_timeout_ms", keepalive_timeout_ms),
-            ("grpc.keepalive_permit_without_calls", 1 if keepalive_permit_without_calls else 0),
+            (
+                "grpc.keepalive_permit_without_calls",
+                1 if keepalive_permit_without_calls else 0,
+            ),
             ("grpc.http2.max_pings_without_data", max_pings_without_data),
         ]
 
@@ -200,7 +203,10 @@ class gNMIclient(object):
 
                 except Exception as e:
                     logger.error(f"The SSL certificate cannot be retrieved from {self.__target}")
-                    raise gNMIException(f"The SSL certificate cannot be retrieved from {self.__target}", e)
+                    raise gNMIException(
+                        f"The SSL certificate cannot be retrieved from {self.__target}",
+                        e,
+                    )
 
             if self.__skip_verify:
                 # Work with the certificate contents
@@ -257,7 +263,9 @@ class gNMIclient(object):
             # Set up SSL channel credentials
             if self.__path_key and self.__path_root:
                 cert = grpc.ssl_channel_credentials(
-                    root_certificates=root_cert, private_key=key, certificate_chain=ssl_cert
+                    root_certificates=root_cert,
+                    private_key=key,
+                    certificate_chain=ssl_cert,
                 )
 
             else:
@@ -340,7 +348,11 @@ class gNMIclient(object):
 
                     for ree in gnmi_message_response.supported_models:
                         response["supported_models"].append(
-                            {"name": ree.name, "organization": ree.organization, "version": ree.version}
+                            {
+                                "name": ree.name,
+                                "organization": ree.organization,
+                                "version": ree.version,
+                            }
                         )
 
                 if gnmi_message_response.supported_encodings:
@@ -390,7 +402,14 @@ class gNMIclient(object):
         encoding = requested_encoding or self.__encoding
         return Encoding.Value(encoding.upper())  # may raise ValueError
 
-    def get(self, prefix: str = "", path: list = None, target: str = None, datatype: str = "all", encoding: str = None):
+    def get(
+        self,
+        prefix: str = "",
+        path: list = None,
+        target: str = None,
+        datatype: str = "all",
+        encoding: str = None,
+    ):
         """
         Collecting the information about the resources from defined paths.
 
@@ -453,7 +472,10 @@ class gNMIclient(object):
 
         try:
             gnmi_message_request = GetRequest(
-                prefix=protobuf_prefix, path=protobuf_paths, type=pb_datatype, encoding=pb_encoding
+                prefix=protobuf_prefix,
+                path=protobuf_paths,
+                type=pb_datatype,
+                encoding=pb_encoding,
             )
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
@@ -644,7 +666,10 @@ class gNMIclient(object):
                     paths_to_collect_list.extend([path_tuple[0] for path_tuple in replace])
 
                 pre_change_dict = self.get(
-                    prefix=prefix, path=paths_to_collect_list, encoding=encoding, datatype="config"
+                    prefix=prefix,
+                    path=paths_to_collect_list,
+                    encoding=encoding,
+                    datatype="config",
                 )
 
             if gnmi_extension:
@@ -657,7 +682,10 @@ class gNMIclient(object):
                 )
             else:
                 gnmi_message_request = SetRequest(
-                    prefix=protobuf_prefix, delete=del_protobuf_paths, update=update_msg, replace=replace_msg
+                    prefix=protobuf_prefix,
+                    delete=del_protobuf_paths,
+                    update=update_msg,
+                    replace=replace_msg,
                 )
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
@@ -716,7 +744,9 @@ class gNMIclient(object):
                     is_printable = True if self.__show_diff == "print" else False
 
                     diff_list = diff_openconfig(
-                        pre_dict=pre_change_dict, post_dict=post_change_dict, is_printable=is_printable
+                        pre_dict=pre_change_dict,
+                        post_dict=post_change_dict,
+                        is_printable=is_printable,
                     )
 
                 if diff_list and self.__show_diff == "get":
@@ -737,7 +767,12 @@ class gNMIclient(object):
             raise gNMIException(f"Set failed: {e}", e)
 
     def set_with_retry(
-        self, delete: list = None, replace: list = None, update: list = None, encoding: str = None, retry_delay: int = 3
+        self,
+        delete: list = None,
+        replace: list = None,
+        update: list = None,
+        encoding: str = None,
+        retry_delay: int = 3,
     ):
         """
         Performs a set and retries (once) after a temporary failure with StatusCode.FAILED_PRECONDITION
@@ -890,7 +925,13 @@ class gNMIclient(object):
         else:
             return SubscribeRequest(subscribe=request)
 
-    def subscribe(self, subscribe: dict = None, poll: bool = False, aliases: list = None, timeout: float = 0.0):
+    def subscribe(
+        self,
+        subscribe: dict = None,
+        poll: bool = False,
+        aliases: list = None,
+        timeout: float = 0.0,
+    ):
         """
         Implementation of the subscribe gNMI RPC to pool
         """
@@ -1113,7 +1154,8 @@ class _Subscriber:
         Blocks until one is available."""
         return self._next_update(timeout=None)
 
-    def _next_update(self, timeout=None): ...
+    def _next_update(self, timeout=None):
+        ...
 
     # Overridden by each concrete class, as they each have slightly different
     # behaviour around waiting (or not) for a sync_response flag
@@ -1298,16 +1340,16 @@ def telemetryParser(in_message=None, debug: bool = False):
                         update_container.update({"val": update_msg.val.proto_bytes})
 
                     elif update_msg.val.HasField("bytes_val"):
-                        val_binary = ''.join(format(byte, '08b') for byte in update_msg.val.bytes_val)
+                        val_binary = "".join(format(byte, "08b") for byte in update_msg.val.bytes_val)
                         val_decimal = struct.unpack("f", struct.pack("I", int(val_binary, 2)))[0]
-                        update_container.update({'val': val_decimal})
-                    
-                    elif update_msg.val.HasField('leaflist_val'):
+                        update_container.update({"val": val_decimal})
+
+                    elif update_msg.val.HasField("leaflist_val"):
                         val_leaflist = update_msg.val
                         element_str = ""
                         for element in val_leaflist.leaflist_val.element:
                             element_str += element
-                        update_container.update({'val': element_str})
+                        update_container.update({"val": element_str})
 
                 response["update"]["update"].append(update_container)
 
