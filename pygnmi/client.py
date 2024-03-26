@@ -453,7 +453,7 @@ class gNMIclient(object):
         # Gnmi PREFIX
         try:
             protobuf_prefix = gnmi_path_generator(prefix, target)
-            
+
         except Exception as e:
             logger.error("Conversion of gNMI prefix to the Protobuf format failed")
             raise gNMIException("Conversion of gNMI prefix to the Protobuf format failed", e)
