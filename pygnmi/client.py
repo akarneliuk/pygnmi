@@ -1425,7 +1425,8 @@ def construct_update_message(user_list: list, encoding: str) -> list:
         for ue in user_list:
             if isinstance(ue, tuple):
                 u_path = gnmi_path_generator(ue[0])
-                u_val = ue[1].encode("utf-8") if isinstance(ue[1], str) else json.dumps(ue[1]).encode("utf-8")
+                u_val = json.dumps(ue[1]).encode("utf-8")
+                u_ascii_val = ue[1].encode("utf-8")
                 encoding = encoding.lower()  # Normalize to lower case
                 if encoding == "json":
                     result.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
@@ -1434,7 +1435,7 @@ def construct_update_message(user_list: list, encoding: str) -> list:
                 elif encoding == "proto":
                     result.append(Update(path=u_path, val=TypedValue(proto_bytes=u_val)))
                 elif encoding == "ascii":
-                    result.append(Update(path=u_path, val=TypedValue(ascii_val=u_val)))
+                    result.append(Update(path=u_path, val=TypedValue(ascii_val=u_ascii_val)))
                 elif encoding == "json_ietf":
                     result.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
                 else:
