@@ -479,6 +479,10 @@ class gNMIclient(object):
                             {"alias": notification.alias}
                         ) if notification.alias else notification_container.update({"alias": None})
 
+                        notification_container.update(
+                            {"target": notification.prefix.target}
+                        ) if notification.prefix.target else notification_container.update({"target": None})
+
                         # Message Notification, Key atomic
                         notification_container.update({"atomic": notification.atomic})
 
@@ -650,6 +654,11 @@ class gNMIclient(object):
                 response.update(
                     {"prefix": gnmi_path_degenerator(gnmi_message_response.prefix)}
                 ) if gnmi_message_response.prefix else response.update({"prefix": None})
+
+                # Message SetResponse, Key target
+                response.update(
+                    {"target": gnmi_message_response.prefix.target}
+                ) if gnmi_message_response.prefix.target else response.update({"target": None})
 
                 if gnmi_message_response.response:
                     response.update({"response": []})
