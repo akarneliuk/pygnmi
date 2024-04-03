@@ -479,6 +479,7 @@ class gNMIclient(object):
                             {"alias": notification.alias}
                         ) if notification.alias else notification_container.update({"alias": None})
 
+                        # Message Notification, Key target
                         notification_container.update(
                             {"target": notification.prefix.target}
                         ) if notification.prefix.target else notification_container.update({"target": None})
