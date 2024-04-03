@@ -513,6 +513,11 @@ class gNMIclient(object):
                             else notification_container.update({"alias": None})
                         )
 
+                        # Message Notification, Key target
+                        notification_container.update(
+                            {"target": notification.prefix.target}
+                        ) if notification.prefix.target else notification_container.update({"target": None})
+
                         # Message Notification, Key atomic
                         notification_container.update({"atomic": notification.atomic})
 
@@ -708,6 +713,11 @@ class gNMIclient(object):
                     if gnmi_message_response.prefix
                     else response.update({"prefix": None})
                 )
+
+                # Message SetResponse, Key target
+                response.update(
+                    {"target": gnmi_message_response.prefix.target}
+                ) if gnmi_message_response.prefix.target else response.update({"target": None})
 
                 if gnmi_message_response.response:
                     response.update({"response": []})
