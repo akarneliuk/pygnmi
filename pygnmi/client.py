@@ -404,7 +404,7 @@ class gNMIclient(object):
 
     def get(
         self,
-        prefix: str = "",
+        prefix: str = None,
         path: list = None,
         target: str = None,
         datatype: str = "all",
@@ -471,12 +471,19 @@ class gNMIclient(object):
             raise gNMIException("Conversion of gNMI paths to the Protobuf format failed", e)
 
         try:
-            gnmi_message_request = GetRequest(
-                prefix=protobuf_prefix,
-                path=protobuf_paths,
-                type=pb_datatype,
-                encoding=pb_encoding,
-            )
+            if prefix is None and target is None:
+                gnmi_message_request = GetRequest(
+                    path=protobuf_paths,
+                    type=pb_datatype,
+                    encoding=pb_encoding,
+                )
+            else:
+                gnmi_message_request = GetRequest(
+                    prefix=protobuf_prefix,
+                    path=protobuf_paths,
+                    type=pb_datatype,
+                    encoding=pb_encoding,
+                )
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
             gnmi_message_response = self.__stub.Get(gnmi_message_request, metadata=self.__metadata)
@@ -594,7 +601,7 @@ class gNMIclient(object):
         replace: list = None,
         update: list = None,
         encoding: str = None,
-        prefix: str = "",
+        prefix: str = None,
         target: str = None,
         extension: dict = None,
     ):
@@ -678,20 +685,35 @@ class gNMIclient(object):
                 )
 
             if gnmi_extension:
-                gnmi_message_request = SetRequest(
-                    prefix=protobuf_prefix,
-                    delete=del_protobuf_paths,
-                    update=update_msg,
-                    replace=replace_msg,
-                    extension=[gnmi_extension],
-                )
+                if prefix is None and target is None:
+                    gnmi_message_request = SetRequest(
+                        delete=del_protobuf_paths,
+                        update=update_msg,
+                        replace=replace_msg,
+                        extension=[gnmi_extension],
+                    )
+                else:
+                    gnmi_message_request = SetRequest(
+                        prefix=protobuf_prefix,
+                        delete=del_protobuf_paths,
+                        update=update_msg,
+                        replace=replace_msg,
+                        extension=[gnmi_extension],
+                    )
             else:
-                gnmi_message_request = SetRequest(
-                    prefix=protobuf_prefix,
-                    delete=del_protobuf_paths,
-                    update=update_msg,
-                    replace=replace_msg,
-                )
+                if prefix is None and target is None:
+                    gnmi_message_request = SetRequest(
+                        delete=del_protobuf_paths,
+                        update=update_msg,
+                        replace=replace_msg,
+                    )
+                else:
+                    gnmi_message_request = SetRequest(
+                        prefix=protobuf_prefix,
+                        delete=del_protobuf_paths,
+                        update=update_msg,
+                        replace=replace_msg,
+                    )
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
             gnmi_message_response = self.__stub.Set(gnmi_message_request, metadata=self.__metadata)
