@@ -1002,7 +1002,7 @@ class gNMIclient(object):
             gnmi_message_request = self._build_subscriptionrequest(subscribe)
             debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
-        return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata)
+        return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata, timeout=timeout)
 
     def subscribe2(self, subscribe: dict, target: str = None, extension: list = None):
         """
