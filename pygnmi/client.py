@@ -581,6 +581,27 @@ class gNMIclient(object):
                                     elif update_msg.val.HasField("proto_bytes"):
                                         update_container.update({"val": update_msg.val.proto_bytes})
 
+                                    elif update_msg.val.HasField("leaflist_val"):
+                                        val_leaflist = update_msg.val
+                                        element_val = None
+                                        if all([isinstance(e, TypedValue) for e in val_leaflist.leaflist_val.element]):
+                                            element_val = {}
+                                            for e in val_leaflist.leaflist_val.element:
+                                                if hasattr(e, "json_val"):
+                                                    element_val.update(json.loads(e.json_val))
+                                                elif hasattr(e, "json_ietf_val"):
+                                                    element_val.update(json.loads(e.json_ietf_val))
+                                                else:
+                                                    raise TypeError(f"Neither json_val nor json_ietf_val found in element {e}.")
+                                        elif all([isinstance(e, str) for e in val_leaflist.leaflist_val.element]):
+                                            element_val = ""
+                                            for e in val_leaflist.leaflist_val.element:
+                                                element_val += e
+                                        else:
+                                            raise Exception("leaflist elements have differing types. Only str and TypedValue are supported.")
+
+                                        update_container.update({"val": element_val})
+
                                 notification_container["update"].append(update_container)
 
                         response["notification"].append(notification_container)
@@ -1384,10 +1405,24 @@ def telemetryParser(in_message=None, debug: bool = False):
 
                     elif update_msg.val.HasField("leaflist_val"):
                         val_leaflist = update_msg.val
-                        element_str = ""
-                        for element in val_leaflist.leaflist_val.element:
-                            element_str += element
-                        update_container.update({"val": element_str})
+                        element_val = None
+                        if all([isinstance(e, TypedValue) for e in val_leaflist.leaflist_val.element]):
+                            element_val = {}
+                            for e in val_leaflist.leaflist_val.element:
+                                if hasattr(e, "json_val"):
+                                    element_val.update(json.loads(e.json_val))
+                                elif hasattr(e, "json_ietf_val"):
+                                    element_val.update(json.loads(e.json_ietf_val))
+                                else:
+                                    raise TypeError(f"Neither json_val nor json_ietf_val found in element {e}.")
+                        elif all([isinstance(e, str) for e in val_leaflist.leaflist_val.element]):
+                            element_val = ""
+                            for e in val_leaflist.leaflist_val.element:
+                                element_val += e
+                        else:
+                            raise Exception("leaflist elements have differing types. Only str and TypedValue are supported.")
+
+                        update_container.update({"val": element_val})
 
                 response["update"]["update"].append(update_container)
 
@@ -1419,8 +1454,8 @@ def telemetryParser(in_message=None, debug: bool = False):
 
             return response
 
-    except:
-        logger.error(f"Parsing of telemetry information is failed.")
+    except Exception as exc:
+        logger.error(f"Parsing of telemetry information is failed: {exc}")
 
         return None
 
