@@ -1109,6 +1109,12 @@ class _Subscriber:
                     self._updates.put(update)
             except Exception as error:
                 self.error = error
+                
+                # The connection was terminated by the server. This is generally okay and
+                # shouldn't raise an exception.
+                if isinstance(error, grpc._channel._MultiThreadedRendezvous) and error.code() == grpc.StatusCode.CANCELLED:
+                    return
+                
                 raise error
 
         self._subscribe_thread = threading.Thread(target=enqueue_updates)
