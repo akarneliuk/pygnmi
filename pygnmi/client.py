@@ -1386,6 +1386,9 @@ def telemetryParser(in_message=None, debug: bool = False):
                     elif update_msg.val.HasField("float_val"):
                         update_container.update({"val": update_msg.val.float_val})
 
+                    elif update_msg.val.HasField("double_val"):
+                        update_container.update({"val": update_msg.val.double_val})
+
                     elif update_msg.val.HasField("decimal_val"):
                         update_container.update({"val": update_msg.val.decimal_val})
 
