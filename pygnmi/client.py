@@ -9,6 +9,7 @@ import sys
 import json
 import logging
 import queue
+import struct
 import time
 import threading
 import os
