@@ -88,8 +88,8 @@ Dev Log
 
 Release **0.8.15**:
 
- - IPv6 support: `Issue 166 <https://github.com/akarneliuk/pygnmi/pull/166>`_.
- - Double support: `Issue 165 <https://github.com/akarneliuk/pygnmi/pull/165>`_.
+- IPv6 support: `Issue 166 <https://github.com/akarneliuk/pygnmi/pull/166>`_.
+- Double support: `Issue 165 <https://github.com/akarneliuk/pygnmi/pull/165>`_.
 
 Release **0.8.14**:
 
