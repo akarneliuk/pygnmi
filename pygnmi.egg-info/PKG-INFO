@@ -1,3 +1,44 @@
+Metadata-Version: 2.2
+Name: pygnmi
+Version: 0.8.15
+Summary: Pure Python gNMI client to manage network functions and collect telemetry.
+Home-page: https://github.com/akarneliuk/pygnmi
+Download-URL: https://github.com/akarneliuk/pygnmi/archive/v0.8.15.tar.gz
+Author: Anton Karneliuk
+Author-email: anton@karneliuk.com
+License: bsd-3-clause
+Keywords: gnmi,automation,grpc,network
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Intended Audience :: Telecommunications Industry
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: System :: Networking
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Description-Content-Type: text/x-rst
+License-File: LICENSE.txt
+Requires-Dist: grpcio
+Requires-Dist: protobuf
+Requires-Dist: cryptography
+Requires-Dist: dictdiffer
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: download-url
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: summary
+
 ==========================
 pyGNMI: Python gNMI client
 ==========================
@@ -29,7 +70,7 @@ Sample code example:
   if __name__ == '__main__':
       with gNMIclient(target=host, username='admin', password='admin', insecure=True) as gc:
            result = gc.get(path=['openconfig-interfaces:interfaces', 'openconfig-acl:acl'])
-
+         
       print(result)
 
 Also integration with Nornir is supported (`refer to examples <examples/nornir>`_).
@@ -86,19 +127,14 @@ Contributors
 Dev Log
 =======
 
-Release **0.8.15**:
-
- - IPv6 support: `Issue 166 <https://github.com/akarneliuk/pygnmi/pull/166>`_.
- - Double support: `Issue 165 <https://github.com/akarneliuk/pygnmi/pull/165>`_.
-
 Release **0.8.14**:
 
 - Number of minor bug fixes and improvements.
 - Adding support of `prefix` to `pygnmicli`.
-- `Adding error propagation from child thread to main thread <https://github.com/akarneliuk/pygnmi/pull/142>`_
-- `Changes to u_val <https://github.com/akarneliuk/pygnmi/pull/144>`_
-- `Adding Master Arbitration support for Set <https://github.com/akarneliuk/pygnmi/pull/146>`_
-- `Adding bytes_val and leaflist_val with string_val parsing <https://github.com/akarneliuk/pygnmi/pull/151>`_
+- `Adding error propagation from child thread to main thread <https://github.com/akarneliuk/pygnmi/pull/142>`
+- `Changes to u_val <https://github.com/akarneliuk/pygnmi/pull/144>`
+- `Adding Master Arbitration support for Set <https://github.com/akarneliuk/pygnmi/pull/146>`
+- `Adding bytes_val and leaflist_val with string_val parsing <https://github.com/akarneliuk/pygnmi/pull/151>`
 
 Release **0.8.13**:
 
@@ -267,7 +303,7 @@ Release **0.5.1**:
 - Fixed regexp warnings.
 - Changed the logging functionality.
 - Enabled Unix domain socket.
-- Added ``close()``
+- Added ``close()`` 
 - Many thanks for all contributors to make this release happen.
 
 Release **0.5.0**:
@@ -448,7 +484,7 @@ Release **0.1.0**:
 
 (c)2020-2022, karneliuk.com
 
-.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.15&color=success
+.. |version| image:: https://img.shields.io/static/v1?label=latest&message=v0.8.14&color=success
 .. _version: https://pypi.org/project/pygnmi/
 .. |tag| image:: https://img.shields.io/static/v1?label=status&message=stable&color=success
 .. _tag: https://pypi.org/project/pygnmi/
