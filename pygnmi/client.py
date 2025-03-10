@@ -96,7 +96,6 @@ class gNMIclient(object):
         self.__skip_verify = skip_verify
         self.__no_qos_marking = no_qos_marking
 
-        self.__target_path = f"{target[0]}:{target[1]}"
         if re.match("unix:.*", target[0]):
             self.__target = target
             self.__target_path = target[0]
@@ -104,6 +103,7 @@ class gNMIclient(object):
             self.__target = (f"[{target[0]}]", target[1])
         else:
             self.__target = target
+        self.__target_path = f"{self.__target[0]}:{target[1]}"
 
         if "keepalive_time_ms" in kwargs:
             self.configureKeepalive(**kwargs)
@@ -199,7 +199,12 @@ class gNMIclient(object):
                         cert = ctx.wrap_socket(s, server_hostname=self.__target[0]).getpeercert(True)
                         ssl_cert = ssl.DER_cert_to_PEM_cert(cert).encode("utf-8")
                     else:
-                        ssl_cert = ssl.get_server_certificate((self.__target[0], self.__target[1])).encode("utf-8")
+                        ssl_cert = ssl.get_server_certificate(
+                            (
+                                re.sub(r"[\[\]]", "", self.__target[0]),
+                                self.__target[1],
+                            )
+                        ).encode("utf-8")
 
                 except Exception as e:
                     logger.error(f"The SSL certificate cannot be retrieved from {self.__target}")
