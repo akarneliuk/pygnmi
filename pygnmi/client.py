@@ -1505,31 +1505,31 @@ def construct_update_message(user_list: list, encoding: str) -> list:
     """This is a helper method to construct the Update() GNMI message"""
     result = []
 
-    if isinstance(user_list, list):
-        for ue in user_list:
-            if isinstance(ue, tuple):
-                u_path = gnmi_path_generator(ue[0])
-                encoding = encoding.lower()  # Normalize to lower case
-                if encoding == "json":
-                    val=TypedValue(json_val=_encode_update_value(ue[1], "json"))
-                elif encoding == "bytes":
-                    val=TypedValue(bytes_val=_encode_update_value(ue[1], "bytes"))
-                elif encoding == "proto":
-                    val=TypedValue(proto_bytes=_encode_update_value(ue[1], "bytes"))
-                elif encoding == "ascii":
-                    val=TypedValue(ascii_val=_encode_update_value(ue[1], "ascii"))
-                elif encoding == "json_ietf":
-                    val=TypedValue(json_ietf_val=_encode_update_value(ue[1], "json"))
-                else:
-                    raise ValueError(f"Unsupported encoding: '{encoding}'")
-                result.append(Update(path=u_path, val=val))
-            else:
-                logger.error(f"The input element for Update message must be tuple, got {ue}.")
-                raise gNMIException(f"The input element for Update message must be tuple, got {ue}.")
+    if not isinstance(user_list, list):
+        logger.error("The provided input for Set message (update/replace operation) is not a list.")
+        raise gNMIException("The provided input for Set message (update/replace operation) is not a list.")
 
-    else:
-        logger.error("The provided input for Set message (replace operation) is not list.")
-        raise gNMIException("The provided input for Set message (replace operation) is not list.")
+    for ue in user_list:
+        if not isinstance(ue, tuple):
+            logger.error(f"The input element for Update message must be tuple, got {ue}.")
+            raise gNMIException(f"The input element for Update message must be tuple, got {ue}.")
+        
+        u_path = gnmi_path_generator(ue[0])
+        encoding = encoding.lower()  # Normalize to lower case
+        if encoding == "json":
+            val=TypedValue(json_val=_encode_update_value(ue[1], "json"))
+        elif encoding == "bytes":
+            val=TypedValue(bytes_val=_encode_update_value(ue[1], "bytes"))
+        elif encoding == "proto":
+            val=TypedValue(proto_bytes=_encode_update_value(ue[1], "bytes"))
+        elif encoding == "ascii":
+            val=TypedValue(ascii_val=_encode_update_value(ue[1], "ascii"))
+        elif encoding == "json_ietf":
+            val=TypedValue(json_ietf_val=_encode_update_value(ue[1], "json"))
+        else:
+            raise ValueError(f"Unsupported encoding: '{encoding}'")
+        
+        result.append(Update(path=u_path, val=val))
 
     return result
 
