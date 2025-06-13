@@ -641,11 +641,13 @@ class gNMIclient(object):
 
         replace:
           - list of tuples where the first entry path provided as a string, and the second entry
-            is a dictionary with the configuration to be configured
+            is the configuration that will be installed in the form of a dictionary (json, json_ietf),
+            bytes (proto, bytes) or a str (ascii).
 
         update:
           - list of tuples where the first entry path provided as a string, and the second entry
-            is a dictionary with the configuration to be configured
+            is the configuration that will be installed in the form of a dictionary (json, json_ietf),
+            bytes (proto, bytes) or a str (ascii).
 
         The encoding argument may have the following values per gNMI specification:
           - json
@@ -1503,32 +1505,41 @@ def construct_update_message(user_list: list, encoding: str) -> list:
     """This is a helper method to construct the Update() GNMI message"""
     result = []
 
-    if isinstance(user_list, list):
-        for ue in user_list:
-            if isinstance(ue, tuple):
-                u_path = gnmi_path_generator(ue[0])
-                u_val = json.dumps(ue[1]).encode("utf-8")
-                u_ascii_val = str(ue[1]).encode("utf-8")
-                encoding = encoding.lower()  # Normalize to lower case
-                if encoding == "json":
-                    result.append(Update(path=u_path, val=TypedValue(json_val=u_val)))
-                elif encoding == "bytes":
-                    result.append(Update(path=u_path, val=TypedValue(bytes_val=u_val)))
-                elif encoding == "proto":
-                    result.append(Update(path=u_path, val=TypedValue(proto_bytes=u_val)))
-                elif encoding == "ascii":
-                    result.append(Update(path=u_path, val=TypedValue(ascii_val=u_ascii_val)))
-                elif encoding == "json_ietf":
-                    result.append(Update(path=u_path, val=TypedValue(json_ietf_val=u_val)))
-                else:
-                    raise ValueError(f"Unsupported encoding: '{encoding}'")
+    if not isinstance(user_list, list):
+        logger.error("The provided input for Set message (update/replace operation) is not a list.")
+        raise gNMIException("The provided input for Set message (update/replace operation) is not a list.")
 
-            else:
-                logger.error(f"The input element for Update message must be tuple, got {ue}.")
-                raise gNMIException(f"The input element for Update message must be tuple, got {ue}.")
-
-    else:
-        logger.error(f"The provided input for Set message (replace operation) is not list.")
-        raise gNMIException("The provided input for Set message (replace operation) is not list.")
+    for ue in user_list:
+        if not isinstance(ue, tuple):
+            logger.error(f"The input element for Update message must be tuple, got {ue}.")
+            raise gNMIException(f"The input element for Update message must be tuple, got {ue}.")
+        
+        u_path = gnmi_path_generator(ue[0])
+        encoding = encoding.lower()  # Normalize to lower case
+        if encoding == "json":
+            val=TypedValue(json_val=_encode_update_value(ue[1], "json"))
+        elif encoding == "bytes":
+            val=TypedValue(bytes_val=_encode_update_value(ue[1], "bytes"))
+        elif encoding == "proto":
+            val=TypedValue(proto_bytes=_encode_update_value(ue[1], "bytes"))
+        elif encoding == "ascii":
+            val=TypedValue(ascii_val=_encode_update_value(ue[1], "ascii"))
+        elif encoding == "json_ietf":
+            val=TypedValue(json_ietf_val=_encode_update_value(ue[1], "json"))
+        else:
+            raise ValueError(f"Unsupported encoding: '{encoding}'")
+        
+        result.append(Update(path=u_path, val=val))
 
     return result
+
+
+def _encode_update_value(update_value: dict | str | bytes, encoding: str) -> bytes:
+    """This is a helper function to encode the diferent formats of the update value into bytes"""
+    if encoding == "json":
+        return json.dumps(update_value).encode("utf-8")
+    
+    if encoding == "ascii":
+        return str(update_value).encode("utf-8")
+    
+    return update_value
