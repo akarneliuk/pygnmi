@@ -1127,12 +1127,11 @@ class _Subscriber:
 
         # Initialize error attribute to None. Used to catch errors in _subscribe_thread.
         self.error = None
-
+        stub = gNMIStub(channel)
+        self.subscription = stub.Subscribe(_client_stream, metadata=metadata)
         def enqueue_updates():
             try:
-                stub = gNMIStub(channel)
-                subscription = stub.Subscribe(_client_stream, metadata=metadata)
-                for update in subscription:
+                for update in self.subscription:
                     self._updates.put(update)
             except Exception as error:
                 self.error = error
@@ -1249,6 +1248,7 @@ class _Subscriber:
         client session alive.
         """
         self._msgs.put("STOP")
+        self.subscription.cancel()
         self._subscribe_thread.join(1)
 
 
