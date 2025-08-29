@@ -589,16 +589,19 @@ class gNMIclient(object):
 
                                     elif update_msg.val.HasField("leaflist_val"):
                                         val_leaflist = update_msg.val
-                                        element_val = None
                                         if all([isinstance(e, TypedValue) for e in val_leaflist.leaflist_val.element]):
-                                            element_val = {}
+                                            element_val = []
                                             for e in val_leaflist.leaflist_val.element:
-                                                if hasattr(e, "json_val"):
-                                                    element_val.update(json.loads(e.json_val))
-                                                elif hasattr(e, "json_ietf_val"):
-                                                    element_val.update(json.loads(e.json_ietf_val))
+                                                if e.HasField("json_val"):
+                                                    element_val.append(json.loads(e.json_val))
+                                                elif e.HasField("json_ietf_val"):
+                                                    element_val.append(json.loads(e.json_ietf_val))
                                                 else:
-                                                    raise TypeError(f"Neither json_val nor json_ietf_val found in element {e}.")
+                                                    for leaf_val in e.ListFields():
+                                                        if isinstance(leaf_val, tuple):
+                                                            element_val.append(leaf_val[1])
+                                                        else:
+                                                            raise TypeError(f"Not tuple element {leaf_val}.")
                                         elif all([isinstance(e, str) for e in val_leaflist.leaflist_val.element]):
                                             element_val = ""
                                             for e in val_leaflist.leaflist_val.element:
@@ -606,7 +609,8 @@ class gNMIclient(object):
                                         else:
                                             raise Exception("leaflist elements have differing types. Only str and TypedValue are supported.")
 
-                                        update_container.update({"val": element_val})
+                                        if element_val:
+                                            update_container.update({"val": element_val})
 
                                 notification_container["update"].append(update_container)
 
@@ -1414,16 +1418,19 @@ def telemetryParser(in_message=None, debug: bool = False):
 
                     elif update_msg.val.HasField("leaflist_val"):
                         val_leaflist = update_msg.val
-                        element_val = None
                         if all([isinstance(e, TypedValue) for e in val_leaflist.leaflist_val.element]):
-                            element_val = {}
+                            element_val = []
                             for e in val_leaflist.leaflist_val.element:
-                                if hasattr(e, "json_val"):
-                                    element_val.update(json.loads(e.json_val))
-                                elif hasattr(e, "json_ietf_val"):
-                                    element_val.update(json.loads(e.json_ietf_val))
+                                if e.HasField("json_val"):
+                                    element_val.append(json.loads(e.json_val))
+                                elif e.HasField("json_ietf_val"):
+                                    element_val.append(json.loads(e.json_ietf_val))
                                 else:
-                                    raise TypeError(f"Neither json_val nor json_ietf_val found in element {e}.")
+                                    for leaf_val in e.ListFields():
+                                        if isinstance(leaf_val, tuple):
+                                            element_val.append(leaf_val[1])
+                                        else:
+                                            raise TypeError(f"Not tuple element {leaf_val}.")
                         elif all([isinstance(e, str) for e in val_leaflist.leaflist_val.element]):
                             element_val = ""
                             for e in val_leaflist.leaflist_val.element:
@@ -1431,7 +1438,8 @@ def telemetryParser(in_message=None, debug: bool = False):
                         else:
                             raise Exception("leaflist elements have differing types. Only str and TypedValue are supported.")
 
-                        update_container.update({"val": element_val})
+                        if element_val:
+                            update_container.update({"val": element_val})
 
                 response["update"]["update"].append(update_container)
 
