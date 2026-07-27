@@ -97,6 +97,8 @@ class gNMIclient(object):
         self.__skip_verify = skip_verify
         self.__no_qos_marking = no_qos_marking
 
+        self._validate_target(target)
+
         if re.match("unix:.*", target[0]):
             self.__target = target
             self.__target_path = target[0]
@@ -110,6 +112,51 @@ class gNMIclient(object):
             self.configureKeepalive(**kwargs)
 
         self.__grpc_proxy = os.getenv("grpc_proxy")
+
+    @staticmethod
+    def _validate_target(target):
+        """
+        Validates the ``target`` argument passed to the constructor.
+
+        ``target`` must be a ``(host, port)`` tuple or list, where ``host`` is
+        a non-empty string (IPv4/IPv6 address, FQDN, or ``unix:<path>``) and
+        ``port`` is a TCP port number expressed as an int or a numeric string.
+        For unix domain sockets the port value is not used, so it is not
+        validated in that case.
+
+        Raises ``gNMIException`` with a descriptive message if validation fails.
+        """
+        if not isinstance(target, (tuple, list)):
+            raise gNMIException(
+                f"'target' must be a tuple or list of (host, port), got {type(target).__name__}: {target!r}"
+            )
+
+        if len(target) != 2:
+            raise gNMIException(
+                f"'target' must contain exactly two elements (host, port), got {len(target)} element(s): {target!r}"
+            )
+
+        host, port = target
+
+        if not isinstance(host, str) or not host.strip():
+            raise gNMIException(f"'target' host must be a non-empty string, got {host!r}")
+
+        # The port is irrelevant for unix domain sockets
+        if re.match("unix:.*", host):
+            return
+
+        if isinstance(port, bool) or not isinstance(port, (int, str)):
+            raise gNMIException(
+                f"'target' port must be an int or a numeric string, got {type(port).__name__}: {port!r}"
+            )
+
+        port_str = str(port).strip()
+        if not port_str.isdigit():
+            raise gNMIException(f"'target' port must be numeric, got {port!r}")
+
+        port_num = int(port_str)
+        if not 0 < port_num <= 65535:
+            raise gNMIException(f"'target' port must be in the range 1-65535, got {port_num}")
 
     def configureKeepalive(
         self,
