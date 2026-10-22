@@ -146,3 +146,49 @@ def test_subscribe2_passes_wait_for_sync_to_the_stream_subscriber(monkeypatch):
     client = gNMIclient.__new__(gNMIclient)
     client.subscribe2(subscribe={"mode": "stream", "subscription": []}, wait_for_sync=False)
     assert seen == {"wait_for_sync": False}
+
+
+class FailingChannel(FakeChannel):
+    """Subscribe yields the given responses, then fails the way a target that refuses the
+    subscription does (for instance RESOURCE_EXHAUSTED: too many active subscriptions)."""
+
+    def __init__(self, responses, error):
+        super().__init__(responses)
+        self.error = error
+
+    def stream_stream(self, method, request_serializer=None, response_deserializer=None, **kwargs):
+        def call(request_iterator, metadata=None, **kw):
+            next(request_iterator)
+            yield from self.responses
+            raise self.error
+
+        return call
+
+
+class TargetRefused(Exception):
+    pass
+
+
+def test_a_failed_subscription_raises_instead_of_waiting_forever():
+    request = SubscribeRequest(subscribe=SubscriptionList(mode=0))
+    sub = StreamSubscriber(FailingChannel([], TargetRefused("too many active subscriptions")), request, [])
+    try:
+        with pytest.raises(TargetRefused):
+            sub.get_update(timeout=5)
+        with pytest.raises(TargetRefused):  # and keeps saying so
+            sub.get_update(timeout=5)
+    finally:
+        sub.close()
+
+
+def test_updates_received_before_a_failure_are_still_returned():
+    request = SubscribeRequest(subscribe=SubscriptionList(mode=0))
+    sub = StreamSubscriber(
+        FailingChannel([update_response("swp1", "UP")], TargetRefused("gone")), request, [], wait_for_sync=False
+    )
+    try:
+        assert len(sub.get_update(timeout=5)["update"]["update"]) == 1
+        with pytest.raises(TargetRefused):
+            sub.get_update(timeout=5)
+    finally:
+        sub.close()

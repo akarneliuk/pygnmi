@@ -1100,6 +1100,11 @@ class gNMIclient(object):
         self.__channel.close()
 
 
+#: Put on a subscriber's update queue when the receiving thread fails, so a waiting
+#: next() or get_update() raises the error instead of waiting forever.
+_RECEIVE_FAILED = object()
+
+
 class _Subscriber:
     """Represent a subscription to a list of paths.
 
@@ -1152,9 +1157,15 @@ class _Subscriber:
                 
                 # The connection was terminated by the server. This is generally okay and
                 # shouldn't raise an exception.
-                if isinstance(error, grpc._channel._MultiThreadedRendezvous) and error.code() == grpc.StatusCode.CANCELLED:
+                # grpc.RpcError is the public base of the private _MultiThreadedRendezvous
+                # this used to name, whose module is not always imported.
+                code = getattr(error, "code", None)
+                if isinstance(error, grpc.RpcError) and callable(code) and code() == grpc.StatusCode.CANCELLED:
                     return
-                
+
+                # Wake whoever waits on the queue: without this, next() and get_update()
+                # waited forever for an update that would never come.
+                self._updates.put(_RECEIVE_FAILED)
                 raise error
 
         self._subscribe_thread = threading.Thread(target=enqueue_updates)
@@ -1183,7 +1194,12 @@ class _Subscriber:
         return client_stream(request)
 
     def _get_one_update(self, timeout=None):
-        return telemetryParser(self._updates.get(block=True, timeout=timeout))
+        item = self._updates.get(block=True, timeout=timeout)
+        if item is _RECEIVE_FAILED:
+            # Left on the queue, so every later call raises the same error.
+            self._updates.put(_RECEIVE_FAILED)
+            raise self.error
+        return telemetryParser(item)
 
     def _get_updates_till_sync(self, timeout=None):
         """Read updates from streaming subscriptions, until sync_response
