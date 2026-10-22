@@ -1031,9 +1031,14 @@ class gNMIclient(object):
 
         return self.__stub.Subscribe(self.__generator(gnmi_message_request), metadata=self.__metadata, timeout=timeout)
 
-    def subscribe2(self, subscribe: dict, target: str = None, extension: list = None):
+    def subscribe2(self, subscribe: dict, target: str = None, extension: list = None, wait_for_sync: bool = True):
         """
         New High-level method to serve temetry based on recent additions
+
+        wait_for_sync applies to STREAM subscriptions only: when True (the default), the
+        first update returned coalesces every update received until the target sends
+        sync_response. Set it to False for targets that send no sync_response, or to get
+        each SubscribeResponse of the initial set as a separate update.
         """
 
         if "mode" not in subscribe:
@@ -1041,7 +1046,9 @@ class gNMIclient(object):
 
         if subscribe["mode"].lower() in {"stream", "once", "poll"}:
             if subscribe["mode"].lower() == "stream":
-                return self.subscribe_stream(subscribe=subscribe, target=target, extension=extension)
+                return self.subscribe_stream(
+                    subscribe=subscribe, target=target, extension=extension, wait_for_sync=wait_for_sync
+                )
 
             elif subscribe["mode"].lower() == "poll":
                 return self.subscribe_poll(subscribe=subscribe, target=target, extension=extension)
@@ -1052,13 +1059,15 @@ class gNMIclient(object):
         else:
             raise gNMIException("Unknown subscription request mode.")
 
-    def subscribe_stream(self, subscribe: dict, target: str = None, extension: list = None):
+    def subscribe_stream(
+        self, subscribe: dict, target: str = None, extension: list = None, wait_for_sync: bool = True
+    ):
         if "mode" not in subscribe:
             subscribe["mode"] = "STREAM"
         gnmi_message_request = self._build_subscriptionrequest(subscribe, target, extension)
         debug_gnmi_msg(self.__debug, gnmi_message_request, "gNMI request")
 
-        return StreamSubscriber(self.__channel, gnmi_message_request, self.__metadata)
+        return StreamSubscriber(self.__channel, gnmi_message_request, self.__metadata, wait_for_sync=wait_for_sync)
 
     def subscribe_poll(self, subscribe: dict, target: str = None, extension: list = None):
         if "mode" not in subscribe:
@@ -1089,6 +1098,11 @@ class gNMIclient(object):
 
     def close(self):
         self.__channel.close()
+
+
+#: Put on a subscriber's update queue when the receiving thread fails, so a waiting
+#: next() or get_update() raises the error instead of waiting forever.
+_RECEIVE_FAILED = object()
 
 
 class _Subscriber:
@@ -1122,6 +1136,10 @@ class _Subscriber:
         # decodes them using telemetryParser, then returns to the calling code.
         self._updates = queue.Queue()
 
+        # Updates merged while waiting for sync_response, kept across a timeout so that
+        # a later call goes on from them (see _get_updates_till_sync).
+        self._pending_sync = None
+
         # start the subscription in a separate thread
         _client_stream = self._create_client_stream(request)
 
@@ -1139,9 +1157,15 @@ class _Subscriber:
                 
                 # The connection was terminated by the server. This is generally okay and
                 # shouldn't raise an exception.
-                if isinstance(error, grpc._channel._MultiThreadedRendezvous) and error.code() == grpc.StatusCode.CANCELLED:
+                # grpc.RpcError is the public base of the private _MultiThreadedRendezvous
+                # this used to name, whose module is not always imported.
+                code = getattr(error, "code", None)
+                if isinstance(error, grpc.RpcError) and callable(code) and code() == grpc.StatusCode.CANCELLED:
                     return
-                
+
+                # Wake whoever waits on the queue: without this, next() and get_update()
+                # waited forever for an update that would never come.
+                self._updates.put(_RECEIVE_FAILED)
                 raise error
 
         self._subscribe_thread = threading.Thread(target=enqueue_updates)
@@ -1170,7 +1194,12 @@ class _Subscriber:
         return client_stream(request)
 
     def _get_one_update(self, timeout=None):
-        return telemetryParser(self._updates.get(block=True, timeout=timeout))
+        item = self._updates.get(block=True, timeout=timeout)
+        if item is _RECEIVE_FAILED:
+            # Left on the queue, so every later call raises the same error.
+            self._updates.put(_RECEIVE_FAILED)
+            raise self.error
+        return telemetryParser(item)
 
     def _get_updates_till_sync(self, timeout=None):
         """Read updates from streaming subscriptions, until sync_response
@@ -1178,11 +1207,17 @@ class _Subscriber:
         Successive updates are coalesced together by merging the update/delete
         lists. Scalar values (timestamp etc.) are set to that of the last
         update.
+
+        A timeout (queue.Empty) keeps the updates already merged: the next call
+        resumes from them instead of dropping them.
         """
-        resp = {"update": {}}
+        if self._pending_sync is None:
+            self._pending_sync = {"update": {}}
+        resp = self._pending_sync
         while not "sync_response" in resp:
             new_resp = self._get_one_update(timeout=timeout)
             self._merge_updates(resp, new_resp)
+        self._pending_sync = None
         return resp
 
     def _merge_updates(self, resp, new_resp):
@@ -1261,16 +1296,25 @@ class StreamSubscriber(_Subscriber):
     from the target as they arrive. If there has been no update from the
     target yet, next() will block.
 
+    With wait_for_sync=False, every call to next() returns one message from the
+    target as it arrives, the initial set included. A target that never sends
+    sync_response (some implementations omit it on STREAM subscriptions) would
+    otherwise block the first next() forever, with the updates already received
+    held in the queue.
+
     """
 
-    def __init__(self, *args):
-        self._first_update_seen = False
+    def __init__(self, *args, wait_for_sync: bool = True):
+        self._first_update_seen = not wait_for_sync
         super().__init__(*args)
 
     def _next_update(self, timeout):
         if not self._first_update_seen:
+            # Marked only once the initial set is complete: a get_update() that times
+            # out before sync_response comes back here and resumes the coalescing.
+            resp = self._get_updates_till_sync(timeout=timeout)
             self._first_update_seen = True
-            return self._get_updates_till_sync(timeout=timeout)
+            return resp
         else:
             return self._get_one_update(timeout=timeout)
 
